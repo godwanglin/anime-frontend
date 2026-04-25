@@ -47,7 +47,7 @@
 	}
 </script>
 
-<picture {...restProps} class="optimized-image {className}" data-loaded={loaded}>
+<picture {...restProps} class="optimized-image {className} z-0" data-loaded={loaded}>
 	{#if placeholder}
 		<span class="optimized-image__skeleton" aria-hidden="true"></span>
 	{/if}

@@ -40,7 +40,7 @@
 			src={thumbnail}
 			alt={title}
 			className="h-full w-full"
-			imageClass="anime-card-image h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
+			imageClass="anime-card-image h-full w-full object-cover transition duration-600 md:group-hover:scale-[1.04]"
 			{loading}
 			{fetchpriority}
 			sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 170px"

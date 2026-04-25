@@ -23,14 +23,15 @@
 	const userBadge = $derived(auth.user?.badge ?? getCultivationBadge(userLevel));
 	const levelProgress = $derived(auth.user?.levelProgress ?? getLevelProgress(userExp, userLevel));
 	const frameTweak = $derived(getFrameTweak(auth.user?.frame?.asset));
-	const framePct = $derived(Math.round(frameTweak.scale * 100));
-	const frameOffsetX = $derived(frameTweak.offsetX ?? 0);
-	const frameOffsetY = $derived(frameTweak.offsetY ?? 0);
+	// const framePct = $derived(Math.round(frameTweak.scale * 100));
+	// const frameOffsetX = $derived(frameTweak.offsetX ?? 0);
+	// const frameOffsetY = $derived(frameTweak.offsetY ?? 0);
 
 	// Pick a recent thumbnail for the blurred hero bg
 	const heroBg = $derived(
 		history.items[0]?.animeThumbnail || saved.items[0]?.animeThumbnail || null
 	);
+	// console.log(heroBg);
 </script>
 
 <SEO title="Profil" noindex />
@@ -71,7 +72,7 @@
                 Layer 1: blurred anime thumbnail as atmospheric bg.
                 Falls back to accent gradient if no thumbnail available.
             -->
-			{#if heroBg}
+			<!-- {#if heroBg}
 				<OptimizedImage
 					src={heroBg}
 					alt=""
@@ -82,7 +83,7 @@
 					fetchpriority="low"
 					sizes="(max-width: 768px) 100vw, 672px"
 				/>
-			{/if}
+			{/if} -->
 			<!-- Accent gradient overlay (always present, dims the bg) -->
 			<div
 				class="absolute inset-0"

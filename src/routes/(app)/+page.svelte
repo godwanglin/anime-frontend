@@ -130,7 +130,7 @@
 					<OptimizedImage
 						src={item.animeThumbnail}
 						alt={item.animeTitle}
-						className="h-full w-full"
+						className="h-full w-full z-0"
 						imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.03]"
 						sizes="(max-width: 768px) 144px, 176px"
 						loading="lazy"

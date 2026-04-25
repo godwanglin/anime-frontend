@@ -10,11 +10,12 @@ git reset --hard origin/main
 git clean -fd
 
 echo "Installing frontend dependencies..."
-if [ -f package-lock.json ]; then
-	npm ci --include=dev || npm install --include=dev
-else
-	npm install --include=dev
-fi
+# if [ -f package-lock.json ]; then
+# 	npm ci --include=dev || npm install --include=dev
+# else
+# fi
+
+npm install --include=dev
 
 echo "Building frontend..."
 npm run build

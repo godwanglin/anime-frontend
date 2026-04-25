@@ -19,4 +19,20 @@ fi
 echo "Building frontend..."
 npm run build
 
-echo "Frontend build complete. Service not started."
+echo "Starting frontend with PM2..."
+if ! command -v pm2 >/dev/null 2>&1; then
+	npm install -g pm2
+fi
+
+APP_NAME="anime-app"
+APP_PORT="8245"
+APP_HOST="0.0.0.0"
+
+if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+	HOST="$APP_HOST" PORT="$APP_PORT" pm2 restart "$APP_NAME" --update-env
+else
+	HOST="$APP_HOST" PORT="$APP_PORT" pm2 start npm --name "$APP_NAME" -- run start
+fi
+
+pm2 save
+echo "Frontend service '$APP_NAME' is running on port $APP_PORT."

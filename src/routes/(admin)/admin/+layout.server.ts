@@ -8,13 +8,13 @@ async function parse<T>(response: Response) {
 }
 
 export async function load({ cookies, fetch }) {
-	const refreshToken = cookies.get('refreshToken');
+	const refreshToken = cookies.get('accessToken');
 	if (!refreshToken) throw redirect(302, '/login?redirect=/admin');
 
 	try {
 		const refreshed = await fetch(`${config.API_BASE_URL}/api/auth/refresh`, {
 			method: 'POST',
-			headers: { cookie: `refreshToken=${refreshToken}` }
+			headers: { Authorization: `Bearer ${refreshToken}` }
 		});
 		const { accessToken } = await parse<{ accessToken: string }>(refreshed);
 		const me = await fetch(`${config.API_BASE_URL}/api/auth/me`, {

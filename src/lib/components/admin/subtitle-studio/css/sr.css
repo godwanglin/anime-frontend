@@ -1,0 +1,752 @@
+
+/* ══════════════════════════════════════════════
+       STUDIO DESIGN TOKENS
+       All scoped to .studio-root — zero leak outside.
+    ══════════════════════════════════════════════ */
+.studio-root {
+    /* Surfaces */
+    --st-bg: #08080a;
+    --st-surface: #0f0f12;
+    --st-surface-2: #141417;
+    --st-surface-3: #1a1a1e;
+    --st-border: oklch(1 0 0 / 0.07);
+    --st-border-strong: oklch(1 0 0 / 0.12);
+
+    /* Text */
+    --st-text: #e2e2e6;
+    --st-text-muted: #6e6e78;
+    --st-text-faint: #3a3a42;
+
+    /* Accent */
+    --st-accent: #7c3aed;
+    --st-accent-light: #8b5cf6;
+    --st-accent-glow: oklch(from #7c3aed l c h / 0.3);
+    --st-accent-surface: oklch(from #7c3aed l c h / 0.1);
+
+    /* Save status */
+    --st-dirty: #f59e0b;
+    --st-saved: #10b981;
+
+    /* Sizing */
+    --st-topbar-h: 48px;
+    --st-sidebar-w: 340px;
+    --st-timeline-h: 200px;
+    --st-radius: 0.75rem;
+
+    /* ── Layout ── */
+    display: flex;
+    flex-direction: column;
+    height: 87vh;
+    background: var(--st-bg);
+    color: var(--st-text);
+    font-size: 13px;
+    overflow: hidden;
+    /* NLE editors never scroll the page — regions scroll internally */
+}
+
+/* ── Studio body: panel bar + center ── */
+.studio-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+}
+
+/* Panel bar — horizontal strip above workspace */
+.studio-panel-bar {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 15;
+    overflow: visible;
+}
+
+/* Center: video + timeline stacked vertically */
+.studio-center {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Video area — fixed reasonable height, not too big */
+.studio-video-wrap {
+    /*
+        35vh memberikan video cukup besar untuk dibaca,
+        tapi tidak mendominasi — timeline bisa lega di bawah.
+        Di layar pendek (< 700px tinggi) diperkecil otomatis.
+    */
+    height: clamp(180px, 35vh, 300px);
+    flex-shrink: 0;
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--st-border);
+}
+
+.studio-video {
+    width: 75%;
+    height: 78%;
+    object-fit: contain;
+    display: block;
+}
+
+.studio-live-sub-wrap {
+    position: absolute;
+    bottom: 48px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    padding-inline: 16px;
+}
+
+.studio-live-sub {
+    background: oklch(0 0 0 / 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+    padding: 5px 14px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 72ch;
+    text-shadow: 0 1px 4px oklch(0 0 0 / 0.8);
+}
+
+/* Timeline — fills ALL remaining vertical space */
+.studio-timeline-wrap {
+    flex: 1;
+    /* min-height: 0; */
+    /* display: flex; */
+    /* flex-direction: column; */
+    /* overflow: hidden; */
+    height: 100px !important;
+    /* IGNORE - force timeline to fill all space below video, even if studio-center is flex column */
+}
+
+/* Timeline component fills its container */
+.studio-timeline-wrap section {
+    flex: 1;
+    min-height: 0;
+    border-radius: 0 !important;
+    border: none !important;
+}
+
+/* ══════════════════════════════════════════════
+       TOPBAR
+    ══════════════════════════════════════════════ */
+.studio-topbar {
+    height: var(--st-topbar-h);
+    min-height: var(--st-topbar-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-inline: 14px;
+    background: var(--st-surface);
+    border-bottom: 1px solid var(--st-border);
+    flex-shrink: 0;
+    z-index: 20;
+}
+
+.studio-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.studio-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: var(--st-surface-3);
+    border: 1px solid var(--st-border);
+    color: var(--st-text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+        color 140ms,
+        background 140ms;
+    flex-shrink: 0;
+}
+
+.studio-back-btn:hover {
+    background: var(--st-surface-2);
+    color: var(--st-text);
+}
+
+.studio-back-btn:active {
+    transform: scale(0.95);
+}
+
+.studio-topbar-sep {
+    width: 1px;
+    height: 18px;
+    background: var(--st-border-strong);
+    flex-shrink: 0;
+}
+
+.studio-episode-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.studio-anime-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--st-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+
+.studio-sep {
+    color: var(--st-text-faint);
+    font-size: 11px;
+}
+
+.studio-ep-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--st-text-muted);
+    white-space: nowrap;
+}
+
+.studio-ep-title {
+    font-weight: 500;
+    color: var(--st-text-faint);
+}
+
+.studio-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Status pills */
+.studio-dirty-pill,
+.studio-saved-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.studio-dirty-pill {
+    background: oklch(from var(--st-dirty) l c h / 0.12);
+    color: var(--st-dirty);
+    border: 1px solid oklch(from var(--st-dirty) l c h / 0.25);
+}
+
+.studio-dirty-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--st-dirty);
+    animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.studio-saved-pill {
+    background: oklch(from var(--st-saved) l c h / 0.1);
+    color: var(--st-saved);
+    border: 1px solid oklch(from var(--st-saved) l c h / 0.2);
+}
+
+/* Save button */
+.studio-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 8px;
+    background: var(--st-accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    transition:
+        background 140ms,
+        transform 100ms,
+        opacity 140ms;
+    white-space: nowrap;
+}
+
+.studio-save-btn:hover:not(:disabled) {
+    background: var(--st-accent-light);
+}
+
+.studio-save-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.studio-save-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.studio-save-btn.is-saving {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+/* Spinner for save button */
+.studio-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid oklch(1 0 0 / 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Icon button */
+.studio-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--st-text-muted);
+    border: 1px solid var(--st-border);
+    cursor: pointer;
+    transition:
+        background 140ms,
+        color 140ms;
+    flex-shrink: 0;
+}
+
+.studio-icon-btn:hover {
+    background: var(--st-surface-3);
+    color: var(--st-text);
+}
+
+.studio-icon-btn:active {
+    transform: scale(0.9);
+}
+
+.studio-icon-btn.active {
+    background: var(--st-accent-surface);
+    color: var(--st-accent-light);
+    border-color: oklch(from var(--st-accent) l c h / 0.3);
+}
+
+/* Video area inside sl-center */
+.sl-video-area {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ══════════════════════════════════════════════
+       LOADING / EMPTY STATES
+    ══════════════════════════════════════════════ */
+.studio-loading {
+    position: absolute;
+    inset: 52px 0 0;
+    z-index: 30;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+        radial-gradient(circle at top, rgba(124, 58, 237, 0.16), transparent 38%),
+        rgba(7, 8, 14, 0.72);
+    backdrop-filter: blur(12px);
+    pointer-events: none;
+}
+
+.studio-loading-shell {
+    width: min(420px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 22px 20px;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+        rgba(11, 12, 20, 0.92);
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45);
+}
+
+.studio-loading-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.studio-loading-stage {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--st-text);
+    letter-spacing: 0.01em;
+}
+
+.studio-loading-detail {
+    max-width: 34ch;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--st-text-muted);
+}
+
+.studio-loading-meter {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.studio-loading-meter-fill {
+    height: 100%;
+    border-radius: inherit;
+    background:
+        linear-gradient(90deg, rgba(124, 58, 237, 0.95), rgba(99, 102, 241, 0.92));
+    box-shadow: 0 0 24px rgba(124, 58, 237, 0.42);
+    transition: width 180ms ease-out;
+}
+
+.studio-loading-meta {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--st-text-faint);
+}
+
+.studio-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--st-border);
+    border-top-color: var(--st-accent-light);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+.studio-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--st-text-muted);
+    text-align: center;
+    padding: 40px;
+}
+
+.studio-empty-icon {
+    font-size: 48px;
+    color: var(--st-text-faint);
+    margin-bottom: 8px;
+}
+
+.studio-empty-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--st-text);
+}
+
+.studio-empty-desc {
+    font-size: 12px;
+    max-width: 28ch;
+}
+
+.studio-empty-back {
+    margin-top: 12px;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: var(--st-surface-3);
+    border: 1px solid var(--st-border);
+    color: var(--st-text);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 140ms;
+}
+
+.studio-empty-back:hover {
+    background: var(--st-surface-2);
+}
+
+/* ══════════════════════════════════════════════
+       WORKSPACE (video + sidebar, above timeline)
+    ══════════════════════════════════════════════ */
+.studio-workspace {
+    /*
+            Fill all remaining vertical space between topbar and timeline.
+            Timeline height is fixed at bottom via studio-timeline-panel.
+        */
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    overflow: hidden;
+    transition: grid-template-columns 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.studio-workspace.sidebar-visible {
+    grid-template-columns: 1fr var(--st-sidebar-w);
+}
+
+.studio-workspace.sidebar-hidden {
+    grid-template-columns: 1fr 0;
+}
+
+/* ── Preview panel ── */
+.studio-preview-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--st-border);
+}
+
+.studio-video-wrap {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.studio-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Live subtitle overlay — sits at bottom of video */
+.studio-live-sub-wrap {
+    position: absolute;
+    bottom: 48px;
+    /* above native controls */
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    padding-inline: 16px;
+}
+
+.studio-live-sub {
+    background: oklch(0 0 0 / 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.45;
+    padding: 6px 16px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 72ch;
+    text-shadow: 0 1px 4px oklch(0 0 0 / 0.8);
+}
+
+/* Meta strip below video */
+.studio-preview-meta {
+    height: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding-inline: 14px;
+    background: var(--st-surface);
+    border-top: 1px solid var(--st-border);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.studio-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.studio-meta-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--st-text-faint);
+    white-space: nowrap;
+}
+
+.studio-meta-value {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--st-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+.studio-meta-server {
+    font-family: ui-monospace, monospace;
+    font-size: 10px;
+}
+
+.studio-meta-divider {
+    width: 1px;
+    height: 14px;
+    background: var(--st-border-strong);
+    margin-inline: 14px;
+    flex-shrink: 0;
+}
+
+/* ── Sidebar ── */
+.studio-sidebar {
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--st-surface);
+    scrollbar-width: thin;
+    scrollbar-color: oklch(1 0 0 / 0.1) transparent;
+}
+
+.studio-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.studio-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.studio-sidebar::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 0.1);
+    border-radius: 9999px;
+}
+
+.studio-sidebar::-webkit-scrollbar-thumb:hover {
+    background: oklch(1 0 0 / 0.2);
+}
+
+/* ══════════════════════════════════════════════
+       TIMELINE PANEL — fixed height, full width
+    ══════════════════════════════════════════════ */
+.studio-timeline-panel {
+    height: var(--st-timeline-h);
+    min-height: var(--st-timeline-h);
+    flex-shrink: 0;
+    border-top: 1px solid var(--st-border);
+    background: var(--st-bg);
+    /*
+            Timeline fills its own height.
+            The TimelineEditor component inside must fill 100% height.
+        */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Pass full height into TimelineEditor's root section */
+.studio-timeline-panel section {
+    flex: 1;
+    min-height: 0;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+}
+
+.studio-player-shell {
+    width: min(100%, 980px);
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.studio-player-shell .vp-shell {
+    width: 100%;
+    height: 100%;
+}
+
+.studio-player-shell .vp-container {
+    height: 100%;
+}
+
+.studio-player-shell .vp-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.studio-player-empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--st-text-muted);
+}
+
+.studio-player-empty span {
+    font-size: 32px;
+    color: var(--st-text-faint);
+}

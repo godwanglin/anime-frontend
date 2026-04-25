@@ -1,0 +1,402 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import AdminToast from '$lib/components/admin/AdminToast.svelte';
+	import SEO from '$lib/components/SEO.svelte';
+	import { auth } from '$lib/stores/auth.svelte';
+	import { notifications } from '$lib/stores/notifications.svelte';
+	import type { AppNotification } from '$lib/stores/notifications.svelte';
+
+	type AdminUser = {
+		id?: number;
+		email?: string;
+		username?: string;
+		avatar?: string | null;
+		role?: string;
+	};
+
+	let { data, children } = $props();
+	let sidebarOpen = $state(false);
+	let notificationPanelOpen = $state(false);
+	let selectedNotificationCategory = $state('all');
+	const adminUser = $derived((data.adminUser ?? {}) as AdminUser);
+	const siteConfig = $derived((page.data.siteConfig ?? {}) as Record<string, string>);
+	const siteName = $derived(siteConfig['site.name'] ?? 'AniStream');
+	const siteLogo = $derived(siteConfig['site.logo'] ?? '/icon.png');
+	const currentPath = $derived(page.url.pathname);
+	const title = $derived(currentPath.split('/').filter(Boolean).at(-1) ?? 'dashboard');
+	const filteredNotifications = $derived(
+		selectedNotificationCategory === 'all'
+			? notifications.items
+			: notifications.items.filter((item) => item.category === selectedNotificationCategory)
+	);
+	const notificationCategories = $derived([
+		{
+			value: 'all',
+			label: 'Semua',
+			count: notifications.items.length,
+			unread: notifications.unreadCount
+		},
+		...Array.from(new Set(notifications.items.map((item) => item.category))).map((category) => {
+			const items = notifications.items.filter((item) => item.category === category);
+			return {
+				value: category,
+				label: notificationCategoryLabel(category),
+				count: items.length,
+				unread: items.filter((item) => !item.isRead).length
+			};
+		})
+	]);
+
+	const nav = [
+		{ href: '/admin', icon: 'dashboard', label: 'Dashboard' },
+		{ href: '/admin/anime', icon: 'movie', label: 'Anime' },
+		{ href: '/admin/episodes', icon: 'video_library', label: 'Episode' },
+		{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
+		{ href: '/admin/notifications', icon: 'campaign', label: 'Notifications' },
+		{ href: '/admin/subtitle-studio', icon: 'subtitles', label: 'Subtitle Studio' },
+		{ href: '/admin/users', icon: 'group', label: 'User' },
+		{ href: '/admin/comments', icon: 'forum', label: 'Komentar' },
+		{ href: '/admin/comment-reports', icon: 'flag', label: 'Laporan' },
+		{ href: '/admin/decorations', icon: 'auto_awesome', label: 'Decorations' },
+		{ href: '/admin/site-config', icon: 'settings', label: 'Site Config' },
+		{ href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' }
+	];
+
+	async function logout() {
+		await auth.logout();
+		goto('/login');
+	}
+
+	function notificationCategoryLabel(value: string) {
+		const labels: Record<string, string> = {
+			announcement: 'Pengumuman',
+			content_new: 'Konten Baru',
+			content_update: 'Update Konten',
+			personal_activity: 'Aktivitas',
+			watch_reminder: 'Reminder',
+			account_security: 'Keamanan',
+			account_system: 'Sistem Akun',
+			admin_operational: 'Admin'
+		};
+		return (
+			labels[value] ??
+			value
+				.replaceAll('_', ' ')
+				.replace(/\b\w/g, (char) => char.toUpperCase())
+		);
+	}
+
+	function notificationCategoryIcon(value: string) {
+		const icons: Record<string, string> = {
+			announcement: 'campaign',
+			content_new: 'new_releases',
+			content_update: 'update',
+			personal_activity: 'alternate_email',
+			watch_reminder: 'schedule',
+			account_security: 'shield',
+			account_system: 'manage_accounts',
+			admin_operational: 'admin_panel_settings'
+		};
+		return icons[value] ?? 'notifications';
+	}
+
+	function notificationTime(value: string) {
+		return new Date(value).toLocaleString('id-ID', {
+			day: '2-digit',
+			month: 'short',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
+	async function toggleNotificationPanel() {
+		notificationPanelOpen = !notificationPanelOpen;
+		if (notificationPanelOpen) {
+			await notifications.fetchNotifications().catch(() => null);
+		}
+	}
+
+	async function openNotification(item: AppNotification) {
+		if (!item.isRead) {
+			await notifications.markAsRead(item.id).catch(() => null);
+		}
+		if (item.link) {
+			notificationPanelOpen = false;
+			goto(item.link);
+		}
+	}
+
+	onMount(async () => {
+		await auth.refreshToken().catch(() => null);
+		if (auth.accessToken) {
+			await Promise.all([
+				notifications.fetchNotifications().catch(() => null),
+				notifications.fetchPreferences().catch(() => null),
+				notifications.subscribePush().catch(() => null)
+			]);
+			notifications.startPolling();
+		}
+	});
+</script>
+
+<SEO title={`${siteName} Admin`} noindex />
+
+<div class="min-h-screen bg-[#0f0f11] text-zinc-100">
+	{#if sidebarOpen}
+		<button
+			class="fixed inset-0 z-40 bg-black/60 lg:hidden"
+			onclick={() => (sidebarOpen = false)}
+			aria-label="Tutup menu"
+		></button>
+	{/if}
+
+	<aside
+		class="fixed inset-y-0 left-0 z-50 w-64 border-r border-zinc-800 bg-zinc-900 transition-transform lg:translate-x-0 {sidebarOpen
+			? 'translate-x-0'
+			: '-translate-x-full lg:translate-x-0'}"
+	>
+		<div class="flex h-full flex-col">
+			<a href="/admin" class="flex h-16 items-center gap-3 border-b border-zinc-800 px-5">
+				<img src={siteLogo} alt={siteName} class="h-9 w-9 rounded-full object-contain" />
+				<div class="min-w-0">
+					<p class="truncate text-sm font-black">{siteName}</p>
+					<p class="text-[11px] font-bold uppercase tracking-widest text-violet-400">Admin</p>
+				</div>
+			</a>
+
+			<nav class="flex-1 space-y-1 overflow-y-auto p-3">
+				{#each nav as item}
+					<a
+						href={item.href}
+						onclick={() => (sidebarOpen = false)}
+						class="flex items-center gap-3 rounded-lg border-r-2 px-3 py-2.5 text-sm font-bold transition
+							{currentPath === item.href || (item.href !== '/admin' && currentPath.startsWith(item.href))
+							? 'border-violet-500 bg-violet-600/20 text-violet-300'
+							: 'border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
+					>
+						<span class="material-symbols-rounded text-[20px]">{item.icon}</span>
+						{item.label}
+					</a>
+				{/each}
+			</nav>
+
+			<div class="border-t border-zinc-800 p-4">
+				<div class="mb-3 flex items-center gap-3">
+					<img
+						src={adminUser.avatar ||
+							`https://api.dicebear.com/9.x/initials/svg?seed=${adminUser.username ?? 'Admin'}`}
+						alt={adminUser.username}
+						class="h-10 w-10 rounded-full bg-zinc-800"
+					/>
+					<div class="min-w-0">
+						<p class="truncate text-sm font-black">{adminUser.username ?? 'Admin'}</p>
+						<p class="text-xs text-zinc-500">{adminUser.email}</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 gap-2">
+					<a
+						href="/"
+						class="rounded-lg border border-zinc-700 px-3 py-2 text-center text-xs font-bold text-zinc-300 hover:bg-zinc-800"
+						>Site</a
+					>
+					<button
+						onclick={logout}
+						class="rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700"
+						>Logout</button
+					>
+				</div>
+			</div>
+		</div>
+	</aside>
+
+	<div class="lg:pl-64">
+		<header
+			class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-950/90 px-4 backdrop-blur lg:px-6"
+		>
+			<div class="flex items-center gap-3">
+				<button
+					class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 lg:hidden"
+					onclick={() => (sidebarOpen = true)}
+					aria-label="Menu"
+				>
+					<span class="material-symbols-rounded">menu</span>
+				</button>
+				<div>
+					<p class="text-xs font-bold uppercase tracking-widest text-zinc-500">Admin / {title}</p>
+					<h1 class="text-lg font-black capitalize">{title.replace('-', ' ')}</h1>
+				</div>
+			</div>
+			<div class="flex items-center gap-2">
+				<button
+					class="relative rounded-lg p-2 text-zinc-400 hover:bg-zinc-800"
+					aria-label="Notifikasi"
+					onclick={toggleNotificationPanel}
+				>
+					<span class="material-symbols-rounded">notifications</span>
+					{#if notifications.unreadCount > 0}
+						<span
+							class="absolute -right-1 -top-1 min-w-5 rounded-full bg-violet-600 px-1.5 py-0.5 text-center text-[10px] font-black text-white shadow-lg shadow-violet-500/30"
+						>
+							{Math.min(notifications.unreadCount, 99)}
+						</span>
+					{/if}
+				</button>
+			</div>
+		</header>
+
+		{#if notificationPanelOpen}
+			<button
+				class="fixed inset-0 z-30 bg-black/45"
+				aria-label="Tutup notifikasi"
+				onclick={() => (notificationPanelOpen = false)}
+			></button>
+
+			<aside
+				class="fixed bottom-0 right-0 top-16 z-40 flex w-full max-w-[430px] flex-col border-l border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/50"
+			>
+				<div class="border-b border-zinc-800 px-4 py-4">
+					<div class="mb-4 flex items-start justify-between gap-3">
+						<div>
+							<p class="text-[11px] font-black uppercase tracking-[0.2em] text-violet-400">
+								Notification Center
+							</p>
+							<h2 class="mt-1 text-lg font-black text-zinc-50">Notifikasi Admin</h2>
+							<p class="mt-1 text-xs text-zinc-500">
+								{notifications.unreadCount} belum dibaca dari {notifications.items.length} notifikasi
+							</p>
+						</div>
+						<div class="flex items-center gap-1">
+							<button
+								type="button"
+								class="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+								aria-label="Refresh notifikasi"
+								onclick={() => notifications.fetchNotifications().catch(() => null)}
+							>
+								<span class="material-symbols-rounded text-[19px]">refresh</span>
+							</button>
+							<button
+								type="button"
+								class="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+								aria-label="Tutup notifikasi"
+								onclick={() => (notificationPanelOpen = false)}
+							>
+								<span class="material-symbols-rounded text-[19px]">close</span>
+							</button>
+						</div>
+					</div>
+
+					<div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+						{#each notificationCategories as category}
+							<button
+								type="button"
+								onclick={() => (selectedNotificationCategory = category.value)}
+								class="shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-black transition
+									{selectedNotificationCategory === category.value
+									? 'border-violet-500 bg-violet-600 text-white shadow-lg shadow-violet-500/20'
+									: 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'}"
+							>
+								{category.label}
+								<span
+									class="ml-1 rounded-full px-1.5 py-0.5 text-[10px]
+										{selectedNotificationCategory === category.value
+										? 'bg-white/20 text-white'
+										: 'bg-zinc-800 text-zinc-500'}"
+								>
+									{category.unread > 0 ? category.unread : category.count}
+								</span>
+							</button>
+						{/each}
+					</div>
+
+					{#if notifications.unreadCount > 0}
+						<button
+							type="button"
+							onclick={() => notifications.markAllAsRead()}
+							class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-[11px] font-black text-zinc-300 hover:border-violet-500/50 hover:text-violet-300"
+						>
+							<span class="material-symbols-rounded text-[15px]">done_all</span>
+							Tandai semua dibaca
+						</button>
+					{/if}
+				</div>
+
+				<div class="min-h-0 flex-1 overflow-y-auto">
+					{#if notifications.loading}
+						<div class="flex h-40 items-center justify-center text-sm font-bold text-zinc-500">
+							Memuat notifikasi...
+						</div>
+					{:else if filteredNotifications.length === 0}
+						<div class="px-6 py-14 text-center">
+							<div
+								class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-zinc-500 ring-1 ring-zinc-800"
+							>
+								<span class="material-symbols-rounded">drafts</span>
+							</div>
+							<p class="text-sm font-black text-zinc-300">Belum ada notifikasi</p>
+							<p class="mt-1 text-xs leading-5 text-zinc-500">
+								Notifikasi kategori ini akan muncul di sini.
+							</p>
+						</div>
+					{:else}
+						<div class="divide-y divide-zinc-900">
+							{#each filteredNotifications as item}
+								<button
+									type="button"
+									onclick={() => openNotification(item)}
+									class="group flex w-full gap-3 px-4 py-4 text-left transition hover:bg-zinc-900/80
+										{item.isRead ? 'bg-transparent' : 'bg-violet-500/[0.07]'}"
+								>
+									<div
+										class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border
+											{item.isRead
+											? 'border-zinc-800 bg-zinc-900 text-zinc-500'
+											: 'border-violet-500/30 bg-violet-500/15 text-violet-300'}"
+									>
+										<span class="material-symbols-rounded text-[20px]">
+											{notificationCategoryIcon(item.category)}
+										</span>
+									</div>
+									<div class="min-w-0 flex-1">
+										<div class="mb-1 flex items-center justify-between gap-3">
+											<span class="truncate text-[10px] font-black uppercase tracking-[0.16em] text-violet-400">
+												{notificationCategoryLabel(item.category)}
+											</span>
+											<span class="shrink-0 text-[10px] font-semibold text-zinc-600">
+												{notificationTime(item.createdAt)}
+											</span>
+										</div>
+										<div class="flex items-start gap-2">
+											<p class="line-clamp-1 flex-1 text-[13px] font-black text-zinc-100">
+												{item.title}
+											</p>
+											{#if !item.isRead}
+												<span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-violet-400 shadow-[0_0_0_4px_rgba(139,92,246,0.14)]"></span>
+											{/if}
+										</div>
+										<p class="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">
+											{item.message}
+										</p>
+										{#if item.link}
+											<span class="mt-2 inline-flex items-center gap-1 text-[11px] font-black text-zinc-500 transition group-hover:text-violet-300">
+												Buka detail
+												<span class="material-symbols-rounded text-[13px]">arrow_outward</span>
+											</span>
+										{/if}
+									</div>
+								</button>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			</aside>
+		{/if}
+
+		<main class="min-h-[calc(100vh-4rem)] p-4 lg:p-6">
+			{@render children()}
+		</main>
+	</div>
+</div>
+
+<AdminToast />

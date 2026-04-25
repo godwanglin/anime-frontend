@@ -1,0 +1,439 @@
+/* ══════════════════════════════════════════════
+   STUDIO LAYOUT ENGINE
+   All classes scoped to .sl-* — zero bleed outside.
+   CSS vars --sl-left-w / --sl-right-w / --sl-bottom-h
+   are driven by the layout store at runtime.
+══════════════════════════════════════════════ */
+
+/* ── Root ── */
+.sl-root {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+
+    /* Bridge sb-* tokens so section panel content renders correctly */
+    --sb-bg: #0f0f12;
+    --sb-surface: #16161a;
+    --sb-surface-2: #1c1c21;
+    --sb-border: oklch(1 0 0 / 0.07);
+    --sb-border-strong: oklch(1 0 0 / 0.13);
+    --sb-text: #dddde2;
+    --sb-text-muted: #6e6e78;
+    --sb-text-faint: #3a3a44;
+    --sb-accent: #7c3aed;
+    --sb-accent-light: #8b5cf6;
+    --sb-accent-surface: oklch(from #7c3aed l c h / 0.12);
+    --sb-accent-border: oklch(from #7c3aed l c h / 0.3);
+    --sb-radius: 0.5rem;
+}
+
+/* ── Workspace row ── */
+.sl-workspace {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ── Sidebars ── */
+.sl-sidebar {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: var(--st-surface, #0f0f12);
+    border-color: var(--st-border, oklch(1 0 0 / 0.07));
+}
+
+.sl-left {
+    width: var(--sl-left-w, 240px);
+    border-right: 1px solid var(--st-border, oklch(1 0 0 / 0.07));
+}
+
+.sl-right {
+    width: var(--sl-right-w, 340px);
+    border-left: 1px solid var(--st-border, oklch(1 0 0 / 0.07));
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: oklch(1 0 0 / 0.1) transparent;
+}
+
+.sl-right::-webkit-scrollbar { width: 4px; }
+.sl-right::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 0.1);
+    border-radius: 9999px;
+}
+
+/* ── Center ── */
+.sl-center {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── Bottom panel (timeline) ── */
+.sl-bottom {
+    height: var(--sl-bottom-h, 240px);
+    min-height: var(--sl-bottom-h, 240px);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-top: 1px solid var(--st-border, oklch(1 0 0 / 0.07));
+}
+
+/* Timeline fills its container fully */
+.sl-bottom section {
+    flex: 1;
+    min-height: 0;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+}
+
+/* ── Resize handles ── */
+.sl-resize {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    transition: background 120ms ease;
+}
+
+.sl-resize-x {
+    width: 4px;
+    cursor: ew-resize;
+    background: transparent;
+}
+
+.sl-resize-y {
+    height: 4px;
+    cursor: ns-resize;
+    background: transparent;
+}
+
+.sl-resize-x:hover,
+.sl-resize-x.sl-resize-active {
+    background: var(--st-accent, #7c3aed);
+}
+
+.sl-resize-y:hover,
+.sl-resize-y.sl-resize-active {
+    background: var(--st-accent, #7c3aed);
+}
+
+/* ── Panel Shell ── */
+.sl-panel-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    transition: box-shadow 120ms ease;
+}
+
+.sl-panel-shell.sl-panel-dragover {
+    box-shadow: inset 0 0 0 2px var(--st-accent, #7c3aed);
+}
+
+.sl-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 8px 0 10px;
+    background: var(--st-surface-2, #141417);
+    border-bottom: 1px solid var(--st-border, oklch(1 0 0 / 0.07));
+    flex-shrink: 0;
+    cursor: grab;
+    user-select: none;
+}
+
+.sl-panel-header:active {
+    cursor: grabbing;
+}
+
+.sl-panel-icon {
+    font-size: 15px;
+    color: var(--st-text-muted, #6e6e78);
+    flex-shrink: 0;
+}
+
+.sl-panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--st-text-muted, #6e6e78);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sl-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.sl-panel-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--st-text-faint, #3a3a42);
+    cursor: pointer;
+    transition: background 120ms, color 120ms;
+}
+
+.sl-panel-action-btn:hover {
+    background: var(--st-surface-3, #1a1a1e);
+    color: var(--st-text, #e2e2e6);
+}
+
+.sl-panel-body {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ── Zone sections container ── */
+.sl-zone-sections {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Row (horizontal split) mode */
+.sl-zone-sections.sl-zone-row {
+    flex-direction: row;
+}
+
+/* Drop-target highlight */
+.sl-zone-sections.sl-zone-dropping {
+    outline: 2px solid var(--st-accent, #7c3aed);
+    outline-offset: -2px;
+}
+
+/* ── Section wrapper (flex child inside zone) ── */
+.sl-section-wrap {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.sl-section-wrap.sl-section-dragging {
+    opacity: 0.45;
+}
+
+/* sp-shell fills its wrapper when inside a zone.
+   flex-basis: auto (not 0) so collapsed wrappers can measure
+   the real header height instead of resolving to 0. */
+.sl-section-wrap > .sp-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* sp-body scrolls when inside a zone */
+.sl-section-wrap > .sp-shell > .sp-body {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: oklch(1 0 0 / 0.1) transparent;
+}
+
+.sl-section-wrap > .sp-shell > .sp-body::-webkit-scrollbar { width: 4px; }
+.sl-section-wrap > .sp-shell > .sp-body::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 0.1);
+    border-radius: 9999px;
+}
+
+/* ── Between-section resize handles ── */
+.sl-sec-resize {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    transition: background 120ms ease;
+}
+
+.sl-sec-resize-y {
+    height: 4px;
+    cursor: ns-resize;
+    background: transparent;
+}
+
+.sl-sec-resize-x {
+    width: 4px;
+    cursor: ew-resize;
+    background: transparent;
+}
+
+.sl-sec-resize-y:hover,
+.sl-sec-resize-x:hover {
+    background: var(--st-accent, #7c3aed);
+}
+
+/* ── Drag-and-drop indicator line ── */
+.sl-drop-line {
+    flex-shrink: 0;
+    background: var(--st-accent, #7c3aed);
+    border-radius: 9999px;
+    pointer-events: none;
+    box-shadow: 0 0 6px var(--st-accent, #7c3aed);
+}
+
+.sl-drop-line-y {
+    height: 2px;
+    margin: 0 6px;
+}
+
+.sl-drop-line-x {
+    width: 2px;
+    margin: 6px 0;
+}
+
+/* ── Section Panel ── */
+.sp-shell {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--st-border, oklch(1 0 0 / 0.07));
+}
+
+.sp-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 8px 0 10px;
+    background: var(--st-surface-2, #141417);
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+    transition: background 120ms;
+    /* reset button styles when used with role=button */
+    border: none;
+    width: 100%;
+    text-align: left;
+    outline: none;
+}
+
+.sp-header:hover { background: oklch(1 0 0 / 0.04); }
+.sp-header:focus-visible { outline: 2px solid var(--st-accent, #7c3aed); outline-offset: -2px; }
+
+.sp-icon {
+    font-size: 14px;
+    color: var(--st-text-muted, #6e6e78);
+    flex-shrink: 0;
+}
+
+.sp-title {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--st-text-muted, #6e6e78);
+    flex: 1;
+    min-width: 0;
+}
+
+.sp-chevron {
+    font-size: 15px;
+    color: var(--st-text-muted, #6e6e78);
+    flex-shrink: 0;
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), color 120ms;
+    display: block;
+}
+
+.sp-header:hover .sp-chevron {
+    color: var(--st-text, #e2e2e6);
+}
+
+.sp-body {
+    padding: 10px;
+    overflow: visible;
+}
+
+/* ── Section context menu ── */
+.sp-ctx-menu {
+    position: fixed;
+    z-index: 9000;
+    min-width: 210px;
+    padding: 4px;
+    border-radius: 8px;
+    background: #16161a;
+    border: 1px solid oklch(1 0 0 / 0.13);
+    box-shadow: 0 8px 24px oklch(0 0 0 / 0.45), 0 2px 6px oklch(0 0 0 / 0.3);
+    animation: spCtxIn 100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes spCtxIn {
+    from { opacity: 0; transform: scale(0.94); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.sp-ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #dddde2;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background 100ms;
+}
+
+.sp-ctx-item .material-symbols-rounded {
+    font-size: 16px;
+    color: #6e6e78;
+    flex-shrink: 0;
+}
+
+.sp-ctx-item:hover:not(:disabled) { background: oklch(1 0 0 / 0.07); color: #fff; }
+.sp-ctx-item:hover:not(:disabled) .material-symbols-rounded { color: #8b5cf6; }
+
+.sp-ctx-item.is-current,
+.sp-ctx-item:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.sp-ctx-divider {
+    height: 1px;
+    background: oklch(1 0 0 / 0.08);
+    margin: 4px 0;
+}
+
+.sp-ctx-label {
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: oklch(1 0 0 / 0.3);
+    padding: 4px 10px 2px;
+}

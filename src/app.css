@@ -1,0 +1,741 @@
+@import 'material-symbols/rounded.css';
+@import 'tailwindcss';
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+	--hero-bg: theme('colors.zinc.50');
+}
+
+.dark {
+	--hero-bg: theme('colors.zinc.950');
+}
+
+html {
+	background-color: #f8fafc;
+	color: #0f172a;
+	width: 100%;
+	max-width: 100%;
+	overflow-x: hidden;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	transition:
+		background-color 300ms ease,
+		color 300ms ease;
+}
+
+html.dark {
+	background-color: #020617;
+	color: #f1f5f9;
+}
+
+
+:root,
+[data-theme='light'] {
+	--page-bg: #f5f3f0;
+	/* warm stone — NOT pure white */
+	--surface: #faf9f7;
+	/* card backgrounds */
+	--surface-2: #ffffff;
+	--surface-offset: #eeebe6;
+	/* hover states, input bg */
+	--border: oklch(from #1a1714 l c h / 0.09);
+	--border-strong: oklch(from #1a1714 l c h / 0.16);
+
+	--text-primary: #1a1714;
+	/* near-black ink */
+	--text-muted: #6b6560;
+	/* stone gray */
+	--text-faint: #a89e95;
+	/* placeholder / metadata */
+
+	--accent: #7c3aed;
+	/* violet-700 — rich, not electric */
+	--accent-hover: #6d28d9;
+	--accent-surface: #ede9fe;
+	/* violet-100 */
+	--accent-text: #5b21b6;
+	/* on accent surface */
+	--accent-glow: oklch(from #7c3aed l c h / 0.18);
+
+	--success-text: #065f46;
+	--success-surface: #d1fae5;
+	--success-dot: #10b981;
+
+	--shadow-sm: 0 1px 3px oklch(0.2 0.02 50 / 0.07), 0 1px 2px oklch(0.2 0.02 50 / 0.05);
+	--shadow-md: 0 4px 12px oklch(0.2 0.02 50 / 0.08), 0 2px 4px oklch(0.2 0.02 50 / 0.05);
+	--shadow-lg: 0 12px 32px oklch(0.2 0.02 50 / 0.1), 0 4px 8px oklch(0.2 0.02 50 / 0.06);
+
+	--radius-sm: 0.375rem;
+	--radius-md: 0.625rem;
+	--radius-lg: 0.875rem;
+	--radius-xl: 1.125rem;
+	--radius-2xl: 1.5rem;
+}
+
+/* ── Dark mode surfaces ── */
+[data-theme='dark'],
+.dark {
+	--page-bg: #0f0e0d;
+	--surface: #171614;
+	--surface-2: #1c1b19;
+	--surface-offset: #252320;
+	--border: oklch(from #ffffff l c h / 0.07);
+	--border-strong: oklch(from #ffffff l c h / 0.12);
+
+	--text-primary: #e8e5e0;
+	--text-muted: #8a8178;
+	--text-faint: #5c5650;
+
+	--accent: #8b5cf6;
+	--accent-hover: #7c3aed;
+	--accent-surface: oklch(from #7c3aed l c h / 0.15);
+	--accent-text: #c4b5fd;
+	--accent-glow: oklch(from #7c3aed l c h / 0.25);
+
+	--success-text: #6ee7b7;
+	--success-surface: oklch(from #10b981 l c h / 0.12);
+	--success-dot: #34d399;
+
+	--shadow-sm: 0 1px 3px oklch(0 0 0 / 0.25);
+	--shadow-md: 0 4px 12px oklch(0 0 0 / 0.35);
+	--shadow-lg: 0 12px 32px oklch(0 0 0 / 0.45);
+}
+
+
+
+body {
+	min-height: 100vh;
+	width: 100%;
+	max-width: 100%;
+	overflow-x: hidden;
+	font-family: 'Lexend Deca', sans-serif;
+	background: var(--page-bg);
+}
+
+body > div {
+	width: 100%;
+	max-width: 100%;
+}
+
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+@keyframes progress {
+	from {
+		width: 0%;
+	}
+
+	to {
+		width: 100%;
+	}
+}
+
+.animate-progress {
+	animation: progress 5s linear forwards;
+}
+
+
+/* ══════════════════════════════════════════════
+   CUSTOM SCROLLBAR — global + utilities
+   Chromium: ::-webkit-scrollbar
+   Firefox : scrollbar-width + scrollbar-color
+══════════════════════════════════════════════ */
+
+/* ── Global scrollbar (semua elemen) ── */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+	width: 5px;
+	height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+	background: var(--border-strong);
+	border-radius: 9999px;
+	transition: background 0.2s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background: var(--text-faint);
+}
+
+*::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+/* ── .scrollbar-accent — thumb pakai warna accent ── */
+/* Pakai di sidebar, modal, atau area yang mau lebih expressive */
+.scrollbar-accent {
+	scrollbar-color: oklch(from var(--accent) l c h / 0.4) transparent;
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb {
+	background: oklch(from var(--accent) l c h / 0.35);
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb:hover {
+	background: oklch(from var(--accent) l c h / 0.6);
+}
+
+/* ── .scrollbar-none — hidden, preserved ── */
+/* Lebih eksplisit dari .scrollbar-hide yang sudah ada */
+.scrollbar-none {
+	scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+	display: none;
+}
+
+.username {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+	isolation: isolate;
+}
+
+.nametag-aura {
+	color: #fff;
+	font-weight: 700;
+	text-shadow: 0 0 10px rgba(168, 85, 247, 0.28);
+}
+
+.nametag-aura::after {
+	content: '';
+	position: absolute;
+	inset: -2px -5px;
+	border-radius: 6px;
+	background: radial-gradient(circle, rgba(168, 85, 247, 0.6), transparent 70%);
+	filter: blur(6px);
+	animation: nametagPulse 2s infinite ease-in-out;
+	z-index: -1;
+}
+
+.nametag-glitch {
+	color: #fff;
+	font-weight: 800;
+	text-shadow: 0 0 8px rgba(34, 211, 238, 0.18);
+}
+
+.nametag-glitch::before,
+.nametag-glitch::after {
+	content: attr(data-text);
+	position: absolute;
+	left: 0;
+	top: 0;
+	opacity: 0.58;
+	pointer-events: none;
+	z-index: -1;
+}
+
+.nametag-glitch::before {
+	color: #f0f;
+	transform: translate(1px, 0);
+}
+
+.nametag-glitch::after {
+	color: #0ff;
+	transform: translate(-1px, 0);
+}
+
+.nametag-glitch:hover::before {
+	transform: translate(2px, -1px);
+}
+
+.nametag-glitch:hover::after {
+	transform: translate(-2px, 1px);
+}
+
+.nametag-cosmic {
+	font-weight: 900;
+	background: linear-gradient(90deg, #a855f7, #6366f1, #22d3ee, #f0abfc, #a855f7);
+	background-size: 220% 100%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	animation: cosmicShift 4s linear infinite;
+	text-shadow: 0 0 20px rgba(99, 102, 241, 0.16);
+}
+
+.nametag-glitch-glasses {
+	color: #fff5f5;
+	font-weight: 900;
+	letter-spacing: 0;
+	text-shadow:
+		1px 0 0 rgba(255, 35, 35, 0.7),
+		-1px 0 0 rgba(88, 0, 0, 0.78),
+		0 0 10px rgba(220, 38, 38, 0.42),
+		0 0 24px rgba(127, 29, 29, 0.46);
+}
+
+.nametag-glitch-glasses {
+	filter: drop-shadow(0 0 8px rgba(127, 29, 29, 0.46));
+}
+
+.nametag-glitch-glasses::before,
+.nametag-glitch-glasses::after {
+	content: '';
+	position: absolute;
+	left: -18%;
+	right: -18%;
+	pointer-events: none;
+	z-index: 1;
+	transform: translateX(-115%);
+}
+
+.nametag-glitch-glasses::before {
+	top: 43%;
+	height: 3px;
+	border-radius: 9999px;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(69, 10, 10, 0.95),
+		rgba(153, 27, 27, 0.98),
+		rgba(239, 68, 68, 0.95),
+		rgba(127, 29, 29, 0.98),
+		transparent
+	);
+	box-shadow:
+		0 -3px 0 rgba(254, 226, 226, 0.82),
+		0 3px 0 rgba(69, 10, 10, 0.62),
+		0 0 14px rgba(220, 38, 38, 0.86),
+		0 0 28px rgba(127, 29, 29, 0.78);
+	animation: glitchGlassesSweep 2.7s ease-in-out infinite;
+}
+
+.nametag-glitch-glasses::after {
+	top: 22%;
+	bottom: 18%;
+	border-radius: 7px;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		rgba(69, 10, 10, 0.12) 26%,
+		rgba(153, 27, 27, 0.24) 42%,
+		rgba(254, 202, 202, 0.3) 50%,
+		rgba(185, 28, 28, 0.22) 58%,
+		rgba(69, 10, 10, 0.16) 74%,
+		transparent 100%
+	);
+	mix-blend-mode: screen;
+	animation: glitchGlassesSweep 2.7s ease-in-out infinite;
+}
+
+.nametag-blood-god {
+	color: #fff1f2;
+	font-weight: 950;
+	padding: 0 0.18em;
+	background:
+		linear-gradient(90deg, #fee2e2 0%, #ef4444 22%, #7f1d1d 44%, #dc2626 62%, #fecaca 100%),
+		radial-gradient(circle at 35% 50%, rgba(255, 255, 255, 0.45), transparent 34%);
+	background-size: 220% 100%, 140% 120%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	text-shadow:
+		0 0 10px rgba(185, 28, 28, 0.58),
+		0 0 24px rgba(127, 29, 29, 0.5),
+		0 0 42px rgba(69, 10, 10, 0.46);
+	animation:
+		bloodGodTextFlow 5.8s ease-in-out infinite,
+		bloodGodPulse 3.4s ease-in-out infinite;
+}
+
+.nametag-blood-god::before,
+.nametag-blood-god::after {
+	content: '';
+	position: absolute;
+	pointer-events: none;
+	border-radius: 9999px;
+	z-index: -1;
+}
+
+.nametag-blood-god::before {
+	inset: -0.34em -0.5em;
+	background:
+		radial-gradient(ellipse at 16% 48%, rgba(254, 202, 202, 0.24), transparent 30%),
+		radial-gradient(ellipse at 78% 44%, rgba(220, 38, 38, 0.22), transparent 34%),
+		linear-gradient(
+			90deg,
+			rgba(2, 0, 0, 0),
+			rgba(69, 10, 10, 0.52),
+			rgba(153, 27, 27, 0.62),
+			rgba(20, 0, 0, 0.48),
+			rgba(2, 0, 0, 0)
+		);
+	background-size:
+		130% 120%,
+		130% 120%,
+		240% 100%;
+	filter: blur(9px);
+	opacity: 0.82;
+	mix-blend-mode: screen;
+	transform: translateZ(0) scaleX(0.98);
+	animation:
+		bloodGodAuraFlow 6.4s ease-in-out infinite,
+		bloodGodAuraBreathe 3.8s ease-in-out infinite;
+}
+
+.nametag-blood-god::after {
+	inset: -0.12em -0.28em;
+	background:
+		linear-gradient(
+			110deg,
+			transparent 0%,
+			rgba(69, 10, 10, 0.18) 16%,
+			rgba(153, 27, 27, 0.62) 38%,
+			rgba(254, 226, 226, 0.58) 50%,
+			rgba(127, 29, 29, 0.5) 62%,
+			transparent 100%
+		),
+		radial-gradient(ellipse at 50% 100%, rgba(127, 29, 29, 0.5), transparent 68%);
+	background-size: 220% 100%, 100% 120%;
+	box-shadow:
+		inset 0 0 0 1px rgba(254, 202, 202, 0.16),
+		0 0 12px rgba(220, 38, 38, 0.38),
+		0 0 28px rgba(69, 10, 10, 0.42);
+	opacity: 0.72;
+	mix-blend-mode: screen;
+	transform: translateZ(0);
+	animation: bloodGodEdgeFlow 4.8s ease-in-out infinite;
+}
+
+.nametag-royal {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.18em;
+	padding: 0.18em 0.55em;
+	margin: 0 1.6em;
+	max-width: calc(100% - 3.2em);
+	min-width: 0;
+	color: #fff5e1;
+	font-weight: 900;
+	letter-spacing: 0.02em;
+	border-radius: 4px;
+	background:
+		linear-gradient(180deg, rgba(254, 226, 226, 0.18), transparent 35%),
+		linear-gradient(180deg, #b91c1c 0%, #6e0d0d 48%, #4a0707 60%, #8a1212 100%);
+	background-size:
+		100% 100%,
+		220% 100%;
+	box-shadow:
+		inset 0 0 0 1px #fde68a,
+		inset 0 0 0 2px #8a5a14,
+		inset 0 1px 0 rgba(255, 244, 200, 0.55),
+		inset 0 -1px 0 rgba(20, 0, 0, 0.6),
+		0 0 12px rgba(220, 38, 38, 0.45),
+		0 0 22px rgba(127, 29, 29, 0.35);
+	text-shadow:
+		0 1px 0 rgba(0, 0, 0, 0.55),
+		0 0 6px rgba(254, 226, 226, 0.45);
+	animation: royalShimmer 5.4s ease-in-out infinite;
+}
+
+.nametag-royal .royal-text {
+	position: relative;
+	z-index: 1;
+	display: inline-block;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background: linear-gradient(180deg, #fff7d4 0%, #f0c75a 55%, #b88a2c 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.nametag-royal .royal-ornament {
+	position: absolute;
+	top: 50%;
+	width: 1.85em;
+	height: 1.16em;
+	pointer-events: none;
+	filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.55))
+		drop-shadow(0 0 6px rgba(240, 199, 90, 0.35));
+}
+
+.nametag-royal .royal-ornament-left {
+	right: 100%;
+	transform: translate(0.32em, -50%);
+}
+
+.nametag-royal .royal-ornament-right {
+	left: 100%;
+	transform: translate(-0.32em, -50%);
+}
+
+@media (max-width: 640px) {
+	.nametag-royal {
+		gap: 0.12em;
+		padding: 0.14em 0.42em;
+		margin: 0 1.15em;
+		max-width: calc(100% - 2.3em);
+	}
+
+	.nametag-royal .royal-ornament {
+		width: 1.42em;
+		height: 0.89em;
+	}
+
+	.nametag-royal .royal-ornament-left {
+		transform: translate(0.24em, -50%);
+	}
+
+	.nametag-royal .royal-ornament-right {
+		transform: translate(-0.24em, -50%);
+	}
+}
+
+@media (max-width: 380px) {
+	.nametag-royal {
+		padding: 0.12em 0.34em;
+		margin: 0 0.9em;
+		max-width: calc(100% - 1.8em);
+	}
+
+	.nametag-royal .royal-ornament {
+		width: 1.15em;
+		height: 0.72em;
+	}
+
+	.nametag-royal .royal-ornament-left {
+		transform: translate(0.18em, -50%);
+	}
+
+	.nametag-royal .royal-ornament-right {
+		transform: translate(-0.18em, -50%);
+	}
+}
+
+.nametag-royal::before,
+.nametag-royal::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+	z-index: 0;
+}
+
+.nametag-royal::before {
+	background: linear-gradient(
+		105deg,
+		transparent 0%,
+		transparent 22%,
+		rgba(255, 192, 203, 0.22) 36%,
+		rgba(186, 230, 253, 0.38) 44%,
+		rgba(255, 252, 235, 0.5) 50%,
+		rgba(216, 180, 254, 0.38) 56%,
+		rgba(167, 243, 208, 0.22) 64%,
+		transparent 78%,
+		transparent 100%
+	);
+	background-size: 240% 100%;
+	mix-blend-mode: overlay;
+	animation: royalHologramShift 3.6s ease-in-out infinite alternate;
+}
+
+.nametag-royal::after {
+	background: linear-gradient(
+		105deg,
+		transparent 46%,
+		rgba(255, 250, 240, 0.45) 48.5%,
+		rgba(255, 253, 248, 0.95) 50%,
+		rgba(255, 250, 240, 0.45) 51.5%,
+		transparent 54%
+	);
+	background-size: 340% 100%;
+	mix-blend-mode: screen;
+	filter: blur(0.6px);
+	animation: royalGlassesSweep 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes royalHologramShift {
+	0% {
+		background-position: 100% 50%;
+	}
+
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+@keyframes royalGlassesSweep {
+	0% {
+		background-position: 100% 50%;
+	}
+
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+@keyframes royalShimmer {
+	0%,
+	100% {
+		background-position:
+			0% 0%,
+			0% 50%;
+		box-shadow:
+			inset 0 0 0 1px #fde68a,
+			inset 0 0 0 2px #8a5a14,
+			inset 0 1px 0 rgba(255, 244, 200, 0.55),
+			inset 0 -1px 0 rgba(20, 0, 0, 0.6),
+			0 0 12px rgba(220, 38, 38, 0.45),
+			0 0 22px rgba(127, 29, 29, 0.35);
+	}
+
+	50% {
+		background-position:
+			0% 0%,
+			100% 50%;
+		box-shadow:
+			inset 0 0 0 1px #fff5cc,
+			inset 0 0 0 2px #a87420,
+			inset 0 1px 0 rgba(255, 244, 200, 0.7),
+			inset 0 -1px 0 rgba(20, 0, 0, 0.6),
+			0 0 16px rgba(240, 199, 90, 0.5),
+			0 0 28px rgba(220, 38, 38, 0.45);
+	}
+}
+
+@keyframes nametagPulse {
+	0%,
+	100% {
+		opacity: 0.55;
+		transform: scaleX(0.96);
+	}
+
+	50% {
+		opacity: 1;
+		transform: scaleX(1.04);
+	}
+}
+
+@keyframes cosmicShift {
+	0% {
+		background-position: 0%;
+	}
+
+	100% {
+		background-position: 220%;
+	}
+}
+
+@keyframes bloodGodTextFlow {
+	0%,
+	100% {
+		background-position:
+			0% 50%,
+			36% 50%;
+	}
+
+	50% {
+		background-position:
+			100% 50%,
+			64% 50%;
+	}
+}
+
+@keyframes bloodGodPulse {
+	0%,
+	100% {
+		filter: drop-shadow(0 0 7px rgba(127, 29, 29, 0.45));
+	}
+
+	50% {
+		filter: drop-shadow(0 0 15px rgba(220, 38, 38, 0.62));
+	}
+}
+
+@keyframes bloodGodAuraFlow {
+	0%,
+	100% {
+		background-position:
+			0% 50%,
+			80% 50%,
+			0% 50%;
+	}
+
+	50% {
+		background-position:
+			64% 45%,
+			20% 55%,
+			100% 50%;
+	}
+}
+
+@keyframes bloodGodAuraBreathe {
+	0%,
+	100% {
+		opacity: 0.62;
+		transform: translateZ(0) scaleX(0.96) scaleY(0.9);
+	}
+
+	50% {
+		opacity: 0.92;
+		transform: translateZ(0) scaleX(1.04) scaleY(1.08);
+	}
+}
+
+@keyframes bloodGodEdgeFlow {
+	0%,
+	100% {
+		background-position:
+			0% 50%,
+			50% 100%;
+		opacity: 0.52;
+	}
+
+	50% {
+		background-position:
+			100% 50%,
+			50% 88%;
+		opacity: 0.84;
+	}
+}
+
+@keyframes glitchGlassesSweep {
+	0%,
+	18% {
+		opacity: 0;
+		transform: translateX(-115%) skewX(-12deg);
+	}
+
+	34% {
+		opacity: 1;
+		transform: translateX(-8%) skewX(-12deg);
+	}
+
+	48% {
+		opacity: 0.86;
+		transform: translateX(22%) skewX(8deg);
+	}
+
+	64% {
+		opacity: 1;
+		transform: translateX(115%) skewX(-10deg);
+	}
+
+	65%,
+	100% {
+		opacity: 0;
+		transform: translateX(115%) skewX(-10deg);
+	}
+}

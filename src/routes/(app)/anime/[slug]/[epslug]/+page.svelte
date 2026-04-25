@@ -1,0 +1,1112 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import AnimeCard from '$lib/components/AnimeCard.svelte';
+	import AutoNextEpisode from '$lib/components/AutoNextEpisode.svelte';
+	import CommentSection from '$lib/components/comments/CommentSection.svelte';
+	import SEO from '$lib/components/SEO.svelte';
+	import WatchProgressTracker from '$lib/components/WatchProgressTracker.svelte';
+	import VideoReactionBar from '$lib/components/VideoReactionBar.svelte';
+	import VideoPlayer from '$lib/components/video-player/v2/VideoPlayer.svelte';
+	import { formatProxySources } from '$lib/format-proxy-urls';
+	import { extractEpisodeSubtitles, groupSubtitlesForPlayer } from '$lib/subtitle-studio';
+	import { auth } from '$lib/stores/auth.svelte';
+	import { history } from '$lib/stores/history.svelte';
+	import { preference } from '$lib/stores/preference.svelte';
+	import { saved } from '$lib/stores/saved.svelte';
+	import type { PageData } from './$types';
+
+	type Episode = {
+		id?: number;
+		slug?: string;
+		number?: number;
+		episode_number?: number;
+		title?: string;
+		sub?: string;
+		date?: string;
+		views?: number;
+		skipIntroSeconds?: number | null;
+		animeSlug?: string;
+		animeTitle?: string;
+	};
+
+	type Anime = {
+		id?: number;
+		slug?: string;
+		title?: string;
+		thumbnail?: string;
+		bigCover?: string;
+		status?: string;
+		type?: string;
+		episodes?: Episode[];
+	};
+
+	type Season = {
+		season: number;
+		title: string;
+		slug: string;
+		isCurrent: boolean;
+		episodes: Episode[];
+	};
+
+	type RelatedVideo = {
+		id: number;
+		slug: string;
+		title: string;
+		thumbnail: string;
+		bigCover?: string;
+		status?: string;
+		studio?: string;
+		type?: string;
+		totalEpisodes?: number;
+		genres?: string[];
+		latestEpisode?: {
+			id: number;
+			slug: string;
+			number: number;
+			title: string;
+			sub?: string;
+			date?: string;
+		} | null;
+		relevance?: {
+			score: number;
+			genreMatches: number;
+		};
+	};
+
+	const { data }: { data: PageData } = $props();
+
+	const anime = $derived(data.anime as Anime | null);
+	const episode = $derived(data.episode as Episode | null);
+	const detail = $derived(data.episodeDetail as Record<string, unknown> | null);
+	const title = $derived(episode?.title ?? anime?.title ?? 'Episode');
+	const cover = $derived(anime?.bigCover || anime?.thumbnail || '');
+	const streamSources = $derived(formatProxySources((detail as any)?.servers ?? []));
+	const streamUrls = $derived(streamSources.map((source) => source.playerUrl));
+	const episodeSubtitles = $derived(extractEpisodeSubtitles(detail));
+	const subtitlesBySrc = $derived(groupSubtitlesForPlayer(streamSources, episodeSubtitles));
+	const defaultEpisodes = $derived(
+		(((detail as any)?.episodes as Episode[] | undefined) ?? anime?.episodes ?? []) as Episode[]
+	);
+	const seasons = $derived(
+		((((detail as any)?.seasons as Season[] | undefined) ?? []) as Season[]).filter(
+			(season) => season.episodes?.length
+		)
+	);
+	const currentSeasonNumber = $derived(
+		seasons.find((season) => season.isCurrent)?.season ??
+			seasons.find((season) =>
+				season.episodes.some(
+					(item) => item.slug === episode?.slug || item.slug === data.params?.epslug
+				)
+			)?.season ??
+			null
+	);
+	let activeSeason = $state<number | null>(null);
+	let activeEpisodeSlug = $state<string | undefined>(undefined);
+	const activeSeasonData = $derived(
+		seasons.find((season) => season.season === activeSeason) ??
+			seasons.find((season) => season.isCurrent) ??
+			seasons[0]
+	);
+	const episodes = $derived(
+		activeSeasonData?.episodes?.length ? activeSeasonData.episodes : defaultEpisodes
+	);
+	const hasMultipleEpisodes = $derived(episodes.length > 1);
+	const showEpisodeList = $derived(hasMultipleEpisodes || seasons.length > 1);
+	const episodeListAnimeSlug = $derived(activeSeasonData?.slug ?? anime?.slug);
+	const relatedVideos = $derived((detail?.relatedVideos as RelatedVideo[]) ?? []);
+	const isSaved = $derived(saved.checkSaved(anime?.id));
+	const trackerPayload = $derived({
+		animeId: anime?.id ?? 0,
+		animeSlug: anime?.slug ?? '',
+		animeTitle: anime?.title ?? '',
+		animeThumbnail: anime?.thumbnail ?? cover,
+		episodeId: episode?.id ?? 0,
+		episodeSlug: episode?.slug ?? data.params?.epslug ?? '',
+		episodeNumber: episode?.number ?? 0,
+		episodeTitle: episode?.title ?? title
+	});
+
+	const defaultEpisodeIndex = $derived(
+		defaultEpisodes.findIndex(
+			(item: any) => item.slug === episode?.slug || item.slug === data.params?.epslug
+		)
+	);
+	const navigation = $derived((detail as any)?.navigation ?? null);
+	const previousEpisode = $derived(
+		navigation?.previous ??
+			(defaultEpisodeIndex >= 0 ? defaultEpisodes[defaultEpisodeIndex + 1] : undefined)
+	);
+	const nextEpisode = $derived(
+		navigation?.next ??
+			(defaultEpisodeIndex > 0 ? defaultEpisodes[defaultEpisodeIndex - 1] : undefined)
+	);
+	const nextEpisodeHref = $derived(
+		nextEpisode && anime?.slug ? `/anime/${anime.slug}/${nextEpisode.slug}` : undefined
+	);
+
+	let showAllEpisodes = $state(false);
+	let episodeOrder = $state<'desc' | 'asc'>('desc');
+	let isDesktop = $state(false);
+
+	onMount(() => {
+		const mq = window.matchMedia('(min-width: 768px)');
+		const update = () => (isDesktop = mq.matches);
+		update();
+		mq.addEventListener('change', update);
+		return () => mq.removeEventListener('change', update);
+	});
+	const sortedEpisodes = $derived(
+		[...episodes].sort((left, right) =>
+			episodeOrder === 'desc'
+				? episodeNumber(right) - episodeNumber(left)
+				: episodeNumber(left) - episodeNumber(right)
+		)
+	);
+	const visibleEpisodes = $derived(showAllEpisodes ? sortedEpisodes : sortedEpisodes.slice(0, 30));
+
+	$effect(() => {
+		const routeEpisodeSlug = episode?.slug ?? data.params?.epslug;
+
+		if (seasons.length === 0) {
+			activeSeason = null;
+			activeEpisodeSlug = routeEpisodeSlug;
+			return;
+		}
+
+		if (routeEpisodeSlug !== activeEpisodeSlug) {
+			activeEpisodeSlug = routeEpisodeSlug;
+			activeSeason = currentSeasonNumber;
+			showAllEpisodes = false;
+			return;
+		}
+
+		if (!activeSeason || !seasons.some((season) => season.season === activeSeason)) {
+			activeSeason = currentSeasonNumber;
+		}
+	});
+
+	$effect(() => {
+		preference.syncPlayerStorage();
+	});
+
+	function episodeProgress(id?: number) {
+		return history.byEpisode(id)?.progressPct ?? 0;
+	}
+
+	function selectSeason(season: number) {
+		activeSeason = season;
+		showAllEpisodes = false;
+	}
+
+	function episodeNumber(ep: Episode) {
+		return ep.number ?? ep.episode_number ?? 0;
+	}
+
+	function toggleEpisodeOrder() {
+		episodeOrder = episodeOrder === 'desc' ? 'asc' : 'desc';
+		showAllEpisodes = false;
+	}
+
+	function episodeHref(ep: Episode) {
+		const animeSlug = ep.animeSlug ?? episodeListAnimeSlug;
+		return animeSlug && ep.slug ? `/anime/${animeSlug}/${ep.slug}` : '#';
+	}
+
+	function formatCount(value?: number) {
+		const count = Number(value ?? 0);
+		if (count >= 1_000_000) {
+			const f = count / 1_000_000;
+			return `${Number.isInteger(f) ? f.toFixed(0) : f.toFixed(1)}M`;
+		}
+		if (count >= 1_000) {
+			const f = count / 1_000;
+			return `${Number.isInteger(f) ? f.toFixed(0) : f.toFixed(1)}K`;
+		}
+		return count.toLocaleString('id-ID');
+	}
+
+	async function toggleSaved() {
+		if (!auth.isLoggedIn) {
+			location.href = `/login?redirect=/anime/${anime?.slug}/${episode?.slug}`;
+			return;
+		}
+		if (!anime?.id) return;
+		if (isSaved) {
+			await saved.unsaveAnime(anime.id);
+			return;
+		}
+		await saved.saveAnime({
+			animeId: anime.id,
+			animeSlug: anime.slug ?? '',
+			animeTitle: anime.title ?? '',
+			animeThumbnail: anime.thumbnail ?? cover,
+			animeStatus: anime.status ?? 'Ongoing'
+		});
+	}
+</script>
+
+<SEO
+	title={`${title} - ${anime?.title ?? 'Anime'}`}
+	description={`Nonton ${title} sub indo di AniStream`}
+	image={anime?.thumbnail ?? cover}
+	type="video.episode"
+/>
+
+<div class="-mx-4 -mt-4 max-w-[calc(100%+2rem)] overflow-x-clip md:mx-0 md:mt-0 md:max-w-none">
+	<!-- ══════════════════════════════════════════
+         VIDEO PLAYER — full bleed, always black
+    ══════════════════════════════════════════ -->
+	<div
+		class="watch-player-shell w-full bg-black md:mx-8 md:w-[calc(100%-4rem)] md:bg-transparent md:rounded-2xl md:shadow-2xl md:shadow-black/20"
+	>
+		{#if streamUrls.length}
+			<div class="relative w-full aspect-video">
+				<VideoPlayer
+					src={streamUrls}
+					poster={cover}
+					{title}
+					autoPlay={preference.pref.autoPlay}
+					{subtitlesBySrc}
+					forceHls
+					config={{
+						subtitle: {
+							color: preference.pref.subtitleColor,
+							fontSize: preference.pref.subtitleFontSize,
+							fontFamily: preference.pref.subtitleFontFamily,
+							fontWeight: 700,
+							background: preference.pref.subtitleBg,
+							borderRadius: '4px',
+							padding: '2px 8px',
+							bottomOffset: preference.pref.subtitlePosition,
+							textShadow: preference.pref.subtitleShadow,
+							opacity: preference.pref.subtitleOpacity,
+							maxWidth: preference.pref.subtitleMaxWidth
+						},
+						theme: {
+							primaryColor: '#ffffff',
+							accentColor: '#7c3aed',
+							controlTextColor: '#ffffff',
+							controlBackground: 'rgba(255,255,255,.16)'
+						},
+						ambient: {
+							enabled: true,
+							intensity: 1.5,
+							opacity: 0.42,
+							blur: 72,
+							saturation: 1.65,
+							contrast: 1
+						},
+						controls: {
+							enabled: true,
+							position: 'bottom',
+							showPlay: true,
+							showSeek: true,
+							showSkip: true,
+							showVolume: true,
+							showTime: true,
+							showSettings: true,
+							showFullscreen: true,
+							showSourceBadge: true,
+							showThumbnailPreview: true,
+							showStats: false,
+							preloadAudioWaveform: true,
+							maxAudioWaveformBytes: 30 * 1024 * 1024,
+							waveformEnable: false
+						},
+						playback: {
+							speeds: [0.25, 0.5, 1, 1.5, 2],
+							skipSeconds: 10,
+							persistProgress: true
+						},
+						fullscreen: {
+							showTopBar: true,
+							showBackButton: true,
+							showTitle: true
+						},
+						skipIntro: {
+							enabled: preference.pref.skipIntroEnabled,
+							seconds: episode?.skipIntroSeconds,
+							autoSkip: true,
+							showButton: true
+						}
+					}}
+				/>
+				<WatchProgressTracker payload={trackerPayload} enabled={auth.isLoggedIn} />
+				<AutoNextEpisode href={nextEpisodeHref} enabled={preference.pref.autoNextEpisode} />
+			</div>
+		{:else}
+			<!--
+                Empty player state — sama dengan design taste: selalu ada visual,
+                bukan blank. Warm zinc surface, icon besar, pesan yang jelas.
+            -->
+			<div
+				class="w-full aspect-video flex items-center justify-center"
+				style="background: #0a0a09;"
+			>
+				<div class="text-center space-y-3 px-6">
+					<div
+						class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-1"
+						style="background: oklch(1 0 0 / 0.05); border: 1px solid oklch(1 0 0 / 0.08);"
+					>
+						<span
+							class="material-symbols-rounded"
+							style="font-size:32px; color: oklch(1 0 0 / 0.25);"
+						>
+							video_off
+						</span>
+					</div>
+					<p class="text-[13px] font-bold" style="color: oklch(1 0 0 / 0.4);">
+						Stream tidak tersedia
+					</p>
+					<p class="text-[11px]" style="color: oklch(1 0 0 / 0.22);">Coba lagi beberapa saat</p>
+				</div>
+			</div>
+		{/if}
+	</div>
+
+	<!-- ══════════════════════════════════════════
+         FADE BRIDGE — player black → page-bg
+         (sama teknik seperti cover → panel di anime detail)
+    ══════════════════════════════════════════ -->
+	<div
+		class="md:hidden"
+		style="
+            height: 32px;
+            background: linear-gradient(to bottom, #000000, var(--page-bg));
+            margin-top: -1px;
+        "
+	></div>
+
+	<!-- ══════════════════════════════════════════
+         DESKTOP LAYOUT: info kiri + sidebar kanan
+    ══════════════════════════════════════════ -->
+	<div
+		class="hidden md:grid gap-5 mt-5 {showEpisodeList
+			? 'md:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]'
+			: 'md:grid-cols-1'}"
+	>
+		<!-- ── INFO KIRI ──────────────────────── -->
+		<div
+			class="min-w-0 rounded-2xl px-5 py-5"
+			style="
+                background: var(--surface);
+                border: 1px solid var(--border);
+                box-shadow: var(--shadow-sm);
+            "
+		>
+			<!-- Title block -->
+			<div class="flex items-start justify-between gap-6 mb-4">
+				<div class="min-w-0 flex-1">
+					<!-- <a
+						href={anime?.slug ? `/anime/${anime.slug}` : '/'}
+						class="text-[10px] font-black uppercase tracking-[0.18em] mb-2 inline-flex items-center gap-1 transition-colors"
+						style="color: var(--accent);"
+					>
+						<span class="material-symbols-rounded" style="font-size:11px;">arrow_back_ios</span>
+						{anime?.title ?? ''}
+					</a> -->
+					<h1
+						class="text-[22px] font-black leading-[1.2] tracking-tight mb-1"
+						style="color: var(--text-primary);"
+					>
+						{anime?.title ?? title ?? ''}
+					</h1>
+					<div class="flex items-center gap-2 flex-wrap">
+						{#if episode?.number && hasMultipleEpisodes}
+							<span
+								class="text-[11px] font-black px-2.5 py-1 rounded-full"
+								style="
+                                    background: var(--accent-surface);
+                                    color: var(--accent-text);
+                                    border: 1px solid oklch(from var(--accent) l c h / 0.2);
+                                "
+							>
+								Episode {episode.number}
+							</span>
+						{/if}
+						{#if episode?.sub}
+							<span
+								class="text-[11px] font-black px-2.5 py-1 rounded-full"
+								style="
+                                    background: color-mix(in oklch, #3b82f6 12%, var(--surface));
+                                    color: color-mix(in oklch, #3b82f6 70%, var(--text-primary));
+                                    border: 1px solid color-mix(in oklch, #3b82f6 25%, transparent);
+                                "
+							>
+								{episode.sub}
+							</span>
+						{/if}
+						{#if episode?.date}
+							<span class="text-[11px]" style="color: var(--text-faint);">
+								{episode.date}
+							</span>
+						{/if}
+						{#if data.error}
+							<span class="text-[11px] text-amber-500">{data.error}</span>
+						{/if}
+					</div>
+				</div>
+
+				<!-- Prev / Next nav -->
+				<div class="flex items-center gap-2 shrink-0 pt-1">
+					{#if previousEpisode && anime?.slug}
+						<a
+							href="/anime/{anime.slug}/{previousEpisode.slug}"
+							class="h-9 flex items-center gap-1.5 px-3.5 rounded-[var(--radius-xl)] text-[12px] font-bold transition-all active:scale-[0.97]"
+							style="
+                                background: var(--surface);
+                                border: 1px solid var(--border-strong);
+                                color: var(--text-muted);
+                                box-shadow: var(--shadow-sm);
+                            "
+						>
+							<span class="material-symbols-rounded" style="font-size:15px;">skip_previous</span>
+							Ep {previousEpisode.number}
+						</a>
+					{/if}
+					{#if nextEpisode && anime?.slug}
+						<a
+							href="/anime/{anime.slug}/{nextEpisode.slug}"
+							class="h-9 flex items-center gap-1.5 px-3.5 rounded-[var(--radius-xl)] text-[12px] font-bold text-white transition-all active:scale-[0.97]"
+							style="
+                                background: var(--accent);
+                                box-shadow: 0 4px 14px var(--accent-glow);
+                            "
+						>
+							Ep {nextEpisode.number}
+							<span class="material-symbols-rounded" style="font-size:15px;">skip_next</span>
+						</a>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Action bar — reaction + simpan + views -->
+			<div
+				class="flex items-center gap-2 flex-wrap py-3 px-4 rounded-[var(--radius-xl)] mb-5"
+				style="
+                    background: var(--surface-offset);
+                    border: 1px solid var(--border-strong);
+                    box-shadow: var(--shadow-sm);
+                "
+			>
+				{#if episode?.id}
+					<VideoReactionBar episodeId={episode.id} />
+					<div class="h-4 w-px mx-1" style="background: var(--border-strong);"></div>
+				{/if}
+
+				<!-- Views -->
+				<div class="flex items-center gap-1.5" style="color: var(--text-muted);">
+					<span class="material-symbols-rounded" style="font-size:14px;">visibility</span>
+					<span class="text-[11px] font-semibold">
+						{formatCount(episode?.views)} ditonton
+					</span>
+				</div>
+
+				<div class="h-4 w-px mx-1" style="background: var(--border-strong);"></div>
+
+				<!-- Simpan -->
+				<button
+					onclick={toggleSaved}
+					class="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] text-[11px] font-black transition-all active:scale-[0.97]"
+					style="
+                        background: {isSaved ? 'var(--accent)' : 'var(--surface-offset)'};
+                        border: 1px solid {isSaved ? 'transparent' : 'var(--border-strong)'};
+                        color: {isSaved ? '#fff' : 'var(--text-muted)'};
+                        box-shadow: {isSaved ? '0 2px 8px var(--accent-glow)' : 'none'};
+                    "
+				>
+					<span class="material-symbols-rounded" style="font-size:14px;">
+						{isSaved ? 'bookmark' : 'bookmark_add'}
+					</span>
+					{isSaved ? 'Tersimpan' : 'Simpan'}
+				</button>
+
+				{#if anime?.status}
+					<div class="h-4 w-px mx-1" style="background: var(--border-strong);"></div>
+					<span class="text-[11px] font-semibold" style="color: var(--text-faint);">
+						{anime.status}
+					</span>
+				{/if}
+			</div>
+
+			<!-- Divider -->
+			<div class="h-px mb-5" style="background: var(--border);"></div>
+
+			<!-- Comments (desktop, height-matched to episode sidebar) -->
+			{#if isDesktop && anime?.id && episode?.id}
+				<div
+					class="comments-desktop-pane mb-6 rounded-2xl"
+					style="
+                        max-height: calc(100dvh - 92px);
+                        background: var(--surface);
+                        border: 1px solid var(--border);
+                        padding: 16px 18px;
+                        box-shadow: var(--shadow-sm);
+                    "
+				>
+					<CommentSection animeId={anime.id} episodeId={episode.id} bounded />
+				</div>
+			{/if}
+
+			<!-- Related videos desktop -->
+			{#if relatedVideos.length > 0}
+				<div>
+					<p
+						class="text-[9px] font-black uppercase tracking-[0.2em] mb-4"
+						style="color: var(--text-faint);"
+					>
+						Anime Terkait
+					</p>
+					<div class="grid grid-cols-3 xl:grid-cols-4 gap-3">
+						{#each relatedVideos as related}
+							<AnimeCard
+								title={related.title}
+								thumbnail={related.thumbnail}
+								genres={related.genres}
+								slug={related.slug}
+								href={related.latestEpisode
+									? `/anime/${related.slug}/${related.latestEpisode.slug}`
+									: `/anime/${related.slug}`}
+								status={related.status as any}
+							/>
+						{/each}
+					</div>
+				</div>
+			{/if}
+		</div>
+
+		{#if showEpisodeList}
+			<!-- ── SIDEBAR EPISODE KANAN ──────────── -->
+			<div
+				class="flex flex-col overflow-hidden rounded-2xl"
+				style="
+                background: var(--surface);
+                border: 1px solid var(--border);
+                max-height: calc(100dvh - 92px);
+                position: sticky;
+                top: 80px;
+                box-shadow: var(--shadow-sm);
+            "
+			>
+				<!-- Sidebar header -->
+				<div class="px-4 py-3.5 shrink-0" style="border-bottom: 1px solid var(--border);">
+					<div class="flex items-center justify-between gap-3">
+						<div class="min-w-0 flex-1">
+							<p
+								class="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5"
+								style="color: var(--text-faint);"
+							>
+								Daftar Episode
+							</p>
+							<p class="text-[13px] font-black line-clamp-1" style="color: var(--text-primary);">
+								{anime?.title}
+							</p>
+						</div>
+						<span
+							class="shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black"
+							style="
+                            background: var(--accent-surface);
+                            color: var(--accent-text);
+                            border: 1px solid oklch(from var(--accent) l c h / 0.2);
+                        "
+						>
+							{episodes.length} Ep
+						</span>
+					</div>
+				</div>
+
+				{#if seasons.length > 1}
+					<div class="px-4 py-3 shrink-0" style="border-bottom: 1px solid var(--border);">
+						<div role="tablist" class="flex max-w-full gap-2 overflow-x-auto pb-1 scrollbar-hide">
+							{#each seasons as season (season.season)}
+								{@const isActiveSeason = season.season === activeSeasonData?.season}
+								<button
+									type="button"
+									role="tab"
+									aria-selected={isActiveSeason}
+									onclick={() => selectSeason(season.season)}
+									class="shrink-0 h-8 px-3 rounded-[var(--radius-lg)] text-[11px] transition-all active:scale-[0.97]"
+									style="
+                                    background: {isActiveSeason
+										? 'var(--accent)'
+										: 'var(--surface-offset)'};
+                                    border: 1px solid {isActiveSeason
+										? 'transparent'
+										: 'var(--border-strong)'};
+                                    color: {isActiveSeason ? '#fff' : 'var(--text-muted)'};
+                                    font-weight: {isActiveSeason ? 900 : 700};
+                                    box-shadow: {isActiveSeason
+										? '0 3px 10px var(--accent-glow)'
+										: 'none'};
+                                "
+								>
+									Season {season.season}
+								</button>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
+				<div
+					class="px-4 py-2.5 shrink-0 flex items-center justify-between gap-3"
+					style="border-bottom: 1px solid var(--border);"
+				>
+					<span class="text-[10px] font-semibold" style="color: var(--text-faint);">
+						{episodeOrder === 'desc' ? 'Episode terbesar dulu' : 'Episode terkecil dulu'}
+					</span>
+					<button
+						type="button"
+						onclick={toggleEpisodeOrder}
+						class="h-8 shrink-0 flex items-center gap-1.5 px-3 rounded-[var(--radius-lg)] text-[10px] font-bold transition-all active:scale-[0.97]"
+						style="
+                        background: var(--surface-offset);
+                        border: 1px solid var(--border-strong);
+                        color: var(--text-muted);
+                    "
+					>
+						<span class="material-symbols-rounded" style="font-size:13px;">
+							{episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
+						</span>
+						{episodeOrder === 'desc' ? 'Terbaru' : 'Terlama'}
+					</button>
+				</div>
+
+				<!-- Episode list scroll -->
+				<div class="flex-1 overflow-y-auto overscroll-contain">
+					{#each sortedEpisodes as ep}
+						{@const isActive = ep.slug === episode?.slug || ep.slug === data.params?.epslug}
+						{@const progress = episodeProgress(ep.id)}
+						<a
+							href={episodeHref(ep)}
+							class="flex items-center gap-3 px-4 py-3 transition-all duration-150"
+							style="
+                            background: {isActive ? 'var(--accent-surface)' : 'transparent'};
+                            border-left: 2px solid {isActive ? 'var(--accent)' : 'transparent'};
+                        "
+						>
+							<!-- Ep number bubble -->
+							<div
+								class="shrink-0 w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center text-[12px] font-black"
+								style="
+                                background: {isActive ? 'var(--accent)' : 'var(--surface-offset)'};
+                                color: {isActive ? '#fff' : 'var(--text-muted)'};
+                                box-shadow: {isActive ? '0 2px 8px var(--accent-glow)' : 'none'};
+                            "
+							>
+								{episodeNumber(ep)}
+							</div>
+
+							<!-- Ep meta -->
+							<div class="flex-1 min-w-0">
+								<p
+									class="text-[12px] font-bold leading-tight"
+									style="color: {isActive ? 'var(--accent-text)' : 'var(--text-primary)'};"
+								>
+									Episode {episodeNumber(ep)}
+								</p>
+								<p class="text-[10px] mt-0.5" style="color: var(--text-faint);">
+									{ep.date}
+								</p>
+								{#if progress > 0}
+									<div
+										class="mt-1.5 h-[3px] rounded-full overflow-hidden"
+										style="background: var(--border-strong);"
+									>
+										<div
+											class="h-full rounded-full"
+											style="width: {progress}%; background: var(--accent);"
+										></div>
+									</div>
+								{/if}
+							</div>
+
+							<!-- Watched check -->
+							{#if progress >= 90}
+								<span
+									class="material-symbols-rounded shrink-0"
+									style="font-size:16px; color: var(--accent);"
+								>
+									check_circle
+								</span>
+							{/if}
+
+							<!-- Sub badge -->
+							{#if ep.sub}
+								<span
+									class="shrink-0 text-[8px] font-black px-1.5 py-0.5 rounded"
+									style="
+                                    background: {isActive
+										? 'var(--accent-surface)'
+										: 'color-mix(in oklch, #3b82f6 10%, var(--surface))'};
+                                    color: {isActive
+										? 'var(--accent-text)'
+										: 'color-mix(in oklch, #3b82f6 70%, var(--text-primary))'};
+                                    border: 1px solid color-mix(in oklch, #3b82f6 20%, transparent);
+                                "
+								>
+									{ep.sub}
+								</span>
+							{/if}
+						</a>
+					{/each}
+				</div>
+			</div>
+		{/if}
+	</div>
+
+	<!-- ══════════════════════════════════════════
+         MOBILE LAYOUT
+    ══════════════════════════════════════════ -->
+	<div class="md:hidden" style="background: var(--page-bg);">
+		<!-- ── INFO MOBILE ────────────────────── -->
+		<div class="px-4 pt-2 pb-5" style="border-bottom: 1px solid var(--border);">
+			<!-- Anime title link -->
+			<a
+				href={anime?.slug ? `/anime/${anime.slug}` : '/'}
+				class="text-[9px] font-black uppercase tracking-[0.18em] mb-2 inline-flex items-center gap-1 transition-colors"
+				style="color: var(--accent);"
+			>
+				<span class="material-symbols-rounded" style="font-size:10px;">arrow_back_ios</span>
+				{anime?.title ?? ''}
+			</a>
+
+			<!-- Episode title + meta -->
+			<h1
+				class="text-[17px] font-black leading-[1.25] tracking-tight mb-1.5"
+				style="color: var(--text-primary);"
+			>
+				{title}
+			</h1>
+
+			<!-- Badges row -->
+			<div class="flex items-center gap-1.5 flex-wrap mb-4">
+				{#if episode?.number && hasMultipleEpisodes}
+					<span
+						class="text-[10px] font-black px-2 py-1 rounded-full"
+						style="
+                            background: var(--accent-surface);
+                            color: var(--accent-text);
+                            border: 1px solid oklch(from var(--accent) l c h / 0.2);
+                        "
+					>
+						Ep {episode.number}
+					</span>
+				{/if}
+				{#if episode?.sub}
+					<span
+						class="text-[10px] font-black px-2 py-1 rounded-full"
+						style="
+                            background: color-mix(in oklch, #3b82f6 10%, var(--surface));
+                            color: color-mix(in oklch, #3b82f6 70%, var(--text-primary));
+                            border: 1px solid color-mix(in oklch, #3b82f6 20%, transparent);
+                        "
+					>
+						{episode.sub}
+					</span>
+				{/if}
+				<div class="flex items-center gap-1" style="color: var(--text-faint);">
+					<span class="material-symbols-rounded" style="font-size:12px;">visibility</span>
+					<span class="text-[10px] font-semibold">{formatCount(episode?.views)}</span>
+				</div>
+				{#if episode?.date}
+					<span class="text-[10px]" style="color: var(--text-faint);">{episode.date}</span>
+				{/if}
+				{#if anime?.status}
+					<span class="text-[10px]" style="color: var(--text-faint);">{anime.status}</span>
+				{/if}
+			</div>
+
+			<!-- Reaction + Simpan -->
+			<div class="flex items-center gap-2 flex-wrap mb-4">
+				{#if episode?.id}
+					<VideoReactionBar episodeId={episode.id} compact />
+				{/if}
+				<button
+					onclick={toggleSaved}
+					class="flex items-center gap-1.5 px-3 py-2 rounded-[var(--radius-xl)] text-[11px] font-black transition-all active:scale-[0.97]"
+					style="
+                        background: {isSaved ? 'var(--accent)' : 'var(--surface)'};
+                        border: 1px solid {isSaved ? 'transparent' : 'var(--border-strong)'};
+                        color: {isSaved ? '#fff' : 'var(--text-muted)'};
+                        box-shadow: {isSaved
+						? '0 4px 14px var(--accent-glow)'
+						: 'var(--shadow-sm)'};
+                    "
+				>
+					<span class="material-symbols-rounded" style="font-size:15px;">
+						{isSaved ? 'bookmark' : 'bookmark_add'}
+					</span>
+					{isSaved ? 'Tersimpan' : 'Simpan'}
+				</button>
+			</div>
+
+			<!-- Prev / Next mobile — full grid -->
+			<div class="grid grid-cols-2 gap-2">
+				{#if previousEpisode && anime?.slug}
+					<a
+						href="/anime/{anime.slug}/{previousEpisode.slug}"
+						class="flex items-center justify-center gap-1.5 h-9 rounded-[var(--radius-xl)] text-[12px] font-bold transition-all active:scale-[0.97]"
+						style="
+                            background: var(--surface);
+                            border: 1px solid var(--border-strong);
+                            color: var(--text-primary);
+                            box-shadow: var(--shadow-sm);
+                        "
+					>
+						<span class="material-symbols-rounded" style="font-size:16px;">skip_previous</span>
+						Ep {previousEpisode.number}
+					</a>
+				{:else}
+					<div></div>
+				{/if}
+				{#if nextEpisode && anime?.slug}
+					<a
+						href="/anime/{anime.slug}/{nextEpisode.slug}"
+						class="flex items-center justify-center gap-1.5 h-9 rounded-[var(--radius-xl)] text-[12px] font-bold text-white transition-all active:scale-[0.97]"
+						style="
+                            background: var(--accent);
+                            box-shadow: 0 4px 14px var(--accent-glow);
+                        "
+					>
+						Ep {nextEpisode.number}
+						<span class="material-symbols-rounded" style="font-size:16px;">skip_next</span>
+					</a>
+				{/if}
+			</div>
+		</div>
+
+		{#if showEpisodeList}
+			<!-- ── EPISODE GRID MOBILE ────────────── -->
+			<div class="px-4 pt-5 pb-4">
+				{#if seasons.length > 1}
+					<div class="flex max-w-full gap-2 overflow-x-auto pb-3 mb-1 scrollbar-hide">
+						{#each seasons as season (season.season)}
+							{@const isActiveSeason = season.season === activeSeasonData?.season}
+							<button
+								type="button"
+								aria-pressed={isActiveSeason}
+								onclick={() => selectSeason(season.season)}
+								class="shrink-0 h-9 px-3.5 rounded-[var(--radius-xl)] text-[11px] transition-all active:scale-[0.97]"
+								style="
+                                background: {isActiveSeason ? 'var(--accent)' : 'var(--surface)'};
+                                border: 1px solid {isActiveSeason
+									? 'transparent'
+									: 'var(--border-strong)'};
+                                color: {isActiveSeason ? '#fff' : 'var(--text-muted)'};
+                                font-weight: {isActiveSeason ? 900 : 700};
+                                box-shadow: {isActiveSeason
+									? '0 4px 12px var(--accent-glow)'
+									: 'var(--shadow-sm)'};
+                            "
+							>
+								Season {season.season}
+							</button>
+						{/each}
+					</div>
+				{/if}
+
+				<!-- Section header -->
+				<div class="flex items-center justify-between gap-3 mb-3">
+					<div class="flex items-center gap-2 min-w-0">
+						<p
+							class="text-[9px] font-black uppercase tracking-[0.2em]"
+							style="color: var(--text-faint);"
+						>
+							Episode
+						</p>
+						<span
+							class="px-2 py-0.5 rounded-full text-[9px] font-black"
+							style="
+                            background: var(--accent-surface);
+                            color: var(--accent-text);
+                            border: 1px solid oklch(from var(--accent) l c h / 0.2);
+                        "
+						>
+							{episodes.length}
+						</span>
+					</div>
+					<button
+						type="button"
+						onclick={toggleEpisodeOrder}
+						class="h-8 shrink-0 flex items-center gap-1.5 px-3 rounded-[var(--radius-lg)] text-[10px] font-bold transition-all active:scale-[0.97]"
+						style="
+                        background: var(--surface);
+                        border: 1px solid var(--border-strong);
+                        color: var(--text-muted);
+                        box-shadow: var(--shadow-sm);
+                    "
+					>
+						<span class="material-symbols-rounded" style="font-size:13px;">
+							{episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
+						</span>
+						{episodeOrder === 'desc' ? 'Terbaru' : 'Terlama'}
+					</button>
+				</div>
+
+				<div class="grid grid-cols-6 gap-1.5">
+					{#each visibleEpisodes as ep}
+						{@const isActive = ep.slug === episode?.slug || ep.slug === data.params?.epslug}
+						{@const progress = episodeProgress(ep.id)}
+						<a
+							href={episodeHref(ep)}
+							class="relative flex flex-col items-center justify-center gap-0.5 py-3 rounded-[var(--radius-lg)] border transition-all duration-150 active:scale-[0.94]"
+							style="
+                            background: {isActive
+								? 'var(--accent)'
+								: progress > 0
+									? 'var(--accent-surface)'
+									: 'var(--surface)'};
+                            border-color: {isActive
+								? 'transparent'
+								: progress > 0
+									? 'oklch(from var(--accent) l c h / 0.25)'
+									: 'var(--border)'};
+                            box-shadow: {isActive
+								? '0 4px 12px var(--accent-glow)'
+								: 'var(--shadow-sm)'};
+                        "
+						>
+							<!-- Sub label -->
+							{#if ep.sub}
+								<span
+									class="absolute top-1 left-1.5 text-[6px] font-black uppercase leading-none"
+									style="color: {isActive ? 'rgba(255,255,255,0.7)' : 'var(--accent)'};"
+								>
+									{ep.sub}
+								</span>
+							{/if}
+
+							<!-- Ep number -->
+							<span
+								class="text-[13px] font-black leading-none"
+								style="color: {isActive
+									? '#fff'
+									: progress > 0
+										? 'var(--accent-text)'
+										: 'var(--text-primary)'};"
+							>
+								{episodeNumber(ep)}
+							</span>
+
+							<!-- Check icon jika selesai -->
+							{#if progress >= 90 && !isActive}
+								<span
+									class="material-symbols-rounded absolute top-0.5 right-0.5"
+									style="font-size:12px; color: green;"
+								>
+									check_circle
+								</span>
+							{/if}
+
+							<!-- Progress bar -->
+							{#if progress > 0 && progress < 90}
+								<div
+									class="absolute left-1.5 right-1.5 bottom-1.5 h-0.5 rounded-full overflow-hidden"
+									style="background: var(--border-strong);"
+								>
+									<div
+										class="h-full rounded-full"
+										style="
+                                        width: {progress}%;
+                                        background: {isActive
+											? 'rgba(255,255,255,0.6)'
+											: 'var(--accent)'};
+                                    "
+									></div>
+								</div>
+							{/if}
+						</a>
+					{/each}
+				</div>
+
+				{#if episodes.length > 30}
+					<button
+						onclick={() => (showAllEpisodes = !showAllEpisodes)}
+						class="mt-3 w-full py-3 rounded-[var(--radius-xl)] text-[11px] font-bold flex items-center justify-center gap-1.5 border transition-all active:scale-[0.99]"
+						style="
+                        background: var(--surface);
+                        border-color: var(--border-strong);
+                        color: var(--text-muted);
+                        box-shadow: var(--shadow-sm);
+                    "
+					>
+						<span class="material-symbols-rounded" style="font-size:16px;">
+							{showAllEpisodes ? 'expand_less' : 'expand_more'}
+						</span>
+						{showAllEpisodes ? 'Sembunyikan' : `Lihat semua ${episodes.length} episode`}
+					</button>
+				{/if}
+			</div>
+
+			<!-- Divider -->
+			<div class="mx-4 h-px" style="background: var(--border);"></div>
+		{/if}
+
+		<!-- ── COMMENTS MOBILE ──────────── -->
+		{#if !isDesktop && anime?.id && episode?.id}
+			<CommentSection animeId={anime.id} episodeId={episode.id} />
+		{/if}
+
+		<!-- ── RELATED VIDEOS MOBILE ──────────── -->
+		{#if relatedVideos.length > 0}
+			<div class="px-4 pt-5 pb-8">
+				<div class="flex items-center gap-2 mb-4">
+					<p
+						class="text-[9px] font-black uppercase tracking-[0.2em]"
+						style="color: var(--text-faint);"
+					>
+						Anime Terkait
+					</p>
+					<span
+						class="px-2 py-0.5 rounded-full text-[9px] font-black"
+						style="
+                            background: var(--accent-surface);
+                            color: var(--accent-text);
+                            border: 1px solid oklch(from var(--accent) l c h / 0.2);
+                        "
+					>
+						{relatedVideos.length}
+					</span>
+				</div>
+				<div class="grid grid-cols-3 gap-2.5">
+					{#each relatedVideos as related}
+						<AnimeCard
+							title={related.title}
+							thumbnail={related.thumbnail}
+							genres={related.genres}
+							slug={related.slug}
+							href={related.latestEpisode
+								? `/anime/${related.slug}/${related.latestEpisode.slug}`
+								: `/anime/${related.slug}`}
+							status={related.status as any}
+						/>
+					{/each}
+				</div>
+			</div>
+		{/if}
+	</div>
+</div>
+
+<style>
+	:global(.watch-player-shell .vp-ambient) {
+		inset: -72px -28px;
+		border-radius: 9999px;
+		background:
+			radial-gradient(48% 70% at 22% 50%, var(--vp-ambient-primary), transparent 72%),
+			radial-gradient(48% 70% at 78% 50%, var(--vp-ambient-secondary), transparent 74%);
+	}
+
+	/*
+	 * Desktop comments pane: a flex column so the bounded CommentSection
+	 * inside (display:flex, height:100%) actually receives a measured
+	 * height to scroll against. min-height:0 prevents the inner list
+	 * from blowing past the viewport cap.
+	 */
+	.comments-desktop-pane {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		overflow: hidden;
+	}
+</style>

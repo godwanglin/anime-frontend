@@ -38,16 +38,9 @@ export const PUT = async ({ request, cookies }) => {
 		body: await request.text()
 	});
 
-	if (!response.ok) {
-		const errorData = await response.json();
-		return new Response(JSON.stringify({ error: errorData.message || 'Login failed' }), {
-			status: response.status
-		});
-	}
-
 	const data = await response.json();
 
 	return new Response(JSON.stringify(data), {
-		status: 200
+		status: response.ok ? 200 : response.status
 	});
 };

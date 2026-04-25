@@ -12,6 +12,7 @@
 		href?: string;
 		rating?: number | string | null;
 		aboveFold?: boolean;
+		episode?: number | string | null;
 	};
 
 	let {
@@ -23,7 +24,8 @@
 		rank,
 		href,
 		rating,
-		aboveFold = false
+		aboveFold = false,
+		episode = null
 	}: AnimeCardProps = $props();
 
 	const link = $derived(href ?? (slug ? `/anime/${slug}` : '#'));
@@ -122,7 +124,15 @@
 			</div>
 		{/if}
 
-		{#if rating}
+		<!-- display salah sat antara rating dan episode -->
+		{#if episode && !rating}
+			<div
+				class="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5"
+			>
+				<span class="text-[11px] font-bold text-white">Ep {episode}</span>
+			</div>
+		{/if}
+		{#if rating && !episode}
 			<div
 				class="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5"
 			>

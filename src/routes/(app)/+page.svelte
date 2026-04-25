@@ -46,6 +46,7 @@
 
 	let trending: Anime[] = $state(data.trending.weekly);
 	let newRelease: Anime[] = $state(data.newRelease);
+
 	let newEpisodes: Episode[] = $state(data.newEpisodes);
 	let popular: PopularAnime[] = $state(data.popular ?? []);
 	let genres: Genre[] = $state(data.genres ?? []);
@@ -196,7 +197,7 @@
 			{@const palette = genrePalettes[i % genrePalettes.length]}
 			<a
 				href="/browse?genre={encodeURIComponent(genre.name)}"
-				class="genre-chip shrink-0 group rounded-2xl p-[1.5px] bg-linear-to-br {palette.grad} transition-all duration-300 hover:scale-[1.04] active:scale-95"
+				class="genre-chip shrink-0 group rounded-lg p-[1.5px] bg-linear-to-br {palette.grad} transition-all duration-300 hover:scale-[1.04] active:scale-95"
 				style="--glow: {palette.glow}; box-shadow: 0 2px 10px rgba({palette.glow}, 0.25), 0 0 0 0 rgba({palette.glow}, 0);"
 			>
 				<div

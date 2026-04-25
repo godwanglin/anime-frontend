@@ -110,7 +110,7 @@
 						<AvatarFrame
 							src={avatar}
 							alt={auth.user?.username ?? 'Avatar'}
-							size={88}
+							size={60}
 							frame={{
 								id: auth.user?.frame?.id as any,
 								name: auth.user?.frame?.name as any,

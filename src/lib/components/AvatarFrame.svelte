@@ -13,6 +13,7 @@
 		/** Extra scale multiplier applied on top of the per-asset tweak */
 		frameScale?: number;
 		class?: string;
+		fromComment?: boolean; // TODO: remove after migrating all comment avatars to this component
 	};
 
 	const {
@@ -24,15 +25,19 @@
 		fallbackInitial,
 		framePreviewOnly = false,
 		frameScale = 1,
-		class: className = ''
+		class: className = '',
+		fromComment = false
 	}: Props = $props();
 
 	const radius = $derived(rounded === 'full' ? '9999px' : 'var(--radius-xl, 14px)');
 	const initial = $derived(((fallbackInitial ?? alt.trim().charAt(0)) || '?').toUpperCase());
 	const tweak = $derived(getFrameTweak(frame?.asset));
 	const framePct = $derived(Math.round(tweak.scale * frameScale * 100));
+
 	const offsetX = $derived(tweak.offsetX ?? 0);
-	const offsetY = $derived(tweak.offsetY ?? 0);
+	const offsetY = $derived(
+		fromComment && frame?.asset === 'border5.gif' ? -6 : (tweak.offsetY ?? 0)
+	);
 	const showInner = $derived(!framePreviewOnly);
 </script>
 

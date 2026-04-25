@@ -54,7 +54,6 @@
 	const userNameTag = $derived(comment.user?.nametag ?? null);
 	const avatarSize = $derived(depth > 0 ? 28 : 36);
 
-
 	function relativeTime(dateStr: string): string {
 		const diff = Date.now() - new Date(dateStr).getTime();
 		const s = Math.floor(diff / 1000);
@@ -97,6 +96,7 @@
 			size={avatarSize}
 			frame={userFrame}
 			fallbackInitial={avatarLetter}
+			fromComment
 		/>
 	</div>
 

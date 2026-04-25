@@ -200,7 +200,11 @@
 						>
 							<span class="truncate">{auth.user?.username}</span>
 							{#if auth.user?.isVerified}
-								<img src="/badges/verify.png" alt="Verified" class="h-3.5 w-3.5 shrink-0 object-contain" />
+								<img
+									src="/badges/verify.png"
+									alt="Verified"
+									class="h-3.5 w-3.5 shrink-0 object-contain"
+								/>
 							{/if}
 						</p>
 						<p class="text-[10px] truncate" style="color: var(--text-faint);">
@@ -410,7 +414,11 @@
 						<span class="flex max-w-[96px] items-center gap-1.5 truncate">
 							<span class="truncate">{auth.user?.username}</span>
 							{#if auth.user?.isVerified}
-								<img src="/badges/verify.png" alt="Verified" class="h-3.5 w-3.5 shrink-0 object-contain" />
+								<img
+									src="/badges/verify.png"
+									alt="Verified"
+									class="h-3.5 w-3.5 shrink-0 object-contain"
+								/>
 							{/if}
 						</span>
 					{:else}

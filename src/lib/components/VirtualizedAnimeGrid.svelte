@@ -13,6 +13,7 @@
 		rank?: number;
 		href?: string;
 		rating?: number | string | null;
+		episode?: number | string | null;
 	};
 
 	type Columns = {
@@ -83,10 +84,13 @@
 		}))
 	);
 	const topPad = $derived(firstRow * rowHeight);
-	const bottomPad = $derived(Math.max(0, totalHeight - topPad - Math.ceil((endIndex - startIndex) / columnCount) * rowHeight));
+	const bottomPad = $derived(
+		Math.max(0, totalHeight - topPad - Math.ceil((endIndex - startIndex) / columnCount) * rowHeight)
+	);
 
 	function resolveColumns(width: number) {
-		if (width >= 1280) return columns.xl ?? columns.lg ?? columns.md ?? columns.sm ?? columns.base ?? 3;
+		if (width >= 1280)
+			return columns.xl ?? columns.lg ?? columns.md ?? columns.sm ?? columns.base ?? 3;
 		if (width >= 1024) return columns.lg ?? columns.md ?? columns.sm ?? columns.base ?? 3;
 		if (width >= 768) return columns.md ?? columns.sm ?? columns.base ?? 3;
 		if (width >= 640) return columns.sm ?? columns.base ?? 3;
@@ -170,7 +174,9 @@
 					status={entry.item.status as 'Ongoing' | 'Completed'}
 					rank={showRank ? entry.index + 1 : entry.item.rank}
 					rating={entry.item.rating}
+					episode={entry.item.episode}
 					aboveFold={entry.index < columnCount * 2}
+					// rating="10"
 				/>
 			</div>
 		{/each}

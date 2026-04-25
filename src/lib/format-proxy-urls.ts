@@ -1,3 +1,5 @@
+import config from './config';
+
 interface StreamSource {
 	id: number;
 	label: string;
@@ -111,14 +113,14 @@ export function formatProxyUrl(
  */
 export function formatProxyUrls(
 	sources: StreamSource[],
-	baseUrl: string = 'http://localhost:3000'
+	baseUrl: string = config.API_BASE_URL
 ): string[] {
 	return formatProxySources(sources, baseUrl).map((source) => source.playerUrl);
 }
 
 export function formatProxySources(
 	sources: StreamSource[],
-	baseUrl: string = 'http://localhost:3000'
+	baseUrl: string = config.API_BASE_URL
 ): FormattedStreamSource[] {
 	const sorted = [...sources].sort((a, b) => {
 		const aOk = a.value.includes('ok.ru') ? 1 : 0;

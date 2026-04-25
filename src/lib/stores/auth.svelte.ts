@@ -87,7 +87,7 @@ async function refreshToken() {
 }
 
 async function authFetch(path: string, init: RequestInit = {}, retry = true) {
-	console.log('authFetch', path, init);
+	// console.log('authFetch', path, init);
 
 	const headers = new Headers(init.headers);
 	const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData;

@@ -1,8 +1,9 @@
 <script lang="ts">
-	import AnimeCard from '$lib/components/AnimeCard.svelte';
 	import HeroSlider from '$lib/components/HeroSlider.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
+	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
 
@@ -126,10 +127,14 @@
 				<div
 					class="relative rounded-xl overflow-hidden aspect-video bg-zinc-200 dark:bg-zinc-800 mb-2"
 				>
-					<img
+					<OptimizedImage
 						src={item.animeThumbnail}
 						alt={item.animeTitle}
-						class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+						className="h-full w-full"
+						imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.03]"
+						sizes="(max-width: 768px) 144px, 176px"
+						loading="lazy"
+						fetchpriority="low"
 					/>
 					<!-- Progress bar -->
 					<div class="absolute bottom-0 left-0 right-0 h-1 bg-black/40">
@@ -143,7 +148,7 @@
 					</div>
 					<!-- Episode badge -->
 					<span
-						class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-black/60 text-white backdrop-blur-sm"
+						class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-black/65 text-white"
 					>
 						Ep {item.episodeNumber}
 					</span>
@@ -195,7 +200,7 @@
 				style="--glow: {palette.glow}; box-shadow: 0 2px 10px rgba({palette.glow}, 0.25), 0 0 0 0 rgba({palette.glow}, 0);"
 			>
 				<div
-					class="flex items-center gap-2.5 px-4 py-3 rounded-[14.5px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md"
+					class="flex items-center gap-2.5 px-4 py-3 rounded-[14.5px] bg-white/95 dark:bg-zinc-900/95"
 				>
 					<div
 						class="flex items-center justify-center h-8 w-8 rounded-lg bg-linear-to-br {palette.grad}"
@@ -267,8 +272,8 @@
 				<!-- Row: giant rank + poster, aligned at bottom -->
 				<div class="flex items-end gap-0">
 					<span
-						class="pointer-events-none select-none relative z-20 text-[6.5rem] md:text-[9.5rem] -mr-4 md:-mr-7 shrink-0 transition-all duration-300 group-hover:scale-[1.03]"
-						style="font-family: 'Bebas Neue', 'Lexend Deca', sans-serif; font-weight: 400; color: transparent; -webkit-text-stroke: 2px {rankColor}; filter: {rankGlow}; line-height: 0.86; letter-spacing: -0.02em;"
+						class="top-rank-number pointer-events-none select-none relative z-20 text-[6.5rem] md:text-[9.5rem] -mr-4 md:-mr-7 shrink-0 transition-all duration-300 group-hover:scale-[1.03]"
+						style="font-family: 'Bebas Neue', 'Lexend Deca', sans-serif; font-weight: 400; color: transparent; -webkit-text-stroke: 2px {rankColor}; filter: {rankGlow}; line-height: 0.86;"
 					>
 						{rank}
 					</span>
@@ -277,11 +282,14 @@
 					<div
 						class="relative z-10 w-28 md:w-36 shrink-0 aspect-[2/3] rounded-xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 shadow-2xl shadow-black/50 ring-1 ring-white/10"
 					>
-						<img
+						<OptimizedImage
 							src={item.thumbnail}
 							alt={item.title}
-							class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+							className="h-full w-full"
+							imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
 							loading="lazy"
+							fetchpriority="low"
+							sizes="(max-width: 768px) 112px, 144px"
 						/>
 						<!-- Left vignette so rank number is readable over bright posters -->
 						<div
@@ -294,14 +302,14 @@
 							class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
 						>
 							<div
-								class="h-11 w-11 rounded-full bg-white/25 border-2 border-white/70 backdrop-blur flex items-center justify-center scale-75 group-hover:scale-100 transition-transform"
+								class="h-11 w-11 rounded-full bg-white/25 border-2 border-white/70 flex items-center justify-center scale-75 group-hover:scale-100 transition-transform"
 							>
 								<span class="material-symbols-rounded text-white text-[24px]">play_arrow</span>
 							</div>
 						</div>
 						{#if item.status === 'Ongoing'}
 							<span
-								class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 backdrop-blur-sm"
+								class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-950/70 border border-emerald-500/40 text-emerald-300"
 							>
 								<span class="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
 								Tayang
@@ -352,11 +360,14 @@
 				<div
 					class="relative aspect-video rounded-xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 shadow-lg shadow-black/20 ring-1 ring-white/5 mb-2"
 				>
-					<img
+					<OptimizedImage
 						src={item.thumbnail}
 						alt={item.title}
-						class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+						className="h-full w-full"
+						imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
 						loading="lazy"
+						fetchpriority="low"
+						sizes="(max-width: 768px) 224px, 288px"
 					/>
 					<!-- Gradient bottom -->
 					<div
@@ -376,7 +387,7 @@
 					<!-- Time pill top-right -->
 					<div class="absolute top-2 right-2">
 						<span
-							class="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-white/90 bg-black/50 backdrop-blur-md ring-1 ring-white/10"
+							class="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-white/90 bg-black/55 ring-1 ring-white/10"
 						>
 							<span class="material-symbols-rounded text-[11px] leading-none">schedule</span>
 							{item.time}
@@ -441,11 +452,14 @@
 				<div
 					class="relative aspect-16/10 rounded-2xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 shadow-xl shadow-black/30 ring-1 ring-white/10"
 				>
-					<img
+					<OptimizedImage
 						src={cover}
 						alt={item.title}
-						class="w-full h-full object-cover transition duration-700 group-hover:scale-110"
+						className="h-full w-full"
+						imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
 						loading="lazy"
+						fetchpriority="low"
+						sizes="(max-width: 768px) 288px, 320px"
 					/>
 					<!-- Cinematic gradient -->
 					<div
@@ -471,7 +485,7 @@
 					{#if item.type}
 						<div class="absolute top-3 left-3">
 							<span
-								class="px-2 py-1 rounded-lg text-[10px] font-bold text-white bg-black/50 backdrop-blur-md ring-1 ring-white/15 uppercase tracking-wider"
+								class="px-2 py-1 rounded-lg text-[10px] font-bold text-white bg-black/55 ring-1 ring-white/15 uppercase tracking-wider"
 							>
 								{item.type}
 							</span>
@@ -479,7 +493,7 @@
 					{/if}
 					<!-- Glassmorphism info panel bottom -->
 					<div class="absolute inset-x-3 bottom-3">
-						<div class="rounded-xl bg-white/10 backdrop-blur-xl ring-1 ring-white/20 p-3 shadow-lg">
+						<div class="rounded-xl bg-black/35 ring-1 ring-white/20 p-3 shadow-lg">
 							<p class="text-[14px] font-black text-white line-clamp-1 drop-shadow">
 								{item.title}
 							</p>
@@ -546,20 +560,12 @@
 	</div>
 
 	<!-- Grid -->
-	<div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-		{#each newRelease as item, i}
-			<div class={i >= 9 ? 'hidden md:block' : ''}>
-				<AnimeCard
-					title={item.title}
-					thumbnail={item.thumbnail}
-					genres={item.genre}
-					slug={item.slug}
-					// rank={i + 1}
-					// status={item.status}
-				/>
-			</div>
-		{/each}
-	</div>
+	<VirtualizedAnimeGrid
+		items={newRelease}
+		columns={{ base: 3, md: 4, lg: 6 }}
+		mobileLimit={9}
+		ariaLabel="Anime baru diupdate"
+	/>
 </section>
 
 <!-- CTA BANNER — Random / Browse -->
@@ -570,10 +576,10 @@
 	>
 		<!-- Decorative blur blobs -->
 		<div
-			class="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-fuchsia-500/40 blur-3xl pointer-events-none"
+			class="home-decor-blur absolute -top-20 -right-20 h-56 w-56 rounded-full bg-fuchsia-500/40 blur-3xl pointer-events-none"
 		></div>
 		<div
-			class="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-violet-400/30 blur-3xl pointer-events-none"
+			class="home-decor-blur absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-violet-400/30 blur-3xl pointer-events-none"
 		></div>
 		<!-- Sparkle icon -->
 		<div class="absolute top-4 right-4 md:top-6 md:right-6 opacity-30 pointer-events-none">
@@ -585,7 +591,7 @@
 		<div class="relative flex flex-col md:flex-row md:items-center gap-5 md:gap-8">
 			<div class="flex-1 min-w-0">
 				<span
-					class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm ring-1 ring-white/25 text-[10px] font-black uppercase tracking-widest text-white mb-3"
+					class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 ring-1 ring-white/25 text-[10px] font-black uppercase tracking-widest text-white mb-3"
 				>
 					<span class="h-1.5 w-1.5 rounded-full bg-fuchsia-300 animate-pulse"></span>
 					Rekomendasi Harian
@@ -608,7 +614,7 @@
 				</a>
 				<a
 					href="/browse"
-					class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/10 text-white font-black text-[13px] backdrop-blur-sm ring-1 ring-white/25 hover:bg-white/20 active:scale-95 transition"
+					class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/10 text-white font-black text-[13px] ring-1 ring-white/25 hover:bg-white/20 active:scale-95 transition"
 				>
 					<span class="material-symbols-rounded text-[18px]">explore</span>
 					Jelajahi
@@ -626,5 +632,25 @@
 		box-shadow:
 			0 4px 18px rgba(var(--glow), 0.55),
 			0 0 24px rgba(var(--glow), 0.35) !important;
+	}
+
+	@media (hover: none), (pointer: coarse) {
+		.genre-chip {
+			transition-duration: 120ms;
+		}
+
+		.genre-chip:hover {
+			box-shadow: 0 2px 10px rgba(var(--glow), 0.25) !important;
+			transform: none;
+		}
+
+		.top-rank-number {
+			filter: none !important;
+		}
+
+		:global(.home-decor-blur) {
+			filter: none;
+			opacity: 0.18;
+		}
 	}
 </style>

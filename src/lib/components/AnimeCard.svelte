@@ -1,5 +1,7 @@
 <!-- src/lib/components/AnimeCard.svelte -->
 <script lang="ts">
+	import OptimizedImage from './OptimizedImage.svelte';
+
 	type AnimeCardProps = {
 		slug?: string;
 		title: string;
@@ -8,23 +10,40 @@
 		status?: 'Ongoing' | 'Completed';
 		rank?: number;
 		href?: string;
+		rating?: number | string | null;
+		aboveFold?: boolean;
 	};
 
-	let { slug, title, thumbnail, genres = [], status, rank, href }: AnimeCardProps = $props();
+	let {
+		slug,
+		title,
+		thumbnail,
+		genres = [],
+		status,
+		rank,
+		href,
+		rating,
+		aboveFold = false
+	}: AnimeCardProps = $props();
 
 	const link = $derived(href ?? (slug ? `/anime/${slug}` : '#'));
+	const loading = $derived(aboveFold ? 'eager' : 'lazy');
+	const fetchpriority = $derived(aboveFold ? 'high' : 'low');
 </script>
 
-<a href={link} class="group flex flex-col">
+<a href={link} class="anime-card group flex flex-col">
 	<!-- Poster -->
 	<div
-		class="relative rounded-2xl overflow-hidden aspect-[2/3] bg-zinc-200 dark:bg-zinc-800 mb-2.5 shadow-md group-hover:shadow-xl group-hover:shadow-black/40 transition-all duration-300"
+		class="anime-card-poster relative rounded-2xl overflow-hidden aspect-[2/3] bg-zinc-200 dark:bg-zinc-800 mb-2.5 shadow-sm md:shadow-md md:group-hover:shadow-lg md:group-hover:shadow-black/30 transition-shadow duration-200"
 	>
-		<img
+		<OptimizedImage
 			src={thumbnail}
 			alt={title}
-			class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-			loading="lazy"
+			className="h-full w-full"
+			imageClass="anime-card-image h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
+			{loading}
+			{fetchpriority}
+			sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 170px"
 		/>
 
 		<!-- Gradient -->
@@ -32,10 +51,10 @@
 
 		<!-- Hover overlay -->
 		<div
-			class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 backdrop-blur-[2px] transition-all duration-300 gap-2"
+			class="anime-card-hover absolute inset-0 hidden flex-col items-center justify-center gap-2 bg-black/35 opacity-0 transition-opacity duration-200 md:flex md:group-hover:opacity-100"
 		>
 			<div
-				class="h-12 w-12 rounded-full bg-white/20 border-2 border-white/60 flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-300"
+				class="h-12 w-12 rounded-full bg-white/20 border-2 border-white/60 flex items-center justify-center scale-90 md:group-hover:scale-100 transition-transform duration-200"
 			>
 				<span class="material-symbols-rounded text-white text-[28px]">play_arrow</span>
 			</div>
@@ -43,7 +62,7 @@
 				<div class="flex flex-wrap justify-center gap-1 px-2">
 					{#each genres.slice(0, 2) as g}
 						<span
-							class="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-white/20 text-white backdrop-blur-sm"
+							class="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-white/20 text-white"
 						>
 							{g}
 						</span>
@@ -75,7 +94,7 @@
 					</div>
 				{:else}
 					<div
-						class="h-6 w-6 rounded-lg bg-black/50 backdrop-blur-sm flex items-center justify-center font-bold text-[11px] text-white/60"
+						class="h-6 w-6 rounded-lg bg-black/55 flex items-center justify-center font-bold text-[11px] text-white/70"
 					>
 						{rank}
 					</div>
@@ -88,18 +107,27 @@
 			<div class="absolute top-2 right-2 z-10">
 				{#if status === 'Ongoing'}
 					<span
-						class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 backdrop-blur-sm"
+						class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-950/70 border border-emerald-500/40 text-emerald-300"
 					>
 						<span class="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
 						Tayang
 					</span>
 				{:else}
 					<span
-						class="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-zinc-500/20 border border-zinc-500/30 text-zinc-400 backdrop-blur-sm"
+						class="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-zinc-950/65 border border-zinc-500/30 text-zinc-300"
 					>
 						Tamat
 					</span>
 				{/if}
+			</div>
+		{/if}
+
+		{#if rating}
+			<div
+				class="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5"
+			>
+				<span class="material-symbols-rounded text-yellow-400 text-[11px]">star</span>
+				<span class="text-[10px] font-bold text-white">{rating}</span>
 			</div>
 		{/if}
 
@@ -108,13 +136,13 @@
 			<div class="absolute bottom-0 left-0 right-0 p-2 z-10">
 				<div class="flex gap-1 mb-1">
 					<span
-						class="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-violet-600/70 text-white backdrop-blur-sm"
+						class="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-violet-600/80 text-white"
 					>
 						{genres[0]}
 					</span>
 					{#if genres.length > 1}
 						<span
-							class="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-white/15 text-white/80 backdrop-blur-sm"
+							class="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-black/45 text-white/85"
 						>
 							+{genres.length - 1}
 						</span>
@@ -143,3 +171,22 @@
 		{/if}
 	</div>
 </a>
+
+<style>
+	.anime-card {
+		content-visibility: auto;
+		contain-intrinsic-size: 210px 360px;
+		contain: layout paint style;
+	}
+
+	.anime-card-poster {
+		transform: translateZ(0);
+	}
+
+	@media (hover: none), (pointer: coarse) {
+		.anime-card :global(.anime-card-image) {
+			transform: none !important;
+			transition-duration: 160ms;
+		}
+	}
+</style>

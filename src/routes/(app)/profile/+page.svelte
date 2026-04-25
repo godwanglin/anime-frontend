@@ -3,6 +3,7 @@
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
+	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { getFrameTweak } from '$lib/decorations';
 	import { getCultivationBadge, getLevelProgress } from '$lib/exp';
@@ -71,12 +72,15 @@
                 Falls back to accent gradient if no thumbnail available.
             -->
 			{#if heroBg}
-				<img
+				<OptimizedImage
 					src={heroBg}
 					alt=""
 					aria-hidden="true"
-					class="absolute inset-0 w-full h-full object-cover scale-110"
-					style="filter: blur(28px) brightness(0.35) saturate(160%);"
+					className="profile-hero-bg absolute inset-0 h-full w-full scale-110"
+					imageClass="h-full w-full object-cover"
+					loading="lazy"
+					fetchpriority="low"
+					sizes="(max-width: 768px) 100vw, 672px"
 				/>
 			{/if}
 			<!-- Accent gradient overlay (always present, dims the bg) -->
@@ -419,6 +423,10 @@
 <NavigationBottom />
 
 <style>
+	:global(.profile-hero-bg) {
+		filter: blur(18px) brightness(0.35) saturate(150%);
+	}
+
 	.profile-frame-overlay {
 		position: absolute;
 		top: 50%;
@@ -435,6 +443,19 @@
 		transform: rotate(18deg);
 		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
 		animation: badge-shine 3.4s ease-in-out infinite;
+	}
+
+	@media (min-width: 768px) {
+		:global(.profile-hero-bg) {
+			filter: blur(28px) brightness(0.35) saturate(160%);
+		}
+	}
+
+	@media (hover: none), (prefers-reduced-motion: reduce) {
+		.badge-shine {
+			animation: none;
+			opacity: 0.45;
+		}
 	}
 
 	@keyframes badge-shine {

@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import config from '$lib/config';
 	import SEO from '$lib/components/SEO.svelte';
+	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
 
 	type Anime = {
 		id: number;
@@ -366,6 +367,12 @@
 			{/each}
 		</div>
 	{:else if results.length > 0}
+		<VirtualizedAnimeGrid
+			items={results}
+			columns={{ base: 3, sm: 4, md: 5, lg: 6 }}
+			ariaLabel="Hasil pencarian anime"
+		/>
+		{#if false}
 		<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
 			{#each results as item}
 				<a href="/anime/{item.slug}" class="group flex flex-col">
@@ -448,6 +455,7 @@
 				</a>
 			{/each}
 		</div>
+		{/if}
 
 		<!-- PAGINATION -->
 		{#if meta && meta.totalPages > 1}

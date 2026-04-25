@@ -1,5 +1,6 @@
 <script lang="ts">
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
+	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import type { PageData } from './$types';
 
@@ -34,10 +35,14 @@
 	<section class="mb-6 overflow-hidden rounded-3xl bg-zinc-950 text-white ring-1 ring-white/10 shadow-2xl shadow-black/25">
 		<div class="relative min-h-[260px] md:min-h-[320px]">
 			{#if featured}
-				<img
+				<OptimizedImage
 					src={featured.thumbnail}
 					alt={featured.title}
-					class="absolute inset-0 h-full w-full object-cover opacity-45"
+					className="absolute inset-0 h-full w-full opacity-45"
+					imageClass="h-full w-full object-cover"
+					loading="eager"
+					fetchpriority="high"
+					sizes="100vw"
 				/>
 			{/if}
 			<div class="absolute inset-0 bg-linear-to-r from-black via-black/78 to-black/20"></div>
@@ -68,10 +73,14 @@
 						class="group flex max-w-2xl items-center gap-3 rounded-2xl bg-white/10 p-2.5 backdrop-blur-xl ring-1 ring-white/15 transition hover:bg-white/15"
 					>
 						<div class="relative h-16 w-28 shrink-0 overflow-hidden rounded-xl bg-zinc-800">
-							<img
+							<OptimizedImage
 								src={featured.thumbnail}
 								alt={featured.title}
-								class="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+								className="h-full w-full"
+								imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
+								loading="eager"
+								fetchpriority="high"
+								sizes="112px"
 							/>
 							<div class="absolute inset-0 bg-black/15"></div>
 						</div>
@@ -132,14 +141,17 @@
 			{#each restEpisodes as item, i}
 				<a
 					href={item.href}
-					class="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/10 hover:ring-violet-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-violet-500/40"
+					class="episode-card group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-200 md:hover:-translate-y-0.5 md:hover:shadow-lg md:hover:shadow-black/10 md:hover:ring-violet-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-violet-500/40"
 				>
 					<div class="relative aspect-video overflow-hidden bg-zinc-200 dark:bg-zinc-800">
-						<img
+						<OptimizedImage
 							src={item.thumbnail}
 							alt={item.title}
-							class="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+							className="h-full w-full"
+							imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
 							loading="lazy"
+							fetchpriority="low"
+							sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
 						/>
 						<div class="absolute inset-0 bg-linear-to-t from-black/90 via-black/25 to-transparent"></div>
 						<div class="absolute left-3 top-3 flex items-center gap-2">
@@ -151,7 +163,7 @@
 							</span>
 						</div>
 						<span
-							class="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-black/50 px-1.5 py-0.5 text-[9px] font-bold text-white/90 backdrop-blur-md ring-1 ring-white/10 md:right-3 md:top-3 md:px-2 md:py-1 md:text-[10px]"
+							class="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-black/55 px-1.5 py-0.5 text-[9px] font-bold text-white/90 ring-1 ring-white/10 md:right-3 md:top-3 md:px-2 md:py-1 md:text-[10px]"
 						>
 							<span class="material-symbols-rounded text-[10px] md:text-[11px]">schedule</span>
 							{item.time}
@@ -192,3 +204,11 @@
 </div>
 
 <NavigationBottom />
+
+<style>
+	.episode-card {
+		content-visibility: auto;
+		contain: layout paint style;
+		contain-intrinsic-size: 180px 210px;
+	}
+</style>

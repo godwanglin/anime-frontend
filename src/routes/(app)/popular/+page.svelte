@@ -1,7 +1,7 @@
 <script lang="ts">
-	import AnimeCard from '$lib/components/AnimeCard.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
 	import type { PageData } from './$types';
 
 	type Anime = {
@@ -41,18 +41,12 @@
 		</a>
 	</section>
 
-	<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-4">
-		{#each animes as item, i}
-			<AnimeCard
-				title={item.title}
-				thumbnail={item.thumbnail}
-				genres={item.genre}
-				slug={item.slug}
-				status={item.status}
-				rank={i + 1}
-			/>
-		{/each}
-	</div>
+	<VirtualizedAnimeGrid
+		items={animes}
+		columns={{ base: 3, sm: 4, md: 5, lg: 6 }}
+		showRank
+		ariaLabel="Anime populer"
+	/>
 </div>
 
 <NavigationBottom />

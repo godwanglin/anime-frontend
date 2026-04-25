@@ -1,7 +1,7 @@
 <script lang="ts">
-	import AnimeCard from '$lib/components/AnimeCard.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
 	import type { PageData } from './$types';
 
 	type Genre = {
@@ -85,18 +85,12 @@
 					Lihat semua
 				</a>
 			</div>
-			<div class="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
-				{#each popular as item, i}
-					<AnimeCard
-						title={item.title}
-						thumbnail={item.thumbnail}
-						genres={item.genre}
-						slug={item.slug}
-						status={item.status}
-						rank={i + 1}
-					/>
-				{/each}
-			</div>
+			<VirtualizedAnimeGrid
+				items={popular}
+				columns={{ base: 3, md: 6 }}
+				showRank
+				ariaLabel="Anime populer per genre"
+			/>
 		</section>
 	{/if}
 </div>

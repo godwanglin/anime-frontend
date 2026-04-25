@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import OptimizedImage from './OptimizedImage.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
 
@@ -26,7 +27,9 @@
 
 	let dragStartX = 0;
 	let isDragging = $state(false);
-	let dragOffset = $state(0);
+	let dragOffset = 0;
+	let rootEl: HTMLElement | undefined = $state();
+	let visibilityObserver: IntersectionObserver | undefined;
 
 	function goTo(index: number) {
 		if (isTransitioning) return;
@@ -82,6 +85,15 @@
 		startAutoplay();
 	}
 
+	function slideDistance(index: number) {
+		const diff = Math.abs(index - current);
+		return Math.min(diff, heroes.length - diff);
+	}
+
+	function shouldRenderSlide(index: number) {
+		return heroes.length <= 3 || slideDistance(index) <= 1;
+	}
+
 	let showDescModal = $state(false);
 	let activeDescription = $state('');
 
@@ -109,12 +121,26 @@
 		});
 	}
 
-	onMount(() => startAutoplay());
-	onDestroy(() => stopAutoplay());
+	onMount(() => {
+		startAutoplay();
+		visibilityObserver = new IntersectionObserver(
+			(entries) => {
+				if (entries[0]?.isIntersecting) startAutoplay();
+				else stopAutoplay();
+			},
+			{ threshold: 0.1 }
+		);
+		if (rootEl) visibilityObserver.observe(rootEl);
+	});
+	onDestroy(() => {
+		stopAutoplay();
+		visibilityObserver?.disconnect();
+	});
 </script>
 
 <!-- HERO SLIDER -->
 <section
+	bind:this={rootEl}
 	class="relative -mx-4 mb-6 overflow-hidden select-none rounded-b-3xl"
 	style="min-height: 280px; max-height: 520px; height: 58vw; cursor: {isDragging
 		? 'grabbing'
@@ -132,28 +158,38 @@
 	{#each heroes as hero, i}
 		{@const imgSrc = hero.banner ?? hero.thumbnail}
 		{@const imgPos = hero.objectPosition ?? 'center top'}
+		{@const isActive = i === current}
 
+		{#if shouldRenderSlide(i)}
 		<div
 			class="absolute inset-0 transition-opacity duration-700"
-			style="opacity: {i === current ? 1 : 0}; z-index: {i === current ? 1 : 0};"
+			style="opacity: {isActive ? 1 : 0}; z-index: {isActive ? 1 : 0};"
 		>
 			<!-- ① AMBIENT BLUR LAYER -->
-			<div class="absolute inset-0 scale-110">
-				<img
+			<div class="absolute inset-0 hidden scale-110 md:block">
+				<OptimizedImage
 					src={imgSrc}
 					alt=""
 					aria-hidden="true"
-					class="w-full h-full object-cover"
-					style="filter: blur(40px) saturate(180%) brightness(0.55); object-position: {imgPos};"
+					className="hero-ambient h-full w-full"
+					imageClass="h-full w-full object-cover"
+					loading={isActive ? 'eager' : 'lazy'}
+					fetchpriority={isActive ? 'high' : 'low'}
+					sizes="100vw"
+					objectPosition={imgPos}
 				/>
 			</div>
 
 			<!-- ② GAMBAR ASLI -->
-			<img
+			<OptimizedImage
 				src={imgSrc}
 				alt={hero.title}
-				class="absolute inset-0 w-full h-full object-cover"
-				style="opacity: 0.4; object-position: {imgPos};"
+				className="absolute inset-0 h-full w-full opacity-40"
+				imageClass="h-full w-full object-cover"
+				loading={isActive ? 'eager' : 'lazy'}
+				fetchpriority={isActive ? 'high' : 'low'}
+				sizes="100vw"
+				objectPosition={imgPos}
 			/>
 
 			<!-- ③ Gradient vignette -->
@@ -170,24 +206,24 @@
 					<!-- Poster — desktop only -->
 					<div
 						class="hidden md:block shrink-0 w-36 lg:w-44 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 transition-all duration-700"
-						style="transform: translateY({i === current ? '0' : '20px'}); opacity: {i === current
-							? 1
-							: 0};"
+						style="transform: translateY({isActive ? '0' : '20px'}); opacity: {isActive ? 1 : 0};"
 					>
-						<img
+						<OptimizedImage
 							src={imgSrc}
 							alt={hero.title}
-							class="w-full h-full object-cover"
-							style="object-position: {imgPos};"
+							className="h-full w-full"
+							imageClass="h-full w-full object-cover"
+							loading={isActive ? 'eager' : 'lazy'}
+							fetchpriority={isActive ? 'high' : 'low'}
+							sizes="176px"
+							objectPosition={imgPos}
 						/>
 					</div>
 
 					<!-- Text info -->
 					<div
 						class="w-full max-w-sm transition-all duration-700 delay-100"
-						style="transform: translateY({i === current ? '0' : '16px'}); opacity: {i === current
-							? 1
-							: 0};"
+						style="transform: translateY({isActive ? '0' : '16px'}); opacity: {isActive ? 1 : 0};"
 					>
 						<!-- Badges -->
 						<div class="flex items-center gap-2 mb-2.5">
@@ -217,21 +253,21 @@
 						<div class="flex flex-wrap gap-1.5 mb-3">
 							{#each hero.genre as g}
 								<span
-									class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-white/85 border border-white/15 backdrop-blur-sm"
+									class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-white/85 border border-white/15"
 								>
 									{g}
 								</span>
 							{/each}
 							{#if hero.episode}
 								<span
-									class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-white/85 border border-white/15 backdrop-blur-sm"
+									class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-white/85 border border-white/15"
 								>
 									{hero.episode}
 								</span>
 							{/if}
 							{#if hero.status}
 								<span
-									class="px-2 py-0.5 rounded-full text-[11px] font-semibold border backdrop-blur-sm
+									class="px-2 py-0.5 rounded-full text-[11px] font-semibold border
                                     {hero.status === 'Ongoing'
 										? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
 										: 'bg-zinc-500/15 border-zinc-500/30 text-zinc-400'}"
@@ -267,7 +303,7 @@
 							</a>
 							<button
 								onclick={() => toggleSaved(hero)}
-								class="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm transition active:scale-95"
+								class="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition active:scale-95"
 								aria-label={saved.checkSaved(hero.id) ? 'Tersimpan' : 'Simpan'}
 							>
 								<span class="material-symbols-rounded text-[18px]"
@@ -275,7 +311,7 @@
 								>
 							</button>
 							<button
-								class="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm transition active:scale-95"
+								class="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition active:scale-95"
 							>
 								<span class="material-symbols-rounded text-[18px]">info</span>
 							</button>
@@ -284,19 +320,20 @@
 				</div>
 			</div>
 		</div>
+		{/if}
 	{/each}
 
 	<!-- Prev / Next arrows — desktop only -->
 	<button
 		onclick={prev}
-		class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm transition"
+		class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition"
 		aria-label="Previous"
 	>
 		<span class="material-symbols-rounded text-[22px]">chevron_left</span>
 	</button>
 	<button
 		onclick={next}
-		class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm transition"
+		class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition"
 		aria-label="Next"
 	>
 		<span class="material-symbols-rounded text-[22px]">chevron_right</span>
@@ -324,7 +361,7 @@
 <!-- Modal deskripsi -->
 {#if showDescModal}
 	<button
-		class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+		class="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4"
 		onclick={() => (showDescModal = false)}
 		aria-label="Tutup"
 	>
@@ -351,3 +388,15 @@
 		</div>
 	</button>
 {/if}
+
+<style>
+	:global(.hero-ambient) {
+		filter: blur(32px) saturate(150%) brightness(0.55);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		:global(.animate-progress) {
+			animation: none;
+		}
+	}
+</style>

@@ -2,11 +2,11 @@
 	import { onMount } from 'svelte';
 	import AnimeCard from '$lib/components/AnimeCard.svelte';
 	import AutoNextEpisode from '$lib/components/AutoNextEpisode.svelte';
-	import CommentSection from '$lib/components/comments/CommentSection.svelte';
+	import DeferredCommentSection from '$lib/components/DeferredCommentSection.svelte';
+	import LazyVideoPlayer from '$lib/components/LazyVideoPlayer.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import WatchProgressTracker from '$lib/components/WatchProgressTracker.svelte';
 	import VideoReactionBar from '$lib/components/VideoReactionBar.svelte';
-	import VideoPlayer from '$lib/components/video-player/v2/VideoPlayer.svelte';
 	import { formatProxySources } from '$lib/format-proxy-urls';
 	import { extractEpisodeSubtitles, groupSubtitlesForPlayer } from '$lib/subtitle-studio';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -262,7 +262,7 @@
 	>
 		{#if streamUrls.length}
 			<div class="relative w-full aspect-video">
-				<VideoPlayer
+				<LazyVideoPlayer
 					src={streamUrls}
 					poster={cover}
 					{title}
@@ -290,11 +290,11 @@
 							controlBackground: 'rgba(255,255,255,.16)'
 						},
 						ambient: {
-							enabled: true,
-							intensity: 1.5,
-							opacity: 0.42,
-							blur: 72,
-							saturation: 1.65,
+							enabled: isDesktop,
+							intensity: isDesktop ? 1.5 : 0,
+							opacity: isDesktop ? 0.42 : 0,
+							blur: isDesktop ? 72 : 0,
+							saturation: isDesktop ? 1.65 : 1,
 							contrast: 1
 						},
 						controls: {
@@ -310,7 +310,7 @@
 							showSourceBadge: true,
 							showThumbnailPreview: true,
 							showStats: false,
-							preloadAudioWaveform: true,
+							preloadAudioWaveform: false,
 							maxAudioWaveformBytes: 30 * 1024 * 1024,
 							waveformEnable: false
 						},
@@ -545,7 +545,7 @@
                         box-shadow: var(--shadow-sm);
                     "
 				>
-					<CommentSection animeId={anime.id} episodeId={episode.id} bounded />
+					<DeferredCommentSection animeId={anime.id} episodeId={episode.id} bounded eager />
 				</div>
 			{/if}
 
@@ -1045,7 +1045,7 @@
 
 		<!-- ── COMMENTS MOBILE ──────────── -->
 		{#if !isDesktop && anime?.id && episode?.id}
-			<CommentSection animeId={anime.id} episodeId={episode.id} />
+			<DeferredCommentSection animeId={anime.id} episodeId={episode.id} />
 		{/if}
 
 		<!-- ── RELATED VIDEOS MOBILE ──────────── -->

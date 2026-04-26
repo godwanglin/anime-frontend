@@ -1,39 +1,42 @@
 import config from '$lib/config';
 
-export const GET = async ({ request, cookies }) => {
+export const GET = async ({ request }) => {
 	const baseUrl = config.API_BASE_URL;
+	const authorization = request.headers.get('authorization') ?? '';
 
 	const response = await fetch(`${baseUrl}/api/auth/me`, {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
-
-			Authorization: `Bearer ${cookies.get('accessToken') ?? ''}`
+			Authorization: authorization
 		}
 	});
 
 	if (!response.ok) {
-		const errorData = await response.json();
-		return new Response(JSON.stringify({ error: errorData.message || 'Login failed' }), {
-			status: response.status
+		const errorData = await response.json().catch(() => ({}));
+		return new Response(JSON.stringify({ error: errorData.message || 'Unauthorized' }), {
+			status: response.status,
+			headers: { 'Content-Type': 'application/json' }
 		});
 	}
 
 	const data = await response.json();
 
 	return new Response(JSON.stringify(data), {
-		status: 200
+		status: 200,
+		headers: { 'Content-Type': 'application/json' }
 	});
 };
 
-export const PUT = async ({ request, cookies }) => {
+export const PUT = async ({ request }) => {
 	const baseUrl = config.API_BASE_URL;
+	const authorization = request.headers.get('authorization') ?? '';
 
 	const response = await fetch(`${baseUrl}/api/auth/me`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
-			Authorization: `Bearer ${cookies.get('accessToken') ?? ''}`
+			Authorization: authorization
 		},
 		body: await request.text()
 	});
@@ -41,6 +44,7 @@ export const PUT = async ({ request, cookies }) => {
 	const data = await response.json();
 
 	return new Response(JSON.stringify(data), {
-		status: response.ok ? 200 : response.status
+		status: response.ok ? 200 : response.status,
+		headers: { 'Content-Type': 'application/json' }
 	});
 };

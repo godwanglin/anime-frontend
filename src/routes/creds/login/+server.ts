@@ -1,31 +1,51 @@
+import { dev } from '$app/environment';
 import config from '$lib/config';
+import type { Cookies } from '@sveltejs/kit';
 
-export const POST = async ({ request }: { request: Request }) => {
+export const POST = async ({
+	request,
+	cookies
+}: {
+	request: Request;
+	cookies: Cookies;
+}) => {
 	const baseUrl = config.API_BASE_URL;
 	const { email, password } = await request.json();
+
 	const response = await fetch(`${baseUrl}/api/auth/login`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		credentials: 'include',
 		body: JSON.stringify({ email, password })
 	});
+
+	const payload = await response.json().catch(() => null);
+
 	if (!response.ok) {
-		const errorData = await response.json();
-		return new Response(JSON.stringify({ error: errorData.message || 'Login failed' }), {
-			status: response.status
+		return new Response(JSON.stringify({ error: payload?.message ?? 'Login failed' }), {
+			status: response.status,
+			headers: { 'Content-Type': 'application/json' }
 		});
 	}
-	const data = await response.json();
-	// console.log(data);
 
-	const { accessToken } = data.data;
-	// set cookie to store access token
-	const cookie = `accessToken=${accessToken}; Path=/; HttpOnly; SameSite=Strict; Secure`;
-	return new Response(JSON.stringify(data), {
+	const data = payload?.data ?? {};
+	const { refreshToken, ...rest } = data as {
+		refreshToken?: string;
+		accessToken?: string;
+		user?: unknown;
+	};
+
+	if (refreshToken) {
+		cookies.set('refreshToken', refreshToken, {
+			path: '/',
+			httpOnly: true,
+			sameSite: 'lax',
+			secure: !dev,
+			maxAge: 60 * 60 * 24 * 7
+		});
+	}
+
+	return new Response(JSON.stringify({ ...payload, data: rest }), {
 		status: 200,
-		headers: {
-			'Set-Cookie': cookie,
-			'Content-Type': 'application/json'
-		}
+		headers: { 'Content-Type': 'application/json' }
 	});
 };

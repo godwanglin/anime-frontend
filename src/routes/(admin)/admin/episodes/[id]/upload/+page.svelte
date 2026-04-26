@@ -46,6 +46,13 @@
 		fileSize?: number | null;
 		fileLastModified?: number | null;
 		initialResolution?: number;
+		encodingLogs?: EncodingLog[];
+	};
+
+	type EncodingLog = {
+		at: string;
+		level: 'info' | 'warn' | 'error';
+		message: string;
 	};
 
 	const RESOLUTION_OPTIONS = [144, 240, 480, 720, 1080] as const;
@@ -104,6 +111,16 @@
 			return nameMatch && sizeMatch && lmMatch;
 		})()
 	);
+	const serverLogLines = $derived(
+		(status?.encodingLogs ?? []).map((entry) => {
+			const time = Number.isNaN(new Date(entry.at).getTime())
+				? entry.at
+				: new Date(entry.at).toLocaleTimeString();
+			const level = entry.level === 'error' ? 'ERR' : entry.level === 'warn' ? 'WARN' : 'INFO';
+			return `[${time}] ${level} ${entry.message}`;
+		})
+	);
+	const activityLines = $derived([...serverLogLines, ...logLines].slice(-220));
 
 	function pushLog(line: string) {
 		const ts = new Date().toLocaleTimeString();
@@ -824,17 +841,17 @@
 							onclick={() => (logLines = [])}
 							class="text-xs font-bold text-zinc-500 hover:text-zinc-300"
 						>
-							Clear
+							Clear Local
 						</button>
 					{/if}
 				</div>
 				<div
 					class="mt-3 max-h-72 space-y-1 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-950 p-3 font-mono text-[11px] text-zinc-400"
 				>
-					{#if logLines.length === 0}
+					{#if activityLines.length === 0}
 						<p class="text-zinc-600">Belum ada aktivitas.</p>
 					{:else}
-						{#each logLines as line}
+						{#each activityLines as line}
 							<p class="break-all">{line}</p>
 						{/each}
 					{/if}

@@ -54,6 +54,7 @@
 		{ href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' },
 		{ href: '/admin/anime', icon: 'movie', label: 'Anime' },
 		{ href: '/admin/episodes', icon: 'video_library', label: 'Episode' },
+		{ href: '/admin/r2-videos', icon: 'storage', label: 'R2 Videos' },
 		{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
 		{ href: '/admin/notifications', icon: 'campaign', label: 'Notifications' },
 		{ href: '/admin/subtitle-studio', icon: 'subtitles', label: 'Subtitle Studio' },

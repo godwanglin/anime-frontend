@@ -10,8 +10,10 @@
 	const gaId = $derived((siteConfig['analytics.googleTagId'] ?? '').replace(/[^A-Za-z0-9_-]/g, ''));
 	const searchConsoleToken = $derived(siteConfig['analytics.googleSearchConsoleVerification'] ?? '');
 	const clarityId = $derived((siteConfig['analytics.clarityProjectId'] ?? '').replace(/[^A-Za-z0-9_-]/g, ''));
+	
 	const scriptOpen = '<' + 'script>';
 	const scriptClose = '</' + 'script>';
+
 
 	const gtmScript = $derived(
 		scriptOpen +
@@ -24,7 +26,9 @@
 	` +
 			scriptClose
 	);
-	const gaScript = $derived(
+	const gaScript = $derived(`
+			<script async src=\"https://www.googletagmanager.com/gtag/js?id=" + gaId + "\">
+	` + 		scriptClose+
 		scriptOpen +
 			`
 			window.dataLayer = window.dataLayer || [];
@@ -55,7 +59,7 @@
 	{#if enabled && gtmId}
 		{@html gtmScript}
 	{:else if enabled && gaId}
-		<script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+
 		{@html gaScript}
 	{/if}
 

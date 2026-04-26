@@ -51,6 +51,7 @@
 
 	const nav = [
 		{ href: '/admin', icon: 'dashboard', label: 'Dashboard' },
+		{ href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' },
 		{ href: '/admin/anime', icon: 'movie', label: 'Anime' },
 		{ href: '/admin/episodes', icon: 'video_library', label: 'Episode' },
 		{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
@@ -60,8 +61,7 @@
 		{ href: '/admin/comments', icon: 'forum', label: 'Komentar' },
 		{ href: '/admin/comment-reports', icon: 'flag', label: 'Laporan' },
 		{ href: '/admin/decorations', icon: 'auto_awesome', label: 'Decorations' },
-		{ href: '/admin/site-config', icon: 'settings', label: 'Site Config' },
-		{ href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' }
+		{ href: '/admin/site-config', icon: 'settings', label: 'Site Config' }
 	];
 
 	async function logout() {
@@ -81,10 +81,7 @@
 			admin_operational: 'Admin'
 		};
 		return (
-			labels[value] ??
-			value
-				.replaceAll('_', ' ')
-				.replace(/\b\w/g, (char) => char.toUpperCase())
+			labels[value] ?? value.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 		);
 	}
 
@@ -360,7 +357,9 @@
 									</div>
 									<div class="min-w-0 flex-1">
 										<div class="mb-1 flex items-center justify-between gap-3">
-											<span class="truncate text-[10px] font-black uppercase tracking-[0.16em] text-violet-400">
+											<span
+												class="truncate text-[10px] font-black uppercase tracking-[0.16em] text-violet-400"
+											>
 												{notificationCategoryLabel(item.category)}
 											</span>
 											<span class="shrink-0 text-[10px] font-semibold text-zinc-600">
@@ -372,14 +371,18 @@
 												{item.title}
 											</p>
 											{#if !item.isRead}
-												<span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-violet-400 shadow-[0_0_0_4px_rgba(139,92,246,0.14)]"></span>
+												<span
+													class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-violet-400 shadow-[0_0_0_4px_rgba(139,92,246,0.14)]"
+												></span>
 											{/if}
 										</div>
 										<p class="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">
 											{item.message}
 										</p>
 										{#if item.link}
-											<span class="mt-2 inline-flex items-center gap-1 text-[11px] font-black text-zinc-500 transition group-hover:text-violet-300">
+											<span
+												class="mt-2 inline-flex items-center gap-1 text-[11px] font-black text-zinc-500 transition group-hover:text-violet-300"
+											>
 												Buka detail
 												<span class="material-symbols-rounded text-[13px]">arrow_outward</span>
 											</span>

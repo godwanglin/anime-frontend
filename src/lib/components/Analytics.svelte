@@ -27,7 +27,7 @@
 			scriptClose
 	);
 	const gaScript = $derived(`
-			<script async src=\"https://www.googletagmanager.com/gtag/js?id=" + gaId + "\">
+			<script async src="https://www.googletagmanager.com/gtag/js?id=${gaId}">
 	` + 		scriptClose+
 		scriptOpen +
 			`

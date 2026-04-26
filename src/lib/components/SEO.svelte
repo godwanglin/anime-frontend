@@ -73,8 +73,6 @@
 	<meta name="twitter:image" content={absoluteImage} />
 
 	{#if structuredData}
-		<script type="application/ld+json">
-{structuredData}
-		</script>
+		{@html `<script type="application/ld+json">${structuredData}</script>`}
 	{/if}
 </svelte:head>

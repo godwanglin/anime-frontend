@@ -4,6 +4,7 @@ interface StreamSource {
 	id: number;
 	label: string;
 	value: string;
+	isPrimary?: boolean;
 }
 
 export interface FormattedStreamSource extends StreamSource {
@@ -123,6 +124,10 @@ export function formatProxySources(
 	baseUrl: string = config.API_BASE_URL
 ): FormattedStreamSource[] {
 	const sorted = [...sources].sort((a, b) => {
+		const aPrimary = a.isPrimary ? 1 : 0;
+		const bPrimary = b.isPrimary ? 1 : 0;
+		if (aPrimary !== bPrimary) return bPrimary - aPrimary;
+
 		const aOk = a.value.includes('ok.ru') ? 1 : 0;
 		const bOk = b.value.includes('ok.ru') ? 1 : 0;
 		return bOk - aOk; // ok.ru di atas

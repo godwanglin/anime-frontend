@@ -35,6 +35,7 @@ export type VideoServer = {
 	id: number;
 	label: string;
 	value: string;
+	isPrimary: boolean;
 };
 
 export type SubtitleDraft = {

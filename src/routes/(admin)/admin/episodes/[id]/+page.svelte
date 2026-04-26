@@ -19,6 +19,7 @@
 	let label = $state('');
 	let value = $state('');
 	let deleteServerId = $state<number | null>(null);
+	let settingPrimaryId = $state<number | null>(null);
 
 	async function load() {
 		episode = (await adminApi<any>(`/episodes/${id}`)).data;
@@ -59,6 +60,20 @@
 		deleteServerId = null;
 		adminToast.success('Server dihapus');
 		await load();
+	}
+
+	async function setPrimaryServer(serverId: number) {
+		settingPrimaryId = serverId;
+		try {
+			await adminApi(`/servers/${serverId}`, {
+				method: 'PUT',
+				body: JSON.stringify({ isPrimary: true })
+			});
+			adminToast.success('Server utama diperbarui');
+			await load();
+		} finally {
+			settingPrimaryId = null;
+		}
 	}
 
 	onMount(load);
@@ -142,10 +157,30 @@
 			<table class="min-w-full text-sm">
 				<tbody class="divide-y divide-zinc-800">
 					{#each servers as server}
-						<tr>
-							<td class="px-3 py-3 font-bold">{server.label}</td>
+						<tr class={server.isPrimary ? 'bg-emerald-500/5' : ''}>
+							<td class="px-3 py-3 font-bold">
+								<div class="flex flex-wrap items-center gap-2">
+									<span>{server.label}</span>
+									{#if server.isPrimary}
+										<span
+											class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-black uppercase tracking-wide text-emerald-300"
+											>Primary</span
+										>
+									{/if}
+								</div>
+							</td>
 							<td class="max-w-xl truncate px-3 py-3 text-zinc-400">{server.value}</td>
 							<td class="px-3 py-3 text-right"
+								><button
+									type="button"
+									disabled={server.isPrimary || settingPrimaryId === server.id}
+									onclick={() => setPrimaryServer(server.id)}
+									class="mr-2 rounded-lg border border-emerald-700 px-2 py-1 text-emerald-300 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-600"
+									>{server.isPrimary
+										? 'Primary'
+										: settingPrimaryId === server.id
+											? 'Menyimpan...'
+											: 'Set Primary'}</button
 								><button
 									onclick={() => (deleteServerId = server.id)}
 									class="rounded-lg border border-red-900 px-2 py-1 text-red-400">Hapus</button

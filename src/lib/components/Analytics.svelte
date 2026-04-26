@@ -58,8 +58,8 @@
 
 	{#if enabled && gtmId}
 		{@html gtmScript}
-	{:else if enabled && gaId}
-
+	{/if}
+	{#if enabled && gaId}
 		{@html `<script async src="https://www.googletagmanager.com/gtag/js?id=${gaId}"></script>
 			<script>
 			window.dataLayer = window.dataLayer || [];

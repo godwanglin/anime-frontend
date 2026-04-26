@@ -167,6 +167,9 @@
 					aria-hidden="true"
 					class="absolute inset-0 w-full h-full object-cover object-top"
 					style="filter: brightness(0.6) saturate(140%);"
+					data-sync-asset-context="anime"
+					data-sync-asset-id={String(activeAnime.id)}
+					data-sync-asset-field={activeAnime.bigCover ? 'bigCover' : 'thumbnail'}
 				/>
 
 				<!-- Gradient atas: sisi kiri gelap untuk badges -->
@@ -246,6 +249,9 @@
 							src={activeAnime.thumbnail}
 							alt={activeAnime.title}
 							class="w-full h-full object-cover"
+							data-sync-asset-context="anime"
+							data-sync-asset-id={String(activeAnime.id)}
+							data-sync-asset-field="thumbnail"
 						/>
 					</div>
 
@@ -357,6 +363,9 @@
 			aria-hidden="true"
 			class="absolute inset-0 w-full h-full object-cover scale-110"
 			style="filter: brightness(0.28) saturate(150%);"
+			data-sync-asset-context="anime"
+			data-sync-asset-id={String(activeAnime.id)}
+			data-sync-asset-field={activeAnime.bigCover ? 'bigCover' : 'thumbnail'}
 		/>
 		<div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent"></div>
 		<div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/30 to-transparent"></div>
@@ -371,6 +380,9 @@
 						src={activeAnime.thumbnail}
 						alt={activeAnime.title}
 						class="w-full h-full object-cover"
+						data-sync-asset-context="anime"
+						data-sync-asset-id={String(activeAnime.id)}
+						data-sync-asset-field="thumbnail"
 					/>
 				</div>
 				<div class="flex-1 pb-0.5">

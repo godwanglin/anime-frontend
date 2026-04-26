@@ -291,6 +291,9 @@
 							loading="lazy"
 							fetchpriority="low"
 							sizes="(max-width: 768px) 112px, 144px"
+							data-sync-asset-context="anime"
+							data-sync-asset-id={String(item.id)}
+							data-sync-asset-field="thumbnail"
 						/>
 						<!-- Left vignette so rank number is readable over bright posters -->
 						<div
@@ -369,6 +372,9 @@
 						loading="lazy"
 						fetchpriority="low"
 						sizes="(max-width: 768px) 224px, 288px"
+						data-sync-asset-context="episode"
+						data-sync-asset-id={String(item.id)}
+						data-sync-asset-field="thumbnail"
 					/>
 					<!-- Gradient bottom -->
 					<div
@@ -461,6 +467,11 @@
 						loading="lazy"
 						fetchpriority="low"
 						sizes="(max-width: 768px) 288px, 320px"
+						data-sync-asset-context="anime"
+						data-sync-asset-id={String(item.id)}
+						data-sync-asset-field={item.bigCover && item.bigCover.length > 0
+							? 'bigCover'
+							: 'thumbnail'}
 					/>
 					<!-- Cinematic gradient -->
 					<div

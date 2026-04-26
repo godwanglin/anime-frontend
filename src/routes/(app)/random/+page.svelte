@@ -53,6 +53,7 @@
 	<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-4">
 		{#each animes as item}
 			<AnimeCard
+				id={item.id}
 				title={item.title}
 				thumbnail={item.thumbnail}
 				genres={item.genre}

@@ -166,6 +166,7 @@
 		{#each visibleItems as entry (entry.key)}
 			<div role="listitem" class="virtual-anime-grid__cell">
 				<AnimeCard
+					id={entry.item.id}
 					title={entry.item.title}
 					thumbnail={entry.item.thumbnail}
 					genres={genresFor(entry.item)}

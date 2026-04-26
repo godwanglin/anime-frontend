@@ -43,6 +43,9 @@
 					loading="eager"
 					fetchpriority="high"
 					sizes="100vw"
+					data-sync-asset-context="episode"
+					data-sync-asset-id={String(featured.id)}
+					data-sync-asset-field="thumbnail"
 				/>
 			{/if}
 			<div class="absolute inset-0 bg-linear-to-r from-black via-black/78 to-black/20"></div>
@@ -81,6 +84,9 @@
 								loading="eager"
 								fetchpriority="high"
 								sizes="112px"
+								data-sync-asset-context="episode"
+								data-sync-asset-id={String(featured.id)}
+								data-sync-asset-field="thumbnail"
 							/>
 							<div class="absolute inset-0 bg-black/15"></div>
 						</div>
@@ -152,6 +158,9 @@
 							loading="lazy"
 							fetchpriority="low"
 							sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+							data-sync-asset-context="episode"
+							data-sync-asset-id={String(item.id)}
+							data-sync-asset-field="thumbnail"
 						/>
 						<div class="absolute inset-0 bg-linear-to-t from-black/90 via-black/25 to-transparent"></div>
 						<div class="absolute left-3 top-3 flex items-center gap-2">

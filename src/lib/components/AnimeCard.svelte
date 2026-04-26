@@ -3,6 +3,7 @@
 	import OptimizedImage from './OptimizedImage.svelte';
 
 	type AnimeCardProps = {
+		id?: number | string;
 		slug?: string;
 		title: string;
 		thumbnail: string;
@@ -13,9 +14,11 @@
 		rating?: number | string | null;
 		aboveFold?: boolean;
 		episode?: number | string | null;
+		syncAssetContext?: 'anime' | 'episode';
 	};
 
 	let {
+		id,
 		slug,
 		title,
 		thumbnail,
@@ -25,7 +28,8 @@
 		href,
 		rating,
 		aboveFold = false,
-		episode = null
+		episode = null,
+		syncAssetContext = 'anime'
 	}: AnimeCardProps = $props();
 
 	const link = $derived(href ?? (slug ? `/anime/${slug}` : '#'));
@@ -46,6 +50,9 @@
 			{loading}
 			{fetchpriority}
 			sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 170px"
+			data-sync-asset-context={id ? syncAssetContext : undefined}
+			data-sync-asset-id={id ? String(id) : undefined}
+			data-sync-asset-field={id ? 'thumbnail' : undefined}
 		/>
 
 		<!-- Gradient -->

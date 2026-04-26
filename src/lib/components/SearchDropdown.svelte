@@ -84,6 +84,9 @@
 						alt={item.title}
 						class="w-9 h-12 object-cover rounded-lg shrink-0"
 						loading="lazy"
+						data-sync-asset-context="anime"
+						data-sync-asset-id={String(item.id)}
+						data-sync-asset-field="thumbnail"
 					/>
 					<div class="flex-1 min-w-0">
 						<p

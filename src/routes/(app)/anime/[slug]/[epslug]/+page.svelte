@@ -635,6 +635,7 @@
 					<div class="grid grid-cols-3 xl:grid-cols-4 gap-3">
 						{#each relatedVideos as related}
 							<AnimeCard
+								id={related.id}
 								title={related.title}
 								thumbnail={related.thumbnail}
 								genres={related.genres}
@@ -1146,6 +1147,7 @@
 				<div class="grid grid-cols-3 gap-2.5">
 					{#each relatedVideos as related}
 						<AnimeCard
+							id={related.id}
 							title={related.title}
 							thumbnail={related.thumbnail}
 							genres={related.genres}

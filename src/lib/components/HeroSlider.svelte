@@ -177,6 +177,9 @@
 					fetchpriority={isActive ? 'high' : 'low'}
 					sizes="100vw"
 					objectPosition={imgPos}
+					data-sync-asset-context={hero.id ? 'anime' : undefined}
+					data-sync-asset-id={hero.id ? String(hero.id) : undefined}
+					data-sync-asset-field={hero.id ? (hero.banner ? 'bigCover' : 'thumbnail') : undefined}
 				/>
 			</div>
 
@@ -190,6 +193,9 @@
 				fetchpriority={isActive ? 'high' : 'low'}
 				sizes="100vw"
 				objectPosition={imgPos}
+				data-sync-asset-context={hero.id ? 'anime' : undefined}
+				data-sync-asset-id={hero.id ? String(hero.id) : undefined}
+				data-sync-asset-field={hero.id ? (hero.banner ? 'bigCover' : 'thumbnail') : undefined}
 			/>
 
 			<!-- ③ Gradient vignette -->
@@ -217,6 +223,9 @@
 							fetchpriority={isActive ? 'high' : 'low'}
 							sizes="176px"
 							objectPosition={imgPos}
+							data-sync-asset-context={hero.id ? 'anime' : undefined}
+							data-sync-asset-id={hero.id ? String(hero.id) : undefined}
+							data-sync-asset-field={hero.id ? (hero.banner ? 'bigCover' : 'thumbnail') : undefined}
 						/>
 					</div>
 

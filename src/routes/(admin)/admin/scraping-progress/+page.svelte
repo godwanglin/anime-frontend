@@ -25,11 +25,12 @@
 	};
 
 	const BASE_SCRAPE_URL = 'https://anichin.cafe/seri/';
+	const SCRAPE_ORDER = 'update';
 	const REFRESH_MS = 500;
 	const TOTAL_PAGES = 30;
 	const pageNumbers = Array.from({ length: TOTAL_PAGES }, (_, index) => index + 1);
 
-	let currentUrl = $state(`${BASE_SCRAPE_URL}?page=1`);
+	let currentUrl = $state(buildPageUrl(1));
 	let singlePage = $state(1);
 	let rangeFrom = $state(1);
 	let rangeTo = $state(5);
@@ -88,8 +89,15 @@
 		queueStatus = message;
 	}
 
+	function buildPageUrl(page: number) {
+		const url = new URL(BASE_SCRAPE_URL);
+		url.searchParams.set('page', String(page));
+		url.searchParams.set('order', SCRAPE_ORDER);
+		return url.toString();
+	}
+
 	function setCurrentPage(page: number) {
-		currentUrl = `${BASE_SCRAPE_URL}?page=${page}`;
+		currentUrl = buildPageUrl(page);
 	}
 
 	function resetMonitorState(message: string) {
@@ -244,7 +252,7 @@
 			if (queueCancelled) break;
 
 			const item = queue[index];
-			const url = `${BASE_SCRAPE_URL}?page=${item.page}`;
+			const url = buildPageUrl(item.page);
 			item.status = 'running';
 			queue = [...queue];
 			setCurrentPage(item.page);
@@ -410,7 +418,7 @@
 					<div class="grid gap-3 xl:grid-cols-[1fr_auto_auto_auto]">
 						<input
 							bind:value={currentUrl}
-							placeholder="https://anichin.cafe/seri/?page=1"
+							placeholder="https://anichin.cafe/seri/?page=1&order=update"
 							class="h-12 rounded-xl border border-zinc-700 bg-zinc-950 px-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-violet-500"
 						/>
 						<button

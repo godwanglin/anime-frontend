@@ -26,18 +26,18 @@
 	` +
 			scriptClose
 	);
-	const gaScript = $derived(`
-			<script async src="https://www.googletagmanager.com/gtag/js?id=${gaId}">
-	` + 		scriptClose+
-		scriptOpen +
-			`
-			window.dataLayer = window.dataLayer || [];
-			function gtag(){dataLayer.push(arguments);}
-			gtag('js', new Date());
-			gtag('config', '${gaId}');
-	` +
-			scriptClose
-	);
+	// const gaScript = $derived(`
+	// 		<script async src="https://www.googletagmanager.com/gtag/js?id=${gaId}">
+	// ` + 		scriptClose+
+	// 	scriptOpen +
+	// 		`
+	// 		window.dataLayer = window.dataLayer || [];
+	// 		function gtag(){dataLayer.push(arguments);}
+	// 		gtag('js', new Date());
+	// 		gtag('config', '${gaId}');
+	// ` +
+	// 		scriptClose
+	// );
 	const clarityScript = $derived(
 		scriptOpen +
 			`
@@ -60,7 +60,14 @@
 		{@html gtmScript}
 	{:else if enabled && gaId}
 
-		{@html gaScript}
+		{@html `<script async src="https://www.googletagmanager.com/gtag/js?id=${gaId}"></script>
+			<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+			gtag('config', '${gaId}');
+			</script>`
+		}
 	{/if}
 
 	{#if enabled && clarityId}

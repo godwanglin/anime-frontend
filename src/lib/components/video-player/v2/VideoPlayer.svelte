@@ -2,13 +2,16 @@
 	import { onDestroy, onMount } from 'svelte';
 
 	import '../vp.css';
+	import CenterControls from './components/CenterControls.svelte';
 	import ControlsOverlay from './components/ControlsOverlay.svelte';
+	import EpisodeDrawer from './components/EpisodeDrawer.svelte';
 	import PlayerOverlays from './components/PlayerOverlays.svelte';
 	import SubtitleOverlay from './components/SubtitleOverlay.svelte';
 	import VideoSurface from './components/VideoSurface.svelte';
 	import {
 		createVideoPlayerState,
 		type PlayerConfig,
+		type PlayerEpisodeList,
 		type SubtitleTrack,
 		type SubtitleUrlProp
 	} from './stores/vpstate.svelte';
@@ -28,6 +31,9 @@
 		videoElement = $bindable(),
 		externalSubtitleLines = [],
 		preferExternalSubtitles = false,
+		prevHref,
+		nextHref,
+		episodeList,
 		onStateChange = () => null
 	}: {
 		src: string | string[];
@@ -44,6 +50,9 @@
 		videoElement?: HTMLVideoElement;
 		externalSubtitleLines?: string[];
 		preferExternalSubtitles?: boolean;
+		prevHref?: string;
+		nextHref?: string;
+		episodeList?: PlayerEpisodeList;
 		onStateChange?: (state: {
 			currentTime: number;
 			duration: number;
@@ -62,6 +71,19 @@
 	let containerEl = $state<HTMLElement>();
 	let seekbarEl = $state<HTMLInputElement>();
 	let subtitleReapplyRaf = 0;
+	let showEpisodeDrawer = $state(false);
+
+	function toggleEpisodeDrawer() {
+		showEpisodeDrawer = !showEpisodeDrawer;
+	}
+
+	function closeEpisodeDrawer() {
+		showEpisodeDrawer = false;
+	}
+
+	$effect(() => {
+		if (!vp.isFullscreen && showEpisodeDrawer) showEpisodeDrawer = false;
+	});
 
 	$effect(() => {
 		vp.updateOptions(getOptions());
@@ -204,6 +226,18 @@
 			{preferExternalSubtitles}
 		/>
 		<PlayerOverlays {vp} {title} />
-		<ControlsOverlay {vp} bind:seekbarEl />
+		<CenterControls {vp} {prevHref} {nextHref} />
+		<ControlsOverlay
+			{vp}
+			bind:seekbarEl
+			{episodeList}
+			{showEpisodeDrawer}
+			onToggleEpisodeDrawer={toggleEpisodeDrawer}
+		/>
+		<EpisodeDrawer
+			open={showEpisodeDrawer}
+			{episodeList}
+			onClose={closeEpisodeDrawer}
+		/>
 	</div>
 </div>

@@ -109,7 +109,9 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 	function seek(time: number) {
 		const videoEl = ctx.getVideoEl();
 		if (!videoEl) return;
-		videoEl.currentTime = clamp(time, 0, duration || 0);
+		const target = clamp(time, 0, duration || 0);
+		currentTime = target;
+		videoEl.currentTime = target;
 	}
 
 	function setPlaybackRate(rate: number) {

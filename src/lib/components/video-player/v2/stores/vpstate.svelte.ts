@@ -15,6 +15,9 @@ import type { VideoPlayerOptions } from './types';
 export type {
 	PlayerConfig,
 	PlaybackStats,
+	PlayerEpisodeItem,
+	PlayerEpisodeList,
+	PlayerEpisodeSeason,
 	QualityLevel,
 	SubtitleConfig,
 	SubtitleTrack,

@@ -7,6 +7,7 @@
 	import SEO from '$lib/components/SEO.svelte';
 	import WatchProgressTracker from '$lib/components/WatchProgressTracker.svelte';
 	import VideoReactionBar from '$lib/components/VideoReactionBar.svelte';
+	import { formatRelativeID } from '$lib/format-date';
 	import { formatProxySources } from '$lib/format-proxy-urls';
 	import { extractEpisodeSubtitles, groupSubtitlesForPlayer } from '$lib/subtitle-studio';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -23,6 +24,7 @@
 		title?: string;
 		sub?: string;
 		date?: string;
+		createdAt?: string;
 		views?: number;
 		skipIntroSeconds?: number | null;
 		animeSlug?: string;
@@ -127,23 +129,90 @@
 		episodeTitle: episode?.title ?? title
 	});
 
-	const defaultEpisodeIndex = $derived(
-		defaultEpisodes.findIndex(
-			(item: any) => item.slug === episode?.slug || item.slug === data.params?.epslug
-		)
+	const episodeRelativeDate = $derived(
+		formatRelativeID(episode?.createdAt) || episode?.date || ''
 	);
 	const navigation = $derived((detail as any)?.navigation ?? null);
-	const previousEpisode = $derived(
-		navigation?.previous ??
-			(defaultEpisodeIndex >= 0 ? defaultEpisodes[defaultEpisodeIndex + 1] : undefined)
-	);
-	const nextEpisode = $derived(
-		navigation?.next ??
-			(defaultEpisodeIndex > 0 ? defaultEpisodes[defaultEpisodeIndex - 1] : undefined)
-	);
+	const currentEpisodeNum = $derived(episode?.number ?? episode?.episode_number ?? null);
+	const previousEpisode = $derived.by(() => {
+		if (navigation?.previous?.slug) return navigation.previous;
+		if (currentEpisodeNum === null) return undefined;
+		const candidates = defaultEpisodes
+			.filter((ep) => {
+				const n = ep.number ?? ep.episode_number;
+				return typeof n === 'number' && n < currentEpisodeNum && !!ep.slug;
+			})
+			.sort(
+				(a, b) =>
+					(b.number ?? b.episode_number ?? 0) - (a.number ?? a.episode_number ?? 0)
+			);
+		return candidates[0];
+	});
+	const nextEpisode = $derived.by(() => {
+		if (navigation?.next?.slug) return navigation.next;
+		if (currentEpisodeNum === null) return undefined;
+		const candidates = defaultEpisodes
+			.filter((ep) => {
+				const n = ep.number ?? ep.episode_number;
+				return typeof n === 'number' && n > currentEpisodeNum && !!ep.slug;
+			})
+			.sort(
+				(a, b) =>
+					(a.number ?? a.episode_number ?? 0) - (b.number ?? b.episode_number ?? 0)
+			);
+		return candidates[0];
+	});
 	const nextEpisodeHref = $derived(
-		nextEpisode && anime?.slug ? `/anime/${anime.slug}/${nextEpisode.slug}` : undefined
+		nextEpisode?.slug && anime?.slug ? `/anime/${anime.slug}/${nextEpisode.slug}` : undefined
 	);
+	const previousEpisodeHref = $derived(
+		previousEpisode?.slug && anime?.slug
+			? `/anime/${anime.slug}/${previousEpisode.slug}`
+			: undefined
+	);
+
+	const playerEpisodeList = $derived.by(() => {
+		const currentEpSlug = episode?.slug ?? data.params?.epslug;
+		const currentEpNum = episode?.number ?? episode?.episode_number;
+
+		const mapEp = (ep: Episode, animeSlugForEp: string | undefined) => {
+			const number = episodeNumber(ep);
+			const href = animeSlugForEp && ep.slug ? `/anime/${animeSlugForEp}/${ep.slug}` : '#';
+			return {
+				slug: ep.slug ?? '',
+				number,
+				title: ep.title,
+				sub: ep.sub,
+				href,
+				progressPct: history.byEpisode(ep.id)?.progressPct ?? 0
+			};
+		};
+
+		if (seasons.length > 0) {
+			return {
+				currentSlug: currentEpSlug,
+				currentNumber: currentEpNum,
+				animeTitle: anime?.title,
+				seasons: seasons.map((s) => ({
+					season: s.season,
+					label: `Season ${s.season}`,
+					isCurrent: s.isCurrent,
+					episodes: s.episodes.map((ep) => mapEp(ep, s.slug))
+				}))
+			};
+		}
+
+		if (defaultEpisodes.length > 0) {
+			return {
+				currentSlug: currentEpSlug,
+				currentNumber: currentEpNum,
+				animeTitle: anime?.title,
+				episodes: defaultEpisodes.map((ep) => mapEp(ep, anime?.slug))
+			};
+		}
+
+		return undefined;
+	});
 
 	let showAllEpisodes = $state(false);
 	let episodeOrder = $state<'desc' | 'asc'>('desc');
@@ -244,6 +313,8 @@
 			animeStatus: anime.status ?? 'Ongoing'
 		});
 	}
+	console.log(episode);
+	
 </script>
 
 <SEO
@@ -269,6 +340,9 @@
 					autoPlay={preference.pref.autoPlay}
 					{subtitlesBySrc}
 					forceHls
+					prevHref={previousEpisodeHref}
+					nextHref={nextEpisodeHref}
+					episodeList={playerEpisodeList}
 					config={{
 						subtitle: {
 							color: preference.pref.subtitleColor,
@@ -437,9 +511,9 @@
 								{episode.sub}
 							</span>
 						{/if}
-						{#if episode?.date}
+						{#if episodeRelativeDate}
 							<span class="text-[11px]" style="color: var(--text-faint);">
-								{episode.date}
+								{episodeRelativeDate}
 							</span>
 						{/if}
 						{#if data.error}
@@ -809,8 +883,8 @@
 					<span class="material-symbols-rounded" style="font-size:12px;">visibility</span>
 					<span class="text-[10px] font-semibold">{formatCount(episode?.views)}</span>
 				</div>
-				{#if episode?.date}
-					<span class="text-[10px]" style="color: var(--text-faint);">{episode.date}</span>
+				{#if episodeRelativeDate}
+					<span class="text-[10px]" style="color: var(--text-faint);">{episodeRelativeDate}</span>
 				{/if}
 				{#if anime?.status}
 					<span class="text-[10px]" style="color: var(--text-faint);">{anime.status}</span>

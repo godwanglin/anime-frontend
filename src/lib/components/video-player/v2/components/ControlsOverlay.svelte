@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
+	import type { PlayerEpisodeList } from '../stores/types';
 	import AudioWaveform from './AudioWaveform.svelte';
 	import SettingsPanel from './SettingsPanel.svelte';
 
@@ -7,11 +8,24 @@
 
 	let {
 		vp,
-		seekbarEl = $bindable()
+		seekbarEl = $bindable(),
+		episodeList,
+		showEpisodeDrawer = false,
+		onToggleEpisodeDrawer
 	}: {
 		vp: VideoPlayerState;
 		seekbarEl?: HTMLInputElement;
+		episodeList?: PlayerEpisodeList;
+		showEpisodeDrawer?: boolean;
+		onToggleEpisodeDrawer?: () => void;
 	} = $props();
+
+	const hasEpisodeList = $derived(
+		!!episodeList &&
+			((episodeList.episodes?.length ?? 0) > 0 ||
+				(episodeList.seasons?.some((s) => s.episodes.length > 0) ?? false))
+	);
+	const showEpisodeButton = $derived(vp.isFullscreen && hasEpisodeList);
 </script>
 
 {#if vp.controlsCfg.enabled !== false}
@@ -118,6 +132,31 @@
 				</div>
 
 				<div class="vp-right-controls">
+					{#if showEpisodeButton}
+						<button
+							type="button"
+							class="vp-ep-trigger"
+							class:vp-ep-trigger-active={showEpisodeDrawer}
+							onclick={(e) => {
+								e.stopPropagation();
+								onToggleEpisodeDrawer?.();
+							}}
+							aria-label="Daftar episode"
+							aria-expanded={showEpisodeDrawer}
+						>
+							<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+								<path
+									d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h10v2H4v-2z"
+								/>
+							</svg>
+							{#if episodeList?.currentNumber !== undefined}
+								<span class="vp-ep-trigger-num">Ep {episodeList.currentNumber}</span>
+							{:else}
+								<span class="vp-ep-trigger-num">Episode</span>
+							{/if}
+						</button>
+					{/if}
+
 					{#if vp.controlsCfg.showSourceBadge !== false && vp.srcList.length > 1}
 						<span
 							class="vp-src-badge"

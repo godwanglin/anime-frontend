@@ -146,6 +146,30 @@ export interface QualityLevel {
 export type SettingsSubPanel = 'speed' | 'quality' | 'subtitle' | null;
 export type TapSide = 'left' | 'right' | null;
 
+export interface PlayerEpisodeItem {
+	slug: string;
+	number: number;
+	title?: string;
+	sub?: string;
+	href: string;
+	progressPct?: number;
+}
+
+export interface PlayerEpisodeSeason {
+	season: number;
+	label?: string;
+	isCurrent?: boolean;
+	episodes: PlayerEpisodeItem[];
+}
+
+export interface PlayerEpisodeList {
+	currentSlug?: string;
+	currentNumber?: number;
+	episodes?: PlayerEpisodeItem[];
+	seasons?: PlayerEpisodeSeason[];
+	animeTitle?: string;
+}
+
 export const STORAGE_KEYS = {
 	volume: 'vp_volume',
 	muted: 'vp_muted',

@@ -2,6 +2,7 @@
 	import VideoPlayer from '$lib/components/video-player/v2/VideoPlayer.svelte';
 	import type {
 		PlayerConfig,
+		PlayerEpisodeList,
 		SubtitleTrack
 	} from '$lib/components/video-player/v2/stores/vpstate.svelte';
 
@@ -13,6 +14,9 @@
 		subtitlesBySrc?: Record<string, SubtitleTrack[]>;
 		forceHls?: boolean;
 		config?: PlayerConfig;
+		prevHref?: string;
+		nextHref?: string;
+		episodeList?: PlayerEpisodeList;
 	};
 
 	let {
@@ -22,9 +26,23 @@
 		autoPlay = false,
 		subtitlesBySrc = {},
 		forceHls = false,
-		config = {}
+		config = {},
+		prevHref,
+		nextHref,
+		episodeList
 	}: Props = $props();
 
 </script>
 
-<VideoPlayer {src} {poster} {title} {autoPlay} {subtitlesBySrc} {forceHls} {config} />
+<VideoPlayer
+	{src}
+	{poster}
+	{title}
+	{autoPlay}
+	{subtitlesBySrc}
+	{forceHls}
+	{config}
+	{prevHref}
+	{nextHref}
+	{episodeList}
+/>

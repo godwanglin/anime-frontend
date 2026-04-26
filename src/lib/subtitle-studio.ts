@@ -4,6 +4,7 @@ import config from './config';
 export type StudioSubtitle = {
 	id?: number;
 	episodeId?: number;
+	serverId?: number;
 	serverUrl: string;
 	language: string;
 	label: string;
@@ -22,9 +23,15 @@ export type PlayerSubtitle = {
 type StudioSubtitleTrack = {
 	id?: number;
 	episodeId?: number;
+	serverId?: number;
 	serverUrl: string;
 	language: string;
 	label: string;
+};
+
+type StudioServer = {
+	id?: number;
+	value?: string;
 };
 
 function asArray(value: unknown): StudioSubtitle[] {
@@ -33,24 +40,37 @@ function asArray(value: unknown): StudioSubtitle[] {
 
 export function extractEpisodeSubtitles(detail: Record<string, unknown> | null | undefined) {
 	if (!detail) return [];
+	const episode = detail.episode as Record<string, unknown> | undefined;
 	const legacy = asArray(
-		detail.subtitles ?? (detail.episode as Record<string, unknown> | undefined)?.subtitles
+		detail.subtitles ?? episode?.subtitles
+	);
+	const servers = (detail.servers ?? episode?.servers ?? []) as StudioServer[];
+	const serverIdsByUrl = new Map(
+		servers
+			.filter((server) => Number.isInteger(server.id) && server.value)
+			.map((server) => [server.value as string, server.id as number])
 	);
 	const tracks = (
 		(detail.subtitleTracks ??
-			(detail.episode as Record<string, unknown> | undefined)?.subtitleTracks ??
+			episode?.subtitleTracks ??
 			[]) as StudioSubtitleTrack[]
 	)
 		.filter((track) => track.episodeId && track.serverUrl && track.language)
-		.map((track) => ({
-			id: track.id,
-			episodeId: track.episodeId,
-			serverUrl: track.serverUrl,
-			language: track.language,
-			label: track.label,
-			format: 'vtt' as const,
-			fileUrl: `${config.API_BASE_URL}/api/subtitle/${track.episodeId}/${encodeURIComponent(track.serverUrl)}/${track.language}.vtt`
-		}));
+		.map((track) => {
+			const serverId = track.serverId ?? serverIdsByUrl.get(track.serverUrl);
+			return {
+				id: track.id,
+				episodeId: track.episodeId,
+				serverId,
+				serverUrl: track.serverUrl,
+				language: track.language,
+				label: track.label,
+				format: 'vtt' as const,
+				fileUrl: serverId
+					? `${config.API_BASE_URL}/api/subtitles/${track.episodeId}/${serverId}/${track.language}.vtt`
+					: `${config.API_BASE_URL}/api/subtitle/${track.episodeId}/${encodeURIComponent(track.serverUrl)}/${track.language}.vtt`
+			};
+		});
 
 	return [...tracks, ...legacy];
 }

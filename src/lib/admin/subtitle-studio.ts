@@ -351,12 +351,26 @@ export async function importTrackFile(payload: {
 	label: string;
 	file: File;
 }) {
+	return importTrackSubtitle(payload);
+}
+
+export async function importTrackSubtitle(payload: {
+	episodeId: number;
+	serverUrl: string;
+	language: string;
+	label: string;
+	file?: File | null;
+	sourceUrl?: string;
+	content?: string;
+}) {
 	const form = new FormData();
 	form.set('episodeId', String(payload.episodeId));
 	form.set('serverUrl', payload.serverUrl);
 	form.set('language', payload.language);
 	form.set('label', payload.label);
-	form.set('file', payload.file);
+	if (payload.file) form.set('file', payload.file);
+	if (payload.sourceUrl) form.set('sourceUrl', payload.sourceUrl.trim());
+	if (payload.content) form.set('content', payload.content);
 	return apiEnvelope<SubtitleTrack>('/subtitles/import', { method: 'POST', body: form });
 }
 
@@ -458,6 +472,15 @@ export async function openReviseSubtitleTrackStream(
 	return response;
 }
 
-export function subtitleVttUrl(episodeId: number, serverUrl: string, language: string) {
+export function subtitleVttUrl(
+	episodeId: number,
+	serverUrl: string,
+	language: string,
+	serverId?: number
+) {
+	if (serverId && Number.isInteger(serverId) && serverId > 0) {
+		return `${config.API_BASE_URL}/api/subtitles/${episodeId}/${serverId}/${language}.vtt`;
+	}
+
 	return `${config.API_BASE_URL}/api/subtitle/${episodeId}/${encodeURIComponent(serverUrl)}/${language}.vtt`;
 }

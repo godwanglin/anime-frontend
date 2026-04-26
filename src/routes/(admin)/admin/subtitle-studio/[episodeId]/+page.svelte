@@ -11,7 +11,7 @@
 		getEditorTracks,
 		getEpisode,
 		getServers,
-		importTrackFile,
+		importTrackSubtitle,
 		openReviseSubtitleTrackStream,
 		saveTrackCues,
 		startAutoGenerateTrack,
@@ -50,7 +50,14 @@
 
 	type AiPendingMode = 'idle' | 'thinking' | 'typing';
 	type CueSourceKind = 'manual' | 'ai_transcribe' | 'ai_translate';
+	type ImportMode = 'file' | 'url' | 'text';
 	type StudioPlayerApi = ReturnType<typeof createVideoPlayerState>;
+
+	const importModeOptions: Array<{ id: ImportMode; icon: string; label: string }> = [
+		{ id: 'file', icon: 'upload_file', label: 'File' },
+		{ id: 'url', icon: 'link', label: 'URL' },
+		{ id: 'text', icon: 'content_paste', label: 'Paste' }
+	];
 
 	const episodeId = $derived(Number(page.params.episodeId));
 	let episode = $state<EpisodeSummary | null>(null);
@@ -87,7 +94,11 @@
 	let isAiRevising = $state(false);
 	let newLang = $state('id');
 	let newLabel = $state('Indonesia');
+	let importMode = $state<ImportMode>('file');
 	let importFile = $state<File | null>(null);
+	let importUrl = $state('');
+	let importText = $state('');
+	let isImporting = $state(false);
 	let cueSourceMap = $state<Record<string, CueSourceKind>>({});
 	let trackSourceMap = $state<Record<number, CueSourceKind>>({});
 	let playerApi = $state<StudioPlayerApi | undefined>(undefined);
@@ -397,6 +408,13 @@
 		autosaveTimer = setTimeout(() => saveNow(), 1800);
 	}
 
+	function canImportSubtitle() {
+		if (!activeServerUrl || isImporting) return false;
+		if (importMode === 'file') return Boolean(importFile);
+		if (importMode === 'url') return importUrl.trim().length > 0;
+		return importText.trim().length > 0;
+	}
+
 	function seek(time: number) {
 		playerApi?.seek(time);
 		currentTime = time;
@@ -483,23 +501,30 @@
 		}
 	}
 
-	async function importFileNow() {
-		if (!importFile) return;
+	async function importSubtitleNow() {
+		if (!canImportSubtitle()) return;
+		isImporting = true;
 		try {
-			const track = await importTrackFile({
+			const track = await importTrackSubtitle({
 				episodeId,
 				serverUrl: activeServerUrl,
 				language: newLang,
 				label: newLabel,
-				file: importFile
+				file: importMode === 'file' ? importFile : null,
+				sourceUrl: importMode === 'url' ? importUrl : undefined,
+				content: importMode === 'text' ? importText : undefined
 			});
 			tracks = [...tracks.filter((t) => t.id !== track.id), track];
 			registerCueSources(track.id, 'manual', track.cues ?? []);
 			selectTrack(track.id);
 			importFile = null;
+			importUrl = '';
+			importText = '';
 			adminToast.success('Subtitle diimport ke timeline');
 		} catch (error) {
 			adminToast.error(error instanceof Error ? error.message : 'Gagal import subtitle');
+		} finally {
+			isImporting = false;
 		}
 	}
 
@@ -1143,6 +1168,7 @@
 				<LanguageTrackPanel
 					{episodeId}
 					{activeServerUrl}
+					activeServerId={activeServer?.id}
 					{tracks}
 					{cues}
 					{activeTrackId}
@@ -1197,22 +1223,69 @@
 
 			<!-- Import section -->
 			{#snippet importSection()}
-				<div class="sb-import-row">
-					<label class="sb-dropzone">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--sb-accent);">
-							{importFile ? 'task' : 'upload_file'}
-						</span>
-						<span class="sb-dropzone-label">{importFile?.name ?? 'Pilih SRT/VTT'}</span>
-						<input
-							type="file"
-							accept=".srt,.vtt,text/vtt"
-							class="sb-file-input"
-							onchange={(e) => (importFile = e.currentTarget.files?.[0] ?? null)}
-						/>
-					</label>
-					<button onclick={importFileNow} disabled={!importFile} class="sb-btn-primary sb-btn-sm">
-						Import
-					</button>
+				<div class="sb-import-panel">
+					<div class="sb-import-tabs" role="tablist" aria-label="Import source">
+						{#each importModeOptions as item}
+							<button
+								type="button"
+								role="tab"
+								aria-selected={importMode === item.id}
+								class="sb-import-tab {importMode === item.id ? 'is-active' : ''}"
+								onclick={() => (importMode = item.id)}
+							>
+								<span class="material-symbols-rounded">{item.icon}</span>
+								{item.label}
+							</button>
+						{/each}
+					</div>
+
+					{#if importMode === 'file'}
+						<div class="sb-import-row">
+							<label class="sb-dropzone">
+								<span class="material-symbols-rounded" style="font-size:16px; color: var(--sb-accent);">
+									{importFile ? 'task' : 'upload_file'}
+								</span>
+								<span class="sb-dropzone-label">{importFile?.name ?? 'Pilih SRT/VTT'}</span>
+								<input
+									type="file"
+									accept=".srt,.vtt,text/vtt"
+									class="sb-file-input"
+									onchange={(e) => (importFile = e.currentTarget.files?.[0] ?? null)}
+								/>
+							</label>
+						</div>
+					{:else if importMode === 'url'}
+						<label class="sb-import-field">
+							<span class="sb-field-label">Subtitle URL</span>
+							<input
+								class="sb-input"
+								type="url"
+								placeholder="https://example.com/subtitle.vtt"
+								bind:value={importUrl}
+							/>
+						</label>
+					{:else}
+						<label class="sb-import-field">
+							<span class="sb-field-label">Subtitle Text</span>
+							<textarea
+								class="sb-textarea sb-import-textarea"
+								rows="7"
+								placeholder="WEBVTT&#10;&#10;00:00:01.000 --> 00:00:03.000&#10;Teks subtitle..."
+								bind:value={importText}
+							></textarea>
+						</label>
+					{/if}
+
+					<div class="sb-import-actions">
+						<button
+							type="button"
+							onclick={importSubtitleNow}
+							disabled={!canImportSubtitle()}
+							class="sb-btn-primary sb-btn-sm"
+						>
+							{isImporting ? 'Importing...' : 'Import'}
+						</button>
+					</div>
 				</div>
 			{/snippet}
 

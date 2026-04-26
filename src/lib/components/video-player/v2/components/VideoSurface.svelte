@@ -48,7 +48,6 @@
 				label={track.label}
 				srclang={track.lang}
 				src={track.src}
-				default={i === 0}
 			/>
 		{/if}
 	{/each}

@@ -13,6 +13,7 @@
 	let {
 		episodeId,
 		activeServerUrl,
+		activeServerId,
 		tracks,
 		cues = [],
 		activeTrackId,
@@ -45,6 +46,7 @@
 	}: {
 		episodeId: number;
 		activeServerUrl: string;
+		activeServerId?: number;
 		tracks: SubtitleTrack[];
 		cues?: SubtitleCue[];
 		activeTrackId: number | null;
@@ -95,7 +97,7 @@
 
 		{#if activeTrack}
 			<a
-				href={subtitleVttUrl(episodeId, activeServerUrl, activeTrack.language)}
+				href={subtitleVttUrl(episodeId, activeServerUrl, activeTrack.language, activeServerId)}
 				target="_blank"
 				rel="noreferrer"
 				class="sb-pill sb-pill-export"

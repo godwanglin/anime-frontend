@@ -86,6 +86,8 @@
 	const streamUrls = $derived(streamSources.map((source) => source.playerUrl));
 	const episodeSubtitles = $derived(extractEpisodeSubtitles(detail));
 	const subtitlesBySrc = $derived(groupSubtitlesForPlayer(streamSources, episodeSubtitles));
+	// console.log(subtitlesBySrc);
+
 	const defaultEpisodes = $derived(
 		(((detail as any)?.episodes as Episode[] | undefined) ?? anime?.episodes ?? []) as Episode[]
 	);
@@ -129,9 +131,7 @@
 		episodeTitle: episode?.title ?? title
 	});
 
-	const episodeRelativeDate = $derived(
-		formatRelativeID(episode?.createdAt) || episode?.date || ''
-	);
+	const episodeRelativeDate = $derived(formatRelativeID(episode?.createdAt) || episode?.date || '');
 	const navigation = $derived((detail as any)?.navigation ?? null);
 	const currentEpisodeNum = $derived(episode?.number ?? episode?.episode_number ?? null);
 	const previousEpisode = $derived.by(() => {
@@ -142,10 +142,7 @@
 				const n = ep.number ?? ep.episode_number;
 				return typeof n === 'number' && n < currentEpisodeNum && !!ep.slug;
 			})
-			.sort(
-				(a, b) =>
-					(b.number ?? b.episode_number ?? 0) - (a.number ?? a.episode_number ?? 0)
-			);
+			.sort((a, b) => (b.number ?? b.episode_number ?? 0) - (a.number ?? a.episode_number ?? 0));
 		return candidates[0];
 	});
 	const nextEpisode = $derived.by(() => {
@@ -156,10 +153,7 @@
 				const n = ep.number ?? ep.episode_number;
 				return typeof n === 'number' && n > currentEpisodeNum && !!ep.slug;
 			})
-			.sort(
-				(a, b) =>
-					(a.number ?? a.episode_number ?? 0) - (b.number ?? b.episode_number ?? 0)
-			);
+			.sort((a, b) => (a.number ?? a.episode_number ?? 0) - (b.number ?? b.episode_number ?? 0));
 		return candidates[0];
 	});
 	const nextEpisodeHref = $derived(
@@ -314,7 +308,6 @@
 		});
 	}
 	console.log(episode);
-	
 </script>
 
 <SEO
@@ -355,7 +348,9 @@
 							bottomOffset: preference.pref.subtitlePosition,
 							textShadow: preference.pref.subtitleShadow,
 							opacity: preference.pref.subtitleOpacity,
-							maxWidth: preference.pref.subtitleMaxWidth
+							maxWidth: preference.pref.subtitleMaxWidth,
+							defaultLanguage: preference.pref.subtitleLang,
+							enabled: preference.pref.subtitleEnabled
 						},
 						theme: {
 							primaryColor: '#ffffff',

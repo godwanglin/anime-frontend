@@ -100,6 +100,7 @@
 	let openSource = $state(false);
 	let openImport = $state(false);
 	let openCue = $state(false);
+	const activeServerId = $derived(servers.find((server) => server.value === activeServerUrl)?.id);
 
 	// Panel mode state
 	let activeTab = $state<TabId>('track');
@@ -219,6 +220,7 @@
 				<LanguageTrackPanel
 					{episodeId}
 					{activeServerUrl}
+					{activeServerId}
 					{tracks}
 					{cues}
 					{activeTrackId}
@@ -384,6 +386,7 @@
 		<LanguageTrackPanel
 			{episodeId}
 			{activeServerUrl}
+			{activeServerId}
 			{tracks}
 			{cues}
 			{activeTrackId}

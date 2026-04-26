@@ -1300,10 +1300,72 @@
 }
 
 /* ── Import ── */
+.sb-import-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: min(520px, calc(100vw - 56px));
+}
+
+.sb-import-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.sb-import-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 30px;
+    border: 1px solid var(--sb-border);
+    border-radius: 6px;
+    background: var(--sb-surface);
+    color: var(--sb-text-muted);
+    font-size: 11px;
+    font-weight: 800;
+    transition:
+        background 140ms,
+        border-color 140ms,
+        color 140ms;
+}
+
+.sb-import-tab span {
+    font-size: 15px;
+}
+
+.sb-import-tab.is-active {
+    border-color: var(--sb-accent-border);
+    background: var(--sb-accent-surface);
+    color: var(--sb-accent-light);
+}
+
 .sb-import-row {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.sb-import-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sb-import-field .sb-input {
+    width: 100%;
+}
+
+.sb-import-textarea {
+    min-height: 132px;
+    max-height: 260px;
+    resize: vertical;
+}
+
+.sb-import-actions {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .sb-dropzone {

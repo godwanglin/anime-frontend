@@ -100,6 +100,10 @@ export function formatProxyUrl(
 		return `${baseUrl}/api/video-stream/ruby-stream/playlist/${id}`;
 	}
 
+	if (/\.m3u8(?:$|[?#])/.test(value)) {
+		return value;
+	}
+
 	// Provider tidak didukung (Rumble, short.icu, dll.)
 	return null;
 }

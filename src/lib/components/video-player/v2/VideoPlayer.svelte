@@ -160,6 +160,11 @@
 
 	function handleLoadedMetadata() {
 		vp.onLoadedMetadata();
+		if (vp.allSubtitles.length > 0) {
+			const activeIndex =
+				vp.activeSubtitleIndex >= 0 ? vp.activeSubtitleIndex : vp.preferredSubtitleIndex();
+			scheduleSubtitleReapply(Math.min(activeIndex, vp.allSubtitles.length - 1));
+		}
 		emitState();
 	}
 
@@ -175,7 +180,8 @@
 			scheduleSubtitleReapply(-1);
 			return;
 		}
-		const activeIndex = vp.activeSubtitleIndex >= 0 ? vp.activeSubtitleIndex : 0;
+		const activeIndex =
+			vp.activeSubtitleIndex >= 0 ? vp.activeSubtitleIndex : vp.preferredSubtitleIndex();
 		scheduleSubtitleReapply(Math.min(activeIndex, subtitleCount - 1));
 	});
 

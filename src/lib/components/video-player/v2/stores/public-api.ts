@@ -35,6 +35,7 @@ export function createPublicApi(ctx: any) {
 		setQuality: hls.setQuality,
 		currentQualityLabel: hls.currentQualityLabel,
 		applySubtitle: subtitle.applySubtitle,
+		preferredSubtitleIndex: subtitle.preferredSubtitleIndex,
 		loadThumbnails: thumbnail.loadThumbnails,
 		handleTap: playback.handleTap,
 		toggleFullscreen: playback.toggleFullscreen,

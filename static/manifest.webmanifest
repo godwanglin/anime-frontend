@@ -1,6 +1,6 @@
 {
-	"name": "AniStream",
-	"short_name": "AniStream",
+	"name": "Weebin",
+	"short_name": "Weebin",
 	"description": "Anime streaming and update notifications",
 	"start_url": "/",
 	"display": "standalone",

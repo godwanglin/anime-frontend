@@ -79,7 +79,8 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 		getOptions: () => options,
 		getVideoEl: () => videoEl,
 		getHlsInstance: () => hls?.hlsInstance,
-		getCurrentSrc: () => currentSrc
+		getCurrentSrc: () => currentSrc,
+		getCurrentTime: () => playback.currentTime
 	});
 
 	const thumbnail = createThumbnailManager({
@@ -225,9 +226,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 			const nextIndex =
 				subtitle.activeSubtitleIndex >= 0 && subtitle.activeSubtitleIndex < subtitle.allSubtitles.length
 					? subtitle.activeSubtitleIndex
-					: subtitle.allSubtitles.length > 0
-						? 0
-						: -1;
+					: subtitle.preferredSubtitleIndex();
 			subtitle.applySubtitle(nextIndex);
 		});
 	});
@@ -238,6 +237,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 
 	function onTimeUpdate() {
 		playback.onTimeUpdate();
+		subtitle.syncActiveCues();
 		if (playbackCfg.persistProgress !== false) {
 			progress.remember(playback.currentTime, playback.duration);
 		}
@@ -259,6 +259,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 	function onLoadedMetadata() {
 		playback.onLoadedMetadata();
 		skipIntro.onLoadedMetadata();
+		subtitle.syncActiveCues();
 	}
 
 	function toggleStats() {

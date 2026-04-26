@@ -73,7 +73,8 @@
 
 	const activeFilters = $derived(
 		[
-			filterAnimeId && `Anime: ${animeOptions.find((anime) => String(anime.id) === filterAnimeId)?.title ?? filterAnimeId}`,
+			filterAnimeId &&
+				`Anime: ${animeOptions.find((anime) => String(anime.id) === filterAnimeId)?.title ?? filterAnimeId}`,
 			search && `Cari: ${search}`,
 			episodeNumber && `Ep: ${episodeNumber}`,
 			(numberFrom || numberTo) && `Range: ${numberFrom || '-'}-${numberTo || '-'}`,
@@ -197,13 +198,24 @@
 	<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 		<div>
 			<h2 class="text-2xl font-black">Manajemen Episode</h2>
-			<p class="text-sm text-zinc-500">Filter episode dari server berdasarkan anime, status, video, tanggal, dan urutan.</p>
+			<p class="text-sm text-zinc-500">
+				Filter episode dari server berdasarkan anime, status, video, tanggal, dan urutan.
+			</p>
 		</div>
-		<button onclick={() => (showCreate = !showCreate)} class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white">Tambah Episode</button>
+		<button
+			onclick={() => (showCreate = !showCreate)}
+			class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white">Tambah Episode</button
+		>
 	</div>
 
 	{#if showCreate}
-		<form onsubmit={(e) => { e.preventDefault(); createEpisode(); }} class="grid gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 md:grid-cols-3">
+		<form
+			onsubmit={(e) => {
+				e.preventDefault();
+				createEpisode();
+			}}
+			class="grid gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 md:grid-cols-3"
+		>
 			<AdminFormInput label="Anime ID" name="animeId" type="number" bind:value={animeId} required />
 			<AdminFormInput label="Slug" name="slug" bind:value={slug} required />
 			<AdminFormInput label="Nomor" name="number" type="number" bind:value={number} required />
@@ -211,14 +223,24 @@
 			<AdminFormInput label="Sub/Dub" name="sub" bind:value={sub} />
 			<label class="block">
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Status</span>
-				<select bind:value={status} class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm">
+				<select
+					bind:value={status}
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				>
 					<option value="published">Published</option>
 					<option value="draft">Draft</option>
 				</select>
 			</label>
 			<AdminFormInput label="Tanggal" name="date" bind:value={date} />
-			<AdminFormInput label="Skip intro (detik)" name="skipIntroSeconds" type="number" bind:value={skipIntroSeconds} />
-			<button class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white md:col-span-3">Simpan Episode</button>
+			<AdminFormInput
+				label="Skip intro (detik)"
+				name="skipIntroSeconds"
+				type="number"
+				bind:value={skipIntroSeconds}
+			/>
+			<button class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white md:col-span-3"
+				>Simpan Episode</button
+			>
 		</form>
 	{/if}
 
@@ -226,7 +248,11 @@
 		<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Anime</span>
-				<select bind:value={draftAnimeId} onchange={applyFilters} class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm">
+				<select
+					bind:value={draftAnimeId}
+					onchange={applyFilters}
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				>
 					<option value="">Semua anime</option>
 					{#each animeOptions as anime}
 						<option value={String(anime.id)}>{anime.title}</option>
@@ -235,15 +261,28 @@
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Cari judul</span>
-				<input bind:value={draftSearch} onkeydown={(e) => e.key === 'Enter' && applyFilters()} placeholder="Judul episode..." class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm" />
+				<input
+					bind:value={draftSearch}
+					onkeydown={(e) => e.key === 'Enter' && applyFilters()}
+					placeholder="Judul episode..."
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				/>
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Episode tepat</span>
-				<input bind:value={draftEpisodeNumber} type="number" placeholder="Contoh: 12" class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm" />
+				<input
+					bind:value={draftEpisodeNumber}
+					type="number"
+					placeholder="Contoh: 12"
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				/>
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Urutan</span>
-				<select bind:value={draftSortBy} class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm">
+				<select
+					bind:value={draftSortBy}
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				>
 					<option value="latest">Latest</option>
 					<option value="oldest">Oldest</option>
 					<option value="mostViewed">Most viewed</option>
@@ -254,15 +293,28 @@
 		<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Range episode dari</span>
-				<input bind:value={draftNumberFrom} type="number" placeholder="Min" class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm" />
+				<input
+					bind:value={draftNumberFrom}
+					type="number"
+					placeholder="Min"
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				/>
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Range episode sampai</span>
-				<input bind:value={draftNumberTo} type="number" placeholder="Max" class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm" />
+				<input
+					bind:value={draftNumberTo}
+					type="number"
+					placeholder="Max"
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				/>
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Status</span>
-				<select bind:value={draftStatus} class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm">
+				<select
+					bind:value={draftStatus}
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				>
 					<option value="">Semua status</option>
 					<option value="published">Published</option>
 					<option value="draft">Draft</option>
@@ -270,7 +322,10 @@
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Video source</span>
-				<select bind:value={draftHasVideo} class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm">
+				<select
+					bind:value={draftHasVideo}
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				>
 					<option value="">Semua</option>
 					<option value="true">Ada video</option>
 					<option value="false">Belum ada video</option>
@@ -281,49 +336,126 @@
 		<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Created from</span>
-				<input bind:value={draftCreatedFrom} type="date" class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm" />
+				<input
+					bind:value={draftCreatedFrom}
+					type="date"
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				/>
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Created to</span>
-				<input bind:value={draftCreatedTo} type="date" class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm" />
+				<input
+					bind:value={draftCreatedTo}
+					type="date"
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				/>
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Updated from</span>
-				<input bind:value={draftUpdatedFrom} type="date" class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm" />
+				<input
+					bind:value={draftUpdatedFrom}
+					type="date"
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				/>
 			</label>
 			<label>
 				<span class="mb-1.5 block text-xs font-bold text-zinc-500">Updated to</span>
-				<input bind:value={draftUpdatedTo} type="date" class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm" />
+				<input
+					bind:value={draftUpdatedTo}
+					type="date"
+					class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+				/>
 			</label>
 		</div>
 
-		<div class="flex flex-col gap-3 border-t border-zinc-800 pt-4 lg:flex-row lg:items-center lg:justify-between">
+		<div
+			class="flex flex-col gap-3 border-t border-zinc-800 pt-4 lg:flex-row lg:items-center lg:justify-between"
+		>
 			<div class="flex flex-wrap gap-2">
 				{#each activeFilters as filter}
-					<span class="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-bold text-violet-200">{filter}</span>
+					<span class="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-bold text-violet-200"
+						>{filter}</span
+					>
 				{:else}
 					<span class="text-xs font-semibold text-zinc-500">Tidak ada filter aktif</span>
 				{/each}
 			</div>
 			<div class="flex gap-2">
-				<button onclick={resetFilters} class="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-300 hover:bg-zinc-800">Reset Filter</button>
-				<button onclick={applyFilters} class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700">Apply Filter</button>
+				<button
+					onclick={resetFilters}
+					class="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-300 hover:bg-zinc-800"
+					>Reset Filter</button
+				>
+				<button
+					onclick={applyFilters}
+					class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
+					>Apply Filter</button
+				>
 			</div>
 		</div>
 	</section>
 
-	<AdminTable columns={[{ key: 'episode', label: 'Episode' }, { key: 'anime', label: 'Anime' }, { key: 'status', label: 'Status' }, { key: 'video', label: 'Video' }, { key: 'views', label: 'Views' }, { key: 'actions', label: 'Aksi' }]} data={items as any} {isLoading}>
+	<AdminTable
+		columns={[
+			{ key: 'episode', label: 'Episode' },
+			{ key: 'anime', label: 'Anime' },
+			{ key: 'status', label: 'Status' },
+			{ key: 'video', label: 'Video' },
+			{ key: 'views', label: 'Views' },
+			{ key: 'actions', label: 'Aksi' }
+		]}
+		data={items as any}
+		{isLoading}
+	>
 		{#snippet children(row)}
-			<td class="px-4 py-3"><p class="font-bold">Ep {row.number} - {row.title}</p><p class="text-xs text-zinc-500">{row.slug}</p></td>
+			<td class="px-4 py-3"
+				><p class="font-bold">Ep {row.number} - {row.title}</p>
+				<p class="text-xs text-zinc-500">{row.slug}</p></td
+			>
 			<td class="px-4 py-3">{row.anime?.title ?? row.animeId}</td>
-			<td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs font-bold {row.status === 'draft' ? 'bg-amber-500/15 text-amber-300' : 'bg-emerald-500/15 text-emerald-300'}">{row.status ?? 'published'}</span></td>
+			<td class="px-4 py-3"
+				><span
+					class="rounded-full px-2 py-1 text-xs font-bold {row.status === 'draft'
+						? 'bg-amber-500/15 text-amber-300'
+						: 'bg-emerald-500/15 text-emerald-300'}">{row.status ?? 'published'}</span
+				></td
+			>
 			<td class="px-4 py-3">{row._count?.servers ? `${row._count.servers} server` : '-'}</td>
 			<td class="px-4 py-3">{Number(row.views ?? 0).toLocaleString('id-ID')}</td>
-			<td class="px-4 py-3"><a href="/admin/episodes/{row.id}" class="mr-2 rounded-lg border border-zinc-700 px-2 py-1">Edit</a><button onclick={() => (deleteId = row.id)} class="rounded-lg border border-red-900 px-2 py-1 text-red-400">Hapus</button></td>
+			<td class="px-4 py-3">
+				<div class="flex flex-wrap gap-2">
+					<a
+						href="/admin/episodes/{row.id}/upload"
+						class="inline-flex items-center gap-1 rounded-lg border border-violet-500/60 px-2 py-1 text-violet-200 hover:bg-violet-500/10"
+					>
+						<span class="material-symbols-rounded text-[16px]">cloud_upload</span>
+						Upload
+					</a>
+					<a href="/admin/episodes/{row.id}" class="rounded-lg border border-zinc-700 px-2 py-1"
+						>Edit</a
+					>
+					<button
+						onclick={() => (deleteId = row.id)}
+						class="rounded-lg border border-red-900 px-2 py-1 text-red-400">Hapus</button
+					>
+				</div>
+			</td>
 		{/snippet}
 	</AdminTable>
 
-	<AdminPagination {total} page={currentPage} limit={20} onChange={(page) => goto(`/admin/episodes${filterQuery(page)}`, { noScroll: true })} />
+	<AdminPagination
+		{total}
+		page={currentPage}
+		limit={20}
+		onChange={(page) => goto(`/admin/episodes${filterQuery(page)}`, { noScroll: true })}
+	/>
 </div>
 
-<AdminModal open={Boolean(deleteId)} title="Hapus episode?" message="Episode akan dihapus permanen." danger onClose={() => (deleteId = null)} onConfirm={deleteEpisode} />
+<AdminModal
+	open={Boolean(deleteId)}
+	title="Hapus episode?"
+	message="Episode akan dihapus permanen."
+	danger
+	onClose={() => (deleteId = null)}
+	onConfirm={deleteEpisode}
+/>

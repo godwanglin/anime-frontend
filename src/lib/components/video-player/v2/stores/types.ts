@@ -25,6 +25,8 @@ export interface SubtitleConfig {
 	lineHeight?: string;
 	opacity?: number;
 	maxWidth?: string;
+	defaultLanguage?: string;
+	enabled?: boolean;
 }
 
 export interface ThemeConfig {

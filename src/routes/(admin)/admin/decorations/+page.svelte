@@ -9,15 +9,17 @@
 	import AdminTable from '$lib/components/admin/AdminTable.svelte';
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
+	import ProfileEffect from '$lib/components/ProfileEffect.svelte';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
 
 	type DecorationRow = {
 		id: number;
 		name: string;
-		type: 'frame' | 'nametag' | string;
+		type: 'frame' | 'nametag' | 'effect' | string;
 		asset: string | null;
 		config: Record<string, unknown> | null;
 		requiredLevel: number;
+		priceExp: number;
 		sortOrder: number;
 		isActive: boolean;
 		createdAt: string;
@@ -28,9 +30,13 @@
 	type DecorationForm = {
 		id?: number;
 		name: string;
-		type: 'frame' | 'nametag';
+		type: 'frame' | 'nametag' | 'effect';
 		asset: string;
 		style: string;
+		effectSrc: string;
+		effectLoop: boolean;
+		effectDuration: number;
+		priceExp: number;
 		requiredLevel: number;
 		sortOrder: number;
 		isActive: boolean;
@@ -89,17 +95,23 @@
 	}
 
 	function rowToForm(row: DecorationRow): DecorationForm {
-		const type = row.type === 'nametag' ? 'nametag' : 'frame';
-		const style =
-			type === 'nametag' && row.config && typeof row.config === 'object'
-				? String((row.config as { style?: unknown }).style ?? '')
-				: '';
+		const type = row.type === 'nametag' ? 'nametag' : row.type === 'effect' ? 'effect' : 'frame';
+		const config = row.config && typeof row.config === 'object' ? row.config : {};
+		const style = type === 'nametag' ? String((config as { style?: unknown }).style ?? '') : '';
+		const effectSrc =
+			type === 'effect' ? String((config as { src?: unknown }).src ?? row.asset ?? '') : '';
+		const rawDuration = Number((config as { duration?: unknown }).duration ?? 10000);
 		return {
 			id: row.id,
 			name: row.name,
 			type,
 			asset: row.asset ?? '',
 			style,
+			effectSrc,
+			effectLoop: type === 'effect' ? Boolean((config as { loop?: unknown }).loop) : true,
+			effectDuration:
+				Number.isFinite(rawDuration) && rawDuration > 0 ? Math.floor(rawDuration) : 10000,
+			priceExp: row.priceExp ?? 0,
 			requiredLevel: row.requiredLevel,
 			sortOrder: row.sortOrder,
 			isActive: row.isActive
@@ -112,6 +124,10 @@
 			type: 'frame',
 			asset: '',
 			style: '',
+			effectSrc: '',
+			effectLoop: true,
+			effectDuration: 10000,
+			priceExp: 1000,
 			requiredLevel: 1,
 			sortOrder: 0,
 			isActive: true
@@ -128,18 +144,30 @@
 
 	function buildPayload(form: DecorationForm) {
 		const isNameTag = form.type === 'nametag';
+		const isEffect = form.type === 'effect';
 		const asset = isNameTag
 			? form.style
 				? `nametag-${form.style}`
 				: null
+			: isEffect
+				? null
 			: form.asset.trim() || null;
-		const config = isNameTag ? { style: form.style } : {};
+		const config = isNameTag
+			? { style: form.style }
+			: isEffect
+				? {
+						src: form.effectSrc.trim(),
+						loop: form.effectLoop,
+						duration: Math.max(500, Math.floor(Number(form.effectDuration) || 10000))
+					}
+				: {};
 		return {
 			name: form.name.trim(),
 			type: form.type,
 			asset,
 			config,
-			requiredLevel: Math.max(1, Math.floor(Number(form.requiredLevel) || 1)),
+			requiredLevel: isEffect ? 1 : Math.max(1, Math.floor(Number(form.requiredLevel) || 1)),
+			priceExp: isEffect ? Math.max(1, Math.floor(Number(form.priceExp) || 0)) : 0,
 			sortOrder: Math.floor(Number(form.sortOrder) || 0),
 			isActive: form.isActive
 		};
@@ -150,6 +178,13 @@
 		if (form.type === 'nametag' && !form.style) return 'Pilih style nametag';
 		if (form.type === 'frame' && !form.asset.trim())
 			return 'Asset (filename) wajib diisi untuk frame';
+		if (form.type === 'effect') {
+			if (!form.effectSrc.trim()) return 'Source URL wajib diisi untuk profile effect';
+			if (!Number.isFinite(Number(form.priceExp)) || Number(form.priceExp) <= 0)
+				return 'Harga EXP wajib lebih dari 0 untuk profile effect';
+			if (!Number.isFinite(Number(form.effectDuration)) || Number(form.effectDuration) < 500)
+				return 'Duration minimal 500ms';
+		}
 		return null;
 	}
 
@@ -237,6 +272,16 @@
 		};
 	}
 
+	function previewEffect(form: DecorationForm) {
+		const src = form.effectSrc.trim();
+		if (!src) return null;
+		return {
+			src,
+			loop: form.effectLoop,
+			duration: Math.max(500, Math.floor(Number(form.effectDuration) || 10000))
+		};
+	}
+
 	function rowFramePreview(row: DecorationRow) {
 		return {
 			id: row.id,
@@ -264,6 +309,24 @@
 		};
 	}
 
+	function rowEffectPreview(row: DecorationRow) {
+		const config = row.config && typeof row.config === 'object' ? row.config : {};
+		const src = String((config as { src?: unknown }).src ?? row.asset ?? '');
+		if (!src) return null;
+		const rawDuration = Number((config as { duration?: unknown }).duration ?? 10000);
+		return {
+			src,
+			loop: Boolean((config as { loop?: unknown }).loop),
+			duration: Number.isFinite(rawDuration) && rawDuration > 0 ? Math.floor(rawDuration) : 10000
+		};
+	}
+
+	function typeBadgeClass(type: string) {
+		if (type === 'nametag') return 'border border-amber-900/60 bg-amber-950/40 text-amber-200';
+		if (type === 'effect') return 'border border-fuchsia-900/60 bg-fuchsia-950/40 text-fuchsia-200';
+		return 'border border-violet-900/60 bg-violet-950/40 text-violet-200';
+	}
+
 	$effect(() => {
 		url;
 		load();
@@ -275,7 +338,7 @@
 		<div>
 			<h2 class="text-2xl font-black">Decorations</h2>
 			<p class="text-sm text-zinc-500">
-				Kelola frame avatar dan nametag yang bisa diunlock user via level.
+				Kelola frame avatar, nametag, dan profile effect.
 			</p>
 		</div>
 		<button
@@ -303,6 +366,7 @@
 			<option value="">Semua tipe</option>
 			<option value="frame">Frame</option>
 			<option value="nametag">Nametag</option>
+			<option value="effect">Profile Effect</option>
 		</select>
 		<select
 			value={statusFilter}
@@ -320,7 +384,8 @@
 			{ key: 'preview', label: 'Preview' },
 			{ key: 'name', label: 'Nama' },
 			{ key: 'type', label: 'Tipe' },
-			{ key: 'level', label: 'Min Lv' },
+			{ key: 'requirement', label: 'Syarat' },
+			{ key: 'price', label: 'Harga' },
 			{ key: 'sort', label: 'Sort' },
 			{ key: 'owned', label: 'Owned' },
 			{ key: 'status', label: 'Status' },
@@ -340,35 +405,56 @@
 						frame={rowFramePreview(row)}
 						fallbackInitial="?"
 					/>
-				{:else}
+				{:else if row.type === 'nametag'}
 					{@const preview = rowNameTagPreview(row)}
 					{#if preview}
 						<NameTag name="Preview" nametag={preview} class="text-[13px]" />
 					{:else}
 						<span class="text-xs text-zinc-500">—</span>
 					{/if}
+				{:else}
+					{@const effect = rowEffectPreview(row)}
+					<div
+						class="relative flex h-14 w-24 items-center justify-center overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950"
+					>
+						{#if effect}
+							<ProfileEffect src={effect.src} loop={effect.loop} duration={effect.duration} />
+							<span class="relative z-[60] text-[10px] font-black text-white drop-shadow">
+								Effect
+							</span>
+						{:else}
+							<span class="text-xs text-zinc-500">-</span>
+						{/if}
+					</div>
 				{/if}
 			</td>
 			<td class="px-4 py-3">
 				<p class="font-bold">{row.name}</p>
-				{#if row.asset}
+				{#if row.type === 'effect'}
+					{@const effect = rowEffectPreview(row)}
+					{#if effect}
+						<p class="max-w-[220px] truncate text-xs text-zinc-500">{effect.src}</p>
+					{/if}
+				{:else if row.asset}
 					<p class="text-xs text-zinc-500">{row.asset}</p>
 				{/if}
 			</td>
 			<td class="px-4 py-3">
 				<span
-					class="rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wider {row.type ===
-					'nametag'
-						? 'border border-amber-900/60 bg-amber-950/40 text-amber-200'
-						: 'border border-violet-900/60 bg-violet-950/40 text-violet-200'}"
+					class="rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wider {typeBadgeClass(
+						row.type
+					)}"
 				>
 					{row.type}
 				</span>
 			</td>
 			<td class="px-4 py-3">
 				<span class="rounded-full bg-zinc-800 px-2.5 py-1 text-xs font-black text-zinc-300">
-					Lv {row.requiredLevel}
+					{row.type === 'effect' ? 'EXP' : `Lv ${row.requiredLevel}`}
 				</span>
+			</td>
+			<td class="px-4 py-3 text-sm text-zinc-400">
+				{row.priceExp > 0 ? row.priceExp.toLocaleString('id-ID') : '-'}
 			</td>
 			<td class="px-4 py-3 text-sm text-zinc-400">{row.sortOrder}</td>
 			<td class="px-4 py-3 text-sm text-zinc-400">{row._count?.ownedBy ?? 0}</td>
@@ -429,18 +515,33 @@
 						frame={previewFrame(editing)}
 						fallbackInitial={(editing.name || 'A')[0]}
 					/>
-				{:else}
+				{:else if editing.type === 'nametag'}
 					{@const np = previewNameTag(editing)}
 					{#if np}
 						<NameTag name={editing.name || 'Preview'} nametag={np} class="text-[16px]" />
 					{:else}
 						<p class="text-sm text-zinc-500">Pilih style untuk lihat preview</p>
 					{/if}
+				{:else}
+					{@const effect = previewEffect(editing)}
+					<div
+						class="relative flex h-full w-full items-center justify-center overflow-hidden rounded-lg bg-zinc-950"
+					>
+						{#if effect}
+							<ProfileEffect src={effect.src} loop={effect.loop} duration={effect.duration} />
+							<div class="relative z-[60] text-center">
+								<p class="text-sm font-black text-white">{editing.name || 'Profile Effect'}</p>
+								<p class="text-[11px] text-zinc-300">{editing.priceExp.toLocaleString('id-ID')} EXP</p>
+							</div>
+						{:else}
+							<p class="text-sm text-zinc-500">Isi source URL untuk lihat preview</p>
+						{/if}
+					</div>
 				{/if}
 			</div>
 
 			<!-- Type -->
-			<div class="grid grid-cols-2 gap-2">
+			<div class="grid grid-cols-3 gap-2">
 				<button
 					type="button"
 					onclick={() => (editing!.type = 'frame')}
@@ -460,6 +561,16 @@
 					disabled={Boolean(editing.id)}
 				>
 					Nametag
+				</button>
+				<button
+					type="button"
+					onclick={() => (editing!.type = 'effect')}
+					class="rounded-lg border px-3 py-2 text-sm font-black {editing.type === 'effect'
+						? 'border-fuchsia-500 bg-fuchsia-600/20 text-fuchsia-200'
+						: 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-600'}"
+					disabled={Boolean(editing.id)}
+				>
+					Effect
 				</button>
 			</div>
 			{#if editing.id}
@@ -494,7 +605,7 @@
 						Pastikan file sudah diupload ke folder static `{FRAME_BASE_PATH}/`. Format: png/gif/webp.
 					</span>
 				</label>
-			{:else}
+			{:else if editing.type === 'nametag'}
 				<label class="block">
 					<span class="mb-1.5 block text-xs font-bold text-zinc-500">Style</span>
 					<select
@@ -512,19 +623,74 @@
 						</span>
 					{/if}
 				</label>
+			{:else}
+				<div class="space-y-3">
+					<label class="block">
+						<span class="mb-1.5 block text-xs font-bold text-zinc-500">Source URL</span>
+						<input
+							type="text"
+							bind:value={editing.effectSrc}
+							placeholder="https://cdn.discordapp.com/assets/content/..."
+							class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-mono"
+						/>
+					</label>
+					<div class="grid grid-cols-2 gap-3">
+						<label class="block">
+							<span class="mb-1.5 block text-xs font-bold text-zinc-500">Duration (ms)</span>
+							<input
+								type="number"
+								bind:value={editing.effectDuration}
+								min="500"
+								step="100"
+								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+							/>
+						</label>
+						<label class="block">
+							<span class="mb-1.5 block text-xs font-bold text-zinc-500">Harga EXP</span>
+							<input
+								type="number"
+								bind:value={editing.priceExp}
+								min="1"
+								step="1"
+								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+							/>
+						</label>
+					</div>
+					<label
+						class="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-3"
+					>
+						<span>
+							<span class="block text-sm font-black text-zinc-100">Loop</span>
+							<span class="text-xs text-zinc-500">
+								Effect akan diulang sesuai duration.
+							</span>
+						</span>
+						<input
+							bind:checked={editing.effectLoop}
+							type="checkbox"
+							class="h-5 w-5 accent-fuchsia-600"
+						/>
+					</label>
+				</div>
 			{/if}
 
-			<div class="grid grid-cols-2 gap-3">
-				<label class="block">
-					<span class="mb-1.5 block text-xs font-bold text-zinc-500">Min Level</span>
-					<input
-						type="number"
-						bind:value={editing.requiredLevel}
-						min="1"
-						step="1"
-						class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
-					/>
-				</label>
+			<div
+				class="grid gap-3"
+				class:grid-cols-1={editing.type === 'effect'}
+				class:grid-cols-2={editing.type !== 'effect'}
+			>
+				{#if editing.type !== 'effect'}
+					<label class="block">
+						<span class="mb-1.5 block text-xs font-bold text-zinc-500">Min Level</span>
+						<input
+							type="number"
+							bind:value={editing.requiredLevel}
+							min="1"
+							step="1"
+							class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
+						/>
+					</label>
+				{/if}
 				<label class="block">
 					<span class="mb-1.5 block text-xs font-bold text-zinc-500">Sort Order</span>
 					<input

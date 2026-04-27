@@ -1,10 +1,12 @@
 <script lang="ts">
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
-	import type { EquippedFrame, EquippedNameTag } from '$lib/decorations';
-	import { getCultivationBadge, type ExpBadge } from '$lib/exp';
+	import type { EquippedEffect, EquippedFrame, EquippedNameTag } from '$lib/decorations';
+	import { getCultivationBadge, type ExpBadge, type LevelProgress } from '$lib/exp';
+	import type { ProfileStats } from '$lib/stores/auth.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { comments } from '$lib/stores/comments.svelte';
+	import ProfileCard from '../ProfileCard.svelte';
 	import CommentInput from './CommentInput.svelte';
 	import CommentReplyList from './CommentReplyList.svelte';
 
@@ -27,8 +29,11 @@
 			exp?: number;
 			level?: number;
 			badge?: ExpBadge;
+			levelProgress?: LevelProgress;
+			profileStats?: ProfileStats;
 			frame?: EquippedFrame;
 			nametag?: EquippedNameTag;
+			effects?: EquippedEffect[];
 		};
 	};
 
@@ -79,7 +84,18 @@
 		await comments.editComment(comment.id, editContent);
 		editing = false;
 	}
+
+	let currentClickedUser: typeof comment.user | null = $state(null);
+	let showUserCard = $state(false);
+	let popoverAnchor = $state<HTMLButtonElement | null>(null);
 </script>
+
+<ProfileCard
+	user={currentClickedUser as any}
+	isOpen={showUserCard && !!currentClickedUser}
+	onClose={() => (showUserCard = false)}
+	anchorEl={popoverAnchor}
+/>
 
 <div
 	class="group flex gap-3 py-3.5 transition-colors"
@@ -91,12 +107,17 @@
 	<!-- Avatar -->
 	<div class="shrink-0 mt-0.5">
 		<AvatarFrame
+			bind:el={popoverAnchor}
 			src={comment.user?.avatar ?? null}
 			alt={comment.user?.username ?? ''}
 			size={avatarSize}
 			frame={userFrame}
 			fallbackInitial={avatarLetter}
 			fromComment
+			onclick={() => {
+				currentClickedUser = comment.user;
+				showUserCard = true;
+			}}
 		/>
 	</div>
 

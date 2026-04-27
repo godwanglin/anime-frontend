@@ -5,6 +5,7 @@
 	import SearchDropdown from '$lib/components/SearchDropdown.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
+	import { imageUploader } from '$lib/stores/image-uploader.svelte';
 	import { notifications } from '$lib/stores/notifications.svelte';
 	import { preference } from '$lib/stores/preference.svelte';
 	import { saved as savedStore } from '$lib/stores/saved.svelte';
@@ -25,6 +26,7 @@
 
 	let isHomePage = $derived($page.url.pathname === '/');
 	let isAnimePage = $derived($page.url.pathname.startsWith('/anime/'));
+	let canUploadAssets = $derived(auth.user?.role === 'admin');
 
 	let animeAppBarTitle = $derived(
 		(($page.data?.episode as { title?: string } | null | undefined)?.title ??
@@ -67,6 +69,9 @@
 
 	function goToNotifications() {
 		goto('/notifications');
+	}
+	function openImageUploader() {
+		imageUploader.open();
 	}
 
 	async function claimOpenAppExp() {
@@ -369,6 +374,17 @@
 
 			<!-- Right actions -->
 			<div class="flex items-center gap-1.5 shrink-0 ml-auto">
+				{#if canUploadAssets}
+					<button
+						onclick={openImageUploader}
+						aria-label="Upload gambar"
+						title="Upload gambar"
+						class="relative flex h-9 w-9 items-center justify-center rounded-full transition-all active:scale-90"
+						style="color: var(--text-muted);"
+					>
+						<span class="material-symbols-rounded" style="font-size:20px;">add_photo_alternate</span>
+					</button>
+				{/if}
 				<button
 					onclick={goToNotifications}
 					aria-label="Buka notifikasi"
@@ -442,6 +458,17 @@
 				</a>
 
 				<div class="flex items-center gap-1">
+					{#if canUploadAssets}
+						<button
+							onclick={openImageUploader}
+							class="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+							style="color: var(--text-muted);"
+							aria-label="Upload gambar"
+							title="Upload gambar"
+						>
+							<span class="material-symbols-rounded" style="font-size:20px;">add_photo_alternate</span>
+						</button>
+					{/if}
 					<button
 						onclick={goToNotifications}
 						class="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors"
@@ -525,6 +552,23 @@
 				>
 					{mobilePageTitle}
 				</p>
+
+				{#if canUploadAssets}
+					<button
+						onclick={openImageUploader}
+						class="relative shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90"
+						style="
+                        background: var(--surface);
+                        border: 1px solid var(--border-strong);
+                        color: var(--text-muted);
+                        box-shadow: var(--shadow-sm);
+                    "
+						aria-label="Upload gambar"
+						title="Upload gambar"
+					>
+						<span class="material-symbols-rounded" style="font-size:19px;">add_photo_alternate</span>
+					</button>
+				{/if}
 
 				<button
 					onclick={goToNotifications}

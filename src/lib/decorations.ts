@@ -1,9 +1,19 @@
-export type DecorationType = 'frame' | 'nametag';
+export type DecorationType = 'frame' | 'nametag' | 'effect';
 export type NameTagStyle = 'aura' | 'glitch' | 'cosmic' | 'glitch-glasses' | 'blood-god' | 'royal';
 
-export type DecorationConfig = {
+export type NameTagConfig = {
 	style?: NameTagStyle;
 };
+
+export type EffectConfig = {
+	src?: string;
+	loop?: boolean;
+	duration?: number;
+};
+
+export type DecorationConfig = NameTagConfig & EffectConfig;
+
+export const MAX_EQUIPPED_EFFECTS = 3;
 
 export type EquippedDecoration = {
 	id: number;
@@ -16,10 +26,12 @@ export type EquippedDecoration = {
 
 export type EquippedFrame = EquippedDecoration;
 export type EquippedNameTag = EquippedDecoration;
+export type EquippedEffect = NonNullable<EquippedDecoration>;
 
 export type EquippedDecorations = {
 	frame: EquippedFrame;
 	nametag: EquippedNameTag;
+	effects: EquippedEffect[];
 };
 
 export type DecorationItem = {
@@ -30,6 +42,7 @@ export type DecorationItem = {
 	assetUrl: string | null;
 	config: DecorationConfig;
 	requiredLevel: number;
+	priceExp: number;
 	sortOrder: number;
 };
 
@@ -67,6 +80,25 @@ export function getNameTagStyle(nametag: EquippedNameTag | undefined): NameTagSt
 export function getNameTagClass(nametag: EquippedNameTag | undefined) {
 	const style = getNameTagStyle(nametag);
 	return style ? `nametag-${style}` : '';
+}
+
+export function getEffectSrc(effect: EquippedEffect | DecorationItem | null | undefined): string | null {
+	if (!effect) return null;
+	if (effect.assetUrl) return effect.assetUrl;
+	const cfg = effect.config as EffectConfig | undefined;
+	return cfg?.src ?? null;
+}
+
+export function getEffectLoop(effect: EquippedEffect | DecorationItem | null | undefined): boolean {
+	const cfg = effect?.config as EffectConfig | undefined;
+	return Boolean(cfg?.loop);
+}
+
+export function getEffectDuration(
+	effect: EquippedEffect | DecorationItem | null | undefined
+): number | undefined {
+	const cfg = effect?.config as EffectConfig | undefined;
+	return typeof cfg?.duration === 'number' ? cfg.duration : undefined;
 }
 
 /**

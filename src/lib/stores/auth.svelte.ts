@@ -1,7 +1,14 @@
 import { browser } from '$app/environment';
 import config from '$lib/config';
-import type { EquippedFrame, EquippedNameTag } from '$lib/decorations';
+import type { EquippedEffect, EquippedFrame, EquippedNameTag } from '$lib/decorations';
 import type { ExpBadge, LevelProgress } from '$lib/exp';
+
+export type ProfileStats = {
+	episodeCount: number;
+	watchSeconds: number;
+	watchHours: number;
+	savedCount: number;
+};
 
 export type AuthUser = {
 	id: number;
@@ -15,8 +22,28 @@ export type AuthUser = {
 	lastExpGainAt?: string | null;
 	badge?: ExpBadge;
 	levelProgress?: LevelProgress;
+	profileStats?: ProfileStats;
 	frame?: EquippedFrame;
 	nametag?: EquippedNameTag;
+	effects?: EquippedEffect[];
+	createdAt?: string;
+};
+
+export type PublicUser = {
+	id: number;
+	username: string;
+	avatar: string | null;
+	role?: string;
+	isVerified?: boolean;
+	exp?: number;
+	level?: number;
+	lastExpGainAt?: string | null;
+	badge?: ExpBadge;
+	levelProgress?: LevelProgress;
+	profileStats?: ProfileStats;
+	frame?: EquippedFrame;
+	nametag?: EquippedNameTag;
+	effects?: EquippedEffect[];
 	createdAt?: string;
 };
 

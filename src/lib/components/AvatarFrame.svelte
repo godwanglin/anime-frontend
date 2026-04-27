@@ -14,9 +14,11 @@
 		frameScale?: number;
 		class?: string;
 		fromComment?: boolean; // TODO: remove after migrating all comment avatars to this component
+		el?: any; // Optional anchor element for popover positioning (used in comments)
+		onclick?: () => void;
 	};
 
-	const {
+	let {
 		src,
 		alt = '',
 		size = 48,
@@ -26,7 +28,9 @@
 		framePreviewOnly = false,
 		frameScale = 1,
 		class: className = '',
-		fromComment = false
+		fromComment = false,
+		el = $bindable<HTMLButtonElement | null>(null),
+		onclick
 	}: Props = $props();
 
 	const radius = $derived(rounded === 'full' ? '9999px' : 'var(--radius-xl, 14px)');
@@ -35,13 +39,26 @@
 	const framePct = $derived(Math.round(tweak.scale * frameScale * 100));
 
 	const offsetX = $derived(tweak.offsetX ?? 0);
+	const offsetYperAsset: any = {
+		'border5.gif': -4,
+		'border8.webp': 1
+	};
+
+	const getoffsetYdefault = () => {
+		if (fromComment) {
+			return offsetYperAsset[frame?.asset as any] ?? tweak.offsetY ?? 0;
+		}
+		return tweak.offsetY ?? 0;
+	};
 	const offsetY = $derived(
-		fromComment && frame?.asset === 'border5.gif' ? -6 : (tweak.offsetY ?? 0)
+		fromComment && getoffsetYdefault() ? getoffsetYdefault() : (tweak.offsetY ?? 0)
 	);
 	const showInner = $derived(!framePreviewOnly);
 </script>
 
-<span
+<button
+	{onclick}
+	bind:this={el}
 	class="avatar-wrapper {className}"
 	style="width: {size}px; height: {size}px; --frame-radius: {radius};"
 >
@@ -73,7 +90,7 @@
 			}}
 		/>
 	{/if}
-</span>
+</button>
 
 <style>
 	.avatar-wrapper {

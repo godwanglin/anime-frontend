@@ -28,9 +28,9 @@
 	// const frameOffsetY = $derived(frameTweak.offsetY ?? 0);
 
 	// Pick a recent thumbnail for the blurred hero bg
-	const heroBg = $derived(
-		history.items[0]?.animeThumbnail || saved.items[0]?.animeThumbnail || null
-	);
+	// const heroBg = $derived(
+	// 	history.items[0]?.animeThumbnail || saved.items[0]?.animeThumbnail || null
+	// );
 	// console.log(heroBg);
 </script>
 

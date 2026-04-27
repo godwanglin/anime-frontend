@@ -1,6 +1,7 @@
 import config from '$lib/config';
-import type { EquippedFrame, EquippedNameTag } from '$lib/decorations';
-import type { ExpBadge } from '$lib/exp';
+import type { EquippedEffect, EquippedFrame, EquippedNameTag } from '$lib/decorations';
+import type { ExpBadge, LevelProgress } from '$lib/exp';
+import type { ProfileStats } from './auth.svelte';
 import { auth } from './auth.svelte';
 
 export type ReactionType = 'LIKE' | 'DISLIKE';
@@ -27,8 +28,11 @@ export type CommentWithMeta = {
 		exp?: number;
 		level?: number;
 		badge?: ExpBadge;
+		levelProgress?: LevelProgress;
+		profileStats?: ProfileStats;
 		frame?: EquippedFrame;
 		nametag?: EquippedNameTag;
+		effects?: EquippedEffect[];
 	};
 };
 
@@ -185,8 +189,11 @@ async function postComment(payload: {
 			exp: auth.user.exp,
 			level: auth.user.level,
 			badge: auth.user.badge,
+			levelProgress: auth.user.levelProgress,
+			profileStats: auth.user.profileStats,
 			frame: auth.user.frame ?? null,
-			nametag: auth.user.nametag ?? null
+			nametag: auth.user.nametag ?? null,
+			effects: auth.user.effects ?? []
 		}
 	};
 

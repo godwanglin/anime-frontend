@@ -5,6 +5,7 @@
 	import AdminToast from '$lib/components/admin/AdminToast.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
+	import { imageUploader } from '$lib/stores/image-uploader.svelte';
 	import { notifications } from '$lib/stores/notifications.svelte';
 	import type { AppNotification } from '$lib/stores/notifications.svelte';
 
@@ -227,6 +228,14 @@
 				</div>
 			</div>
 			<div class="flex items-center gap-2">
+				<button
+					class="relative rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+					aria-label="Upload gambar"
+					title="Upload gambar"
+					onclick={() => imageUploader.open()}
+				>
+					<span class="material-symbols-rounded">add_photo_alternate</span>
+				</button>
 				<button
 					class="relative rounded-lg p-2 text-zinc-400 hover:bg-zinc-800"
 					aria-label="Notifikasi"

@@ -2,14 +2,16 @@ import type {
 	DecorationType,
 	EquippedDecoration,
 	EquippedDecorations,
+	EquippedEffect,
 	OwnedDecoration,
 	ShopDecoration
 } from '$lib/decorations';
+import { MAX_EQUIPPED_EFFECTS } from '$lib/decorations';
 import { auth } from './auth.svelte';
 
 let shopItems = $state<ShopDecoration[]>([]);
 let ownedItems = $state<OwnedDecoration[]>([]);
-let equipped = $state<EquippedDecorations>({ frame: null, nametag: null });
+let equipped = $state<EquippedDecorations>({ frame: null, nametag: null, effects: [] });
 let isLoading = $state(false);
 let isMutating = $state(false);
 let error = $state<string | null>(null);
@@ -34,13 +36,26 @@ function normalizeEquipped(value: unknown): EquippedDecorations {
 	const data = value as Partial<EquippedDecorations> | null | undefined;
 	return {
 		frame: data?.frame ?? null,
-		nametag: data?.nametag ?? null
+		nametag: data?.nametag ?? null,
+		effects: Array.isArray(data?.effects) ? (data?.effects as EquippedEffect[]) : []
 	};
 }
 
 function syncAuthDecoration(type: DecorationType, item: EquippedDecoration) {
 	if (!auth.user) return;
+	if (type === 'effect') return; // effects array di-sync terpisah
 	auth.user[type] = item;
+}
+
+function syncAuthEffects(effects: EquippedEffect[]) {
+	if (!auth.user) return;
+	auth.user.effects = effects;
+}
+
+function syncAll(next: EquippedDecorations) {
+	syncAuthDecoration('frame', next.frame);
+	syncAuthDecoration('nametag', next.nametag);
+	syncAuthEffects(next.effects);
 }
 
 async function fetchShop() {
@@ -60,7 +75,7 @@ async function fetchShop() {
 async function fetchOwned() {
 	if (!auth.isLoggedIn) {
 		ownedItems = [];
-		equipped = { frame: null, nametag: null };
+		equipped = { frame: null, nametag: null, effects: [] };
 		return;
 	}
 	isLoading = true;
@@ -70,8 +85,7 @@ async function fetchOwned() {
 		const envelope = await readEnvelope<OwnedDecoration[]>(response);
 		ownedItems = envelope.data ?? [];
 		equipped = normalizeEquipped(envelope.meta?.equipped);
-		syncAuthDecoration('frame', equipped.frame);
-		syncAuthDecoration('nametag', equipped.nametag);
+		syncAll(equipped);
 	} catch (caught) {
 		error = caught instanceof Error ? caught.message : 'Gagal memuat inventaris';
 	} finally {
@@ -79,15 +93,21 @@ async function fetchOwned() {
 	}
 }
 
-function applyEquipState(type: DecorationType, decorationId: number | null) {
-	shopItems = shopItems.map((item) => ({
-		...item,
-		isEquipped: item.type === type ? decorationId !== null && item.id === decorationId : item.isEquipped
-	}));
-	ownedItems = ownedItems.map((item) => ({
-		...item,
-		isEquipped: item.type === type ? decorationId !== null && item.id === decorationId : item.isEquipped
-	}));
+function setEquippedFlag(items: ShopDecoration[] | OwnedDecoration[], next: EquippedDecorations) {
+	const equippedIds = new Set<number>();
+	if (next.frame) equippedIds.add(next.frame.id);
+	if (next.nametag) equippedIds.add(next.nametag.id);
+	for (const eff of next.effects) equippedIds.add(eff.id);
+	return items.map((item) => ({ ...item, isEquipped: equippedIds.has(item.id) }));
+}
+
+function applyMeta(meta: Record<string, unknown> | null | undefined) {
+	if (!meta) return;
+	const next = normalizeEquipped(meta.equipped);
+	equipped = next;
+	shopItems = setEquippedFlag(shopItems, next) as ShopDecoration[];
+	ownedItems = setEquippedFlag(ownedItems, next) as OwnedDecoration[];
+	syncAll(next);
 }
 
 async function equipDecoration(decorationId: number) {
@@ -99,15 +119,30 @@ async function equipDecoration(decorationId: number) {
 			method: 'POST',
 			body: JSON.stringify({})
 		});
-		const envelope = await readEnvelope<{ equipped: EquippedDecoration }>(response);
-		const next = envelope.data?.equipped ?? null;
-		if (!next) throw new Error('Dekorasi belum dimiliki atau tidak ditemukan');
-
-		equipped = { ...equipped, [next.type]: next };
-		applyEquipState(next.type, next.id);
-		syncAuthDecoration(next.type, next);
+		const envelope = await readEnvelope<{ equipped: EquippedDecoration; type: DecorationType }>(
+			response
+		);
+		applyMeta(envelope.meta ?? null);
 	} catch (caught) {
 		error = caught instanceof Error ? caught.message : 'Gagal memasang dekorasi';
+	} finally {
+		isMutating = false;
+	}
+}
+
+async function unequipById(decorationId: number) {
+	if (isMutating) return;
+	isMutating = true;
+	error = null;
+	try {
+		const response = await auth.authFetch(`/api/user/decorations/${decorationId}/unequip`, {
+			method: 'POST',
+			body: JSON.stringify({})
+		});
+		const envelope = await readEnvelope<{ decorationId: number }>(response);
+		applyMeta(envelope.meta ?? null);
+	} catch (caught) {
+		error = caught instanceof Error ? caught.message : 'Gagal melepas dekorasi';
 	} finally {
 		isMutating = false;
 	}
@@ -122,12 +157,54 @@ async function unequip(type: DecorationType = 'frame') {
 			method: 'POST',
 			body: JSON.stringify({ type })
 		});
-		await readEnvelope<{ equipped: null; type: DecorationType }>(response);
-		equipped = { ...equipped, [type]: null };
-		applyEquipState(type, null);
-		syncAuthDecoration(type, null);
+		const envelope = await readEnvelope<{ equipped: null; type: DecorationType }>(response);
+		applyMeta(envelope.meta ?? null);
 	} catch (caught) {
 		error = caught instanceof Error ? caught.message : 'Gagal melepas dekorasi';
+	} finally {
+		isMutating = false;
+	}
+}
+
+type PurchaseResponse = {
+	decoration: EquippedDecoration;
+	spentExp: number;
+	exp: number;
+	level: number;
+	badge?: { name: string; color: string };
+	levelProgress?: {
+		currentLevelExp: number;
+		nextLevelExp: number;
+		progress: number;
+		remainingExp: number;
+	};
+};
+
+async function purchase(decorationId: number) {
+	if (isMutating) return null;
+	isMutating = true;
+	error = null;
+	try {
+		const response = await auth.authFetch(`/api/user/decorations/${decorationId}/purchase`, {
+			method: 'POST',
+			body: JSON.stringify({})
+		});
+		const envelope = await readEnvelope<PurchaseResponse>(response);
+		// Sync user EXP / level setelah purchase.
+		if (auth.user && envelope.data) {
+			auth.user.exp = envelope.data.exp;
+			auth.user.level = envelope.data.level;
+			if (envelope.data.badge) auth.user.badge = envelope.data.badge;
+			if (envelope.data.levelProgress) auth.user.levelProgress = envelope.data.levelProgress;
+		}
+		applyMeta(envelope.meta ?? null);
+		// Refresh owned + shop supaya status `isOwned` berubah.
+		await fetchOwned();
+		await fetchShop();
+		return envelope.data;
+	} catch (caught) {
+		error = caught instanceof Error ? caught.message : 'Gagal membeli dekorasi';
+		return null;
 	} finally {
 		isMutating = false;
 	}
@@ -153,6 +230,12 @@ export const decorations = {
 	get nametag() {
 		return equipped.nametag;
 	},
+	get effects() {
+		return equipped.effects;
+	},
+	get maxEffects() {
+		return MAX_EQUIPPED_EFFECTS;
+	},
 	get isLoading() {
 		return isLoading;
 	},
@@ -162,9 +245,14 @@ export const decorations = {
 	get error() {
 		return error;
 	},
+	clearError() {
+		error = null;
+	},
 	fetchShop,
 	fetchOwned,
 	equip,
 	equipDecoration,
-	unequip
+	unequip,
+	unequipById,
+	purchase
 };

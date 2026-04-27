@@ -68,7 +68,7 @@ function extractRubyId(url: string): string | null {
  */
 export function formatProxyUrl(
 	source: StreamSource,
-	baseUrl: string = 'http://localhost:3000'
+	baseUrl: string = config.API_BASE_URL
 ): string | null {
 	const { value } = source;
 

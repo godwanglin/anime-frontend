@@ -2,12 +2,12 @@ import config from '$lib/config';
 
 export const POST = async ({ request }: { request: Request }) => {
 	const baseUrl = config.API_BASE_URL;
-	const { email, password } = await request.json();
+	const { email, password, username } = await request.json();
 	const response = await fetch(`${baseUrl}/api/auth/register`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		// credentials: 'include',
-		body: JSON.stringify({ email, password })
+		body: JSON.stringify({ email, password, username })
 	});
 	// if (!response.ok) {
 	// 	const errorData = await response.json();

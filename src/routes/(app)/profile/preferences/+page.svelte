@@ -25,12 +25,12 @@
 		{ value: 'Impact, sans-serif', label: 'Impact' }
 	];
 	const subtitleSizeOptions = [
-		{ value: '1rem', label: '1rem', description: 'Kecil' },
-		{ value: '1.2rem', label: '1.2rem', description: 'Normal' },
-		{ value: '1.5rem', label: '1.5rem', description: 'Sedang' },
-		{ value: '1.8rem', label: '1.8rem', description: 'Besar' },
-		{ value: '2rem', label: '2rem', description: 'Lebih besar' },
-		{ value: '2.5rem', label: '2.5rem', description: 'Maksimal' }
+		{ value: '1rem', label: 'Sangat kecil', description: 'Sangat kecil' },
+		{ value: '1.2rem', label: 'Kecil', description: 'Kecil' },
+		{ value: '1.5rem', label: 'Normal', description: 'Normal' },
+		{ value: '1.8rem', label: 'Sedang', description: 'Sedang' },
+		{ value: '2rem', label: 'Besar', description: 'Besar' },
+		{ value: '2.5rem', label: 'Lebih Besar', description: 'Lebih Besar' }
 	];
 	const subtitleBgOptions = [
 		{ label: 'Hitam', value: 'rgba(0,0,0,0.72)', swatch: 'rgba(0,0,0,0.72)' },
@@ -416,7 +416,7 @@
 				<p class="text-[10px] font-bold uppercase tracking-widest mb-2" style="color: var(--text-faint);">Preview</p>
 				<div class="relative rounded-xl overflow-hidden" style="background:#000; height:80px;">
 					<div class="absolute inset-x-0 bottom-2 flex justify-center" style="opacity: {preference.pref.subtitleOpacity};">
-						<p style="color: {preference.pref.subtitleColor}; font-size: {preference.pref.subtitleFontSize}; font-family: {preference.pref.subtitleFontFamily}; font-weight: 700; background: {preference.pref.subtitleBg}; text-shadow: {preference.pref.subtitleShadow}; border-radius: 4px; padding: 2px 10px; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Subtitle contoh — AniStream</p>
+						<p style="color: {preference.pref.subtitleColor}; font-size: {preference.pref.subtitleFontSize}; font-family: {preference.pref.subtitleFontFamily}; font-weight: 700; background: {preference.pref.subtitleBg}; text-shadow: {preference.pref.subtitleShadow}; border-radius: 4px; padding: 2px 10px; max-width: 75%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Subtitle contoh — AniStream</p>
 					</div>
 				</div>
 			</div>

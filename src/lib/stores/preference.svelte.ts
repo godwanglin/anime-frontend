@@ -38,7 +38,7 @@ const fallbackPreference: UserPreference = {
 	subtitleShadow: '0 2px 6px rgba(0,0,0,1)',
 	subtitlePosition: '10%',
 	subtitleOpacity: 1,
-	subtitleMaxWidth: '90%'
+	subtitleMaxWidth: '75%'
 };
 
 let pref = $state<UserPreference>({ ...fallbackPreference });

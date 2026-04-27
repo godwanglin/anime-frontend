@@ -95,7 +95,7 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 	}
 
 	function onFullscreenChange() {
-		isFullscreen = !!document.fullscreenElement;
+		isFullscreen = document.fullscreenElement === ctx.getContainerEl();
 	}
 
 	function onKeydown(e: KeyboardEvent) {

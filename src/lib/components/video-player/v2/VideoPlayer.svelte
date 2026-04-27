@@ -210,6 +210,7 @@
 
 	<div
 		class="vp-container"
+		class:vp-fullscreen={vp.isFullscreen}
 		bind:this={containerEl}
 		onmousemove={vp.onMouseMove}
 		onmouseleave={vp.onMouseLeave}

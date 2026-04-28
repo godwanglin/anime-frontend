@@ -63,7 +63,7 @@
 		</button>
 	</div>
 {:else}
-	<div class="relative max-w-2xl mx-auto pb-16">
+	<div class="relative w-full max-w-full md:max-w-2xl mx-auto pb-16">
 		{#if effects.length > 0}
 			<div
 				class="absolute inset-y-0 -left-4 -right-4 z-50 pointer-events-none overflow-hidden md:left-0 md:right-0"
@@ -76,18 +76,18 @@
 							// loop={effect.config.loop}
 							duration={effect.config.duration}
 							onFinishLoaded={(img) => {
-								const fadeTimeoutId = setTimeout(
-									() => {
-										clearTimeout(fadeTimeoutId);
-										img.style.transition = 'opacity 0.8s ease-out';
-										img.style.opacity = '0';
-										const removeTimeoutId = setTimeout(() => {
-											clearTimeout(removeTimeoutId);
-											img.remove();
-										}, 800);
-									},
-									(effect.config.duration ?? 5000) > 5000 ? (effect.config.duration ?? 5000) : 5000
-								);
+								// const fadeTimeoutId = setTimeout(
+								// 	() => {
+								// 		clearTimeout(fadeTimeoutId);
+								// 		img.style.transition = 'opacity 0.8s ease-out';
+								// 		img.style.opacity = '0';
+								// 		const removeTimeoutId = setTimeout(() => {
+								// 			clearTimeout(removeTimeoutId);
+								// 			img.remove();
+								// 		}, 800);
+								// 	},
+								// 	(effect.config.duration ?? 5000) > 5000 ? (effect.config.duration ?? 5000) : 5000
+								// );
 							}}
 						/>
 					{/if}

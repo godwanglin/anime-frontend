@@ -7,7 +7,13 @@
 	import ProfileEffect from '$lib/components/ProfileEffect.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import config from '$lib/config';
-	import { getEffectDuration, getEffectLoop, getEffectSrc } from '$lib/decorations';
+	import {
+		getEffectDuration,
+		getEffectLoop,
+		getEffectSrc,
+		getFrameAssetUrl
+	} from '$lib/decorations';
+	import { preloadEffects, resolveEffectFetchUrl } from '$lib/effect-preloader';
 	import { getCultivationBadge, getLevelProgress } from '$lib/exp';
 	import type { PublicUser } from '$lib/stores/auth.svelte';
 
@@ -123,6 +129,13 @@
 		})
 	);
 
+	const effectPreloadUrls = $derived(
+		profileEffects
+			.map((effect) => resolveEffectFetchUrl(effect.src))
+			.filter((url): url is string => typeof url === 'string' && url.length > 0)
+	);
+	const frameAssetUrl = $derived(getFrameAssetUrl(user?.frame ?? null));
+
 	const statItems = $derived([
 		{ label: 'Episode', value: profileStats.episodeCount, icon: 'play_circle' },
 		{ label: 'Jam nonton', value: profileStats.watchHours, icon: 'schedule' },
@@ -168,6 +181,24 @@
 		loadTab('history', id);
 	});
 
+	function warmDecorationAssets(next: PublicUser | null) {
+		if (!next || typeof window === 'undefined') return;
+
+		const effectSrcs = (next.effects ?? [])
+			.map((effect) => getEffectSrc(effect))
+			.filter((src): src is string => typeof src === 'string' && src.length > 0);
+		if (effectSrcs.length > 0) {
+			void preloadEffects(effectSrcs);
+		}
+
+		const frameUrl = getFrameAssetUrl(next.frame ?? null);
+		if (frameUrl) {
+			const img = new Image();
+			img.decoding = 'async';
+			img.src = frameUrl;
+		}
+	}
+
 	async function fetchUser(id: number) {
 		try {
 			const response = await fetch(`${config.API_BASE_URL}/api/users/${id}`);
@@ -179,8 +210,16 @@
 				throw new Error(json?.message ?? 'Gagal memuat profil');
 			}
 
-			user = json?.data ?? null;
-			if (!user) throw new Error('Profil tidak ditemukan');
+			const nextUser = json?.data ?? null;
+			if (!nextUser) throw new Error('Profil tidak ditemukan');
+
+			// Kick off asset preload BEFORE assigning state so the network fetch
+			// starts in the same microtask, in parallel with Svelte's render
+			// flush. ProfileEffect's mount-time preloadEffect call will reuse the
+			// inflight promise, so the user sees the effect the moment the asset
+			// is decoded — not after a second round-trip.
+			warmDecorationAssets(nextUser);
+			user = nextUser;
 		} catch (error) {
 			if (activeFetchUserId !== id) return;
 			user = null;
@@ -287,6 +326,15 @@
 </script>
 
 <SEO title={user ? `${user.username} - Profil` : 'Profil User'} noindex />
+
+<svelte:head>
+	{#if frameAssetUrl}
+		<link rel="preload" as="image" href={frameAssetUrl} fetchpriority="high" />
+	{/if}
+	{#each effectPreloadUrls as url}
+		<link rel="preload" as="fetch" href={url} crossorigin="anonymous" fetchpriority="high" />
+	{/each}
+</svelte:head>
 
 {#if isLoading}
 	<div class="max-w-2xl mx-auto pb-16">

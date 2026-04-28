@@ -291,7 +291,7 @@
 	     z-50 wajib di sini — `contain: paint` + `transform` bikin stacking context baru,
 	     jadi z-index dari .effect-layer di dalam tidak bisa "tembus" ke atas cardContent (z-10). -->
 	<div
-		class="absolute inset-0 pointer-events-none z-50"
+		class="absolute inset-0 pointer-events-none z-50 overflow-hidden"
 		style="contain: layout paint style; transform: translateZ(0);"
 	>
 		{#each profileEffects as effect}
@@ -300,6 +300,7 @@
 				loop={effect.loop}
 				duration={effect.duration}
 				blob={effect.blob}
+				class="pc-effect-fill"
 			/>
 		{/each}
 	</div>
@@ -457,3 +458,20 @@
 		{/each}
 	</div>
 {/snippet}
+
+<style>
+	/* Override default ProfileEffect mobile rule (yang force `width: 100vw` +
+	   `object-fit: contain` untuk halaman patternUser). Di ProfileCard kita
+	   pengen efek mengisi penuh lebar card, bukan dipotong ke ukuran viewport
+	   atau dikecilkan oleh aspect-ratio image. */
+	:global(.pc-effect-fill.effect-layer) {
+		left: 0 !important;
+		right: 0 !important;
+		width: 100% !important;
+		transform: translateZ(0) !important;
+	}
+	:global(.pc-effect-fill .effect-img) {
+		object-fit: cover !important;
+		object-position: top center !important;
+	}
+</style>

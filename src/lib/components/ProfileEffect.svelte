@@ -105,6 +105,7 @@
 				onload={handleLoad}
 				decoding="async"
 				loading="eager"
+				fetchpriority="high"
 				draggable="false"
 			/>
 		{/key}
@@ -117,7 +118,6 @@
 		inset: 0;
 		pointer-events: none;
 		z-index: 50;
-		/* Isolasi paint/layout supaya repaint frame animasi tidak ikut menggetarkan parent */
 		contain: layout paint style;
 		transform: translateZ(0);
 	}
@@ -126,9 +126,41 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		object-position: top center;
 		display: block;
-		/* Promote ke compositor layer sendiri — frame APNG/WEBP cukup re-composite, bukan re-paint */
 		transform: translateZ(0);
 		backface-visibility: hidden;
+		opacity: 0;
+		animation: profile-effect-fade-in 220ms ease-out forwards;
+	}
+
+	@keyframes profile-effect-fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@media (max-width: 767px) {
+		.effect-layer {
+			left: 50%;
+			right: auto;
+			width: 100vw;
+			transform: translateX(-50%) translateZ(0);
+		}
+
+		.effect-img {
+			object-fit: contain;
+			object-position: top center;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.effect-img {
+			animation: none;
+			opacity: 1;
+		}
 	}
 </style>

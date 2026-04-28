@@ -7,6 +7,7 @@ export type NameTagConfig = {
 
 export type EffectConfig = {
 	src?: string;
+	blob?: string;
 	loop?: boolean;
 	duration?: number;
 };
@@ -82,7 +83,9 @@ export function getNameTagClass(nametag: EquippedNameTag | undefined) {
 	return style ? `nametag-${style}` : '';
 }
 
-export function getEffectSrc(effect: EquippedEffect | DecorationItem | null | undefined): string | null {
+export function getEffectSrc(
+	effect: EquippedEffect | DecorationItem | null | undefined
+): string | null {
 	if (!effect) return null;
 	if (effect.assetUrl) return effect.assetUrl;
 	const cfg = effect.config as EffectConfig | undefined;

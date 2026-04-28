@@ -7,9 +7,11 @@
 		loop = false,
 		duration = 10000,
 		class: _class = '',
-		onFinishLoaded
+		onFinishLoaded,
+		blob
 	}: {
 		src: string;
+		blob?: string;
 		loop?: boolean;
 		duration?: number;
 		class?: string;
@@ -23,11 +25,13 @@
 	let iteration = $state(0);
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
+	// console.log(blob);
+
 	$effect(() => {
 		// Re-resolve kalau prop src berubah
 		// console.log(src);
 
-		const current = `${src}?_=${Date.now()}`;
+		const current = src;
 		const cached = getCachedEffect(current);
 		if (cached) {
 			resolvedSrc = cached;
@@ -95,7 +99,7 @@
 	{#if resolvedSrc}
 		{#key iteration}
 			<img
-				src={resolvedSrc}
+				src={blob ? blob : resolvedSrc}
 				alt=""
 				class="effect-img"
 				onload={handleLoad}

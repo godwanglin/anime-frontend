@@ -85,15 +85,22 @@
 		editing = false;
 	}
 
-	let currentClickedUser: typeof comment.user | null = $state(null);
+	let currentClickedUser: typeof comment.user | null = $state(comment.user ?? null);
 	let showUserCard = $state(false);
 	let popoverAnchor = $state<HTMLButtonElement | null>(null);
+
+	// onMount(async () => {
+	// 	await assetLoader();
+	// });
 </script>
 
 <ProfileCard
 	user={currentClickedUser as any}
 	isOpen={showUserCard && !!currentClickedUser}
-	onClose={() => (showUserCard = false)}
+	onClose={() => {
+		showUserCard = false;
+		// assetLoader();
+	}}
 	anchorEl={popoverAnchor}
 />
 

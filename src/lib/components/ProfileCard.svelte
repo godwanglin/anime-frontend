@@ -7,6 +7,8 @@
 	import AvatarFrame from './AvatarFrame.svelte';
 	import NameTag from './NameTag.svelte';
 	import ProfileEffect from './ProfileEffect.svelte';
+	import { onMount } from 'svelte';
+	import { assetLoader } from '$lib/effect-preloader';
 
 	const {
 		user,
@@ -124,8 +126,11 @@
 					: 'bottom center'
 	);
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') onClose?.();
+	async function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			onClose?.();
+			profileEffects = await assetLoader(baseProfileEffects);
+		}
 	}
 
 	function popoverTransition(node: HTMLElement) {
@@ -156,21 +161,38 @@
 
 	// Profile effects diambil langsung dari user data (dari backend), bukan
 	// hardcoded. Helper getEffectSrc/Loop/Duration handle struktur EquippedEffect.
-	type ResolvedEffect = { id: number; src: string; loop: boolean; duration?: number };
-	const profileEffects = $derived(
+	type ResolvedEffect = {
+		id: number;
+		src: string;
+		loop: boolean;
+		duration?: number;
+		blob?: string;
+	};
+
+	let baseProfileEffects = $derived(
 		(user?.effects ?? []).flatMap((effect): ResolvedEffect[] => {
 			const src = getEffectSrc(effect);
 			if (!src) return [];
+
 			return [
 				{
 					id: effect.id,
 					src,
+					blob: effect.config?.blob,
 					loop: getEffectLoop(effect),
 					duration: getEffectDuration(effect)
 				}
 			];
 		})
 	);
+
+	let profileEffects = $state<ResolvedEffect[]>([]);
+
+	onMount(async () => {
+		profileEffects = await assetLoader(baseProfileEffects);
+	});
+
+	// console.log('Efekk', user?.effects);
 
 	const userExp = $derived(Math.max(0, Number(user?.exp ?? 0)));
 	const userLevel = $derived(Math.max(1, Number(user?.level ?? 1)));
@@ -205,7 +227,10 @@
 	<button
 		class="fixed inset-0 z-40"
 		style="background: oklch(0 0 0 / {isMobile ? '0.6' : '0.35'});"
-		onclick={onClose}
+		onclick={async () => {
+			onClose?.();
+			profileEffects = await assetLoader(baseProfileEffects);
+		}}
 		role="button"
 		tabindex="-1"
 		aria-label="Tutup"
@@ -270,7 +295,12 @@
 		style="contain: layout paint style; transform: translateZ(0);"
 	>
 		{#each profileEffects as effect}
-			<ProfileEffect src={effect.src} loop={effect.loop} duration={effect.duration} />
+			<ProfileEffect
+				src={effect.src}
+				loop={effect.loop}
+				duration={effect.duration}
+				blob={effect.blob}
+			/>
 		{/each}
 	</div>
 {/snippet}

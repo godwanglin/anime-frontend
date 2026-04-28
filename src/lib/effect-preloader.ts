@@ -26,8 +26,8 @@ function proxiedEffectUrl(src: string) {
 	if (!isAllowedEffectCdn(src)) {
 		throw new Error('Effect CDN tidak diperbolehkan');
 	}
-	const srcReal = `${src}${src.includes('?') ? '&' : '?'}_=${Date.now()}`;
-	return `/decorations-effect?url=${encodeURIComponent(srcReal)}`;
+	return src;
+	// return `/decorations-effect?url=${encodeURIComponent(srcReal)}`;
 }
 
 async function loadOne(src: string): Promise<string> {
@@ -36,7 +36,7 @@ async function loadOne(src: string): Promise<string> {
 
 	try {
 		const response = await fetch(proxiedEffectUrl(src), {
-			mode: 'same-origin',
+			// mode: 'same-origin',
 			credentials: 'same-origin',
 			cache: 'force-cache'
 		});
@@ -90,3 +90,19 @@ export async function preloadEffects(srcs: Array<string | null | undefined>) {
 export function getCachedEffect(src: string): string | null {
 	return cache.get(src) ?? null;
 }
+
+export const assetLoader = async (assets: any[]) => {
+	const effectsWithBlob = await Promise.all(
+		(assets ?? [])
+			.filter((effect) => effect?.src)
+			.map(async (effect) => {
+				const url = await preloadEffect(`${effect.src}?_t=${Date.now()}`);
+
+				return {
+					...effect,
+					blob: url
+				};
+			})
+	);
+	return effectsWithBlob;
+};

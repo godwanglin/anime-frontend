@@ -18,6 +18,45 @@
 		meta?: Record<string, unknown>;
 	};
 
+	type HistoryItem = {
+		id: number;
+		animeId: number;
+		animeSlug: string;
+		animeTitle: string;
+		animeThumbnail: string;
+		episodeId: number;
+		episodeSlug: string;
+		episodeNumber: number;
+		episodeTitle: string;
+		progressPct: number;
+		watchedAt: string;
+	};
+
+	type SavedItem = {
+		id: number;
+		animeId: number;
+		animeSlug: string;
+		animeTitle: string;
+		animeThumbnail: string;
+		animeStatus: string;
+		savedAt: string;
+	};
+
+	type CommentItem = {
+		id: number;
+		content: string | null;
+		isEdited: boolean;
+		createdAt: string;
+		likeCount: number;
+		dislikeCount: number;
+		replyCount: number;
+		parentId: number | null;
+		anime: { id: number; slug: string; title: string; thumbnail: string | null } | null;
+		episode: { id: number; slug: string; number: number; title: string } | null;
+	};
+
+	type TabKey = 'history' | 'comments' | 'saved';
+
 	const patternUser = $derived($page.params.patternUser);
 	const userId = $derived.by(() => {
 		const match = patternUser?.match(/-(\d+)$/);
@@ -28,6 +67,23 @@
 	let user = $state<PublicUser | null>(null);
 	let isLoading = $state(true);
 	let errorMessage = $state('');
+
+	let activeTab = $state<TabKey>('history');
+
+	let historyItems = $state<HistoryItem[]>([]);
+	let historyLoaded = $state(false);
+	let historyLoading = $state(false);
+	let historyError = $state('');
+
+	let commentItems = $state<CommentItem[]>([]);
+	let commentsLoaded = $state(false);
+	let commentsLoading = $state(false);
+	let commentsError = $state('');
+
+	let savedItems = $state<SavedItem[]>([]);
+	let savedLoaded = $state(false);
+	let savedLoading = $state(false);
+	let savedError = $state('');
 
 	const avatar = $derived(
 		user?.avatar ||
@@ -51,6 +107,7 @@
 	const profileEffects = $derived(
 		(user?.effects ?? []).flatMap((effect) => {
 			const src = getEffectSrc(effect);
+			// const blob = get(effect);
 			if (!src) return [];
 			// console.log(user?.effects);
 
@@ -64,12 +121,20 @@
 			];
 		})
 	);
+
 	const statItems = $derived([
 		{ label: 'Episode', value: profileStats.episodeCount, icon: 'play_circle' },
 		{ label: 'Jam nonton', value: profileStats.watchHours, icon: 'schedule' },
 		{ label: 'Tersimpan', value: profileStats.savedCount, icon: 'bookmark' }
 	]);
+	const tabs: Array<{ key: TabKey; icon: string; label: string }> = [
+		{ key: 'history', icon: 'history', label: 'Riwayat' },
+		{ key: 'comments', icon: 'chat_bubble', label: 'Komentar' },
+		{ key: 'saved', icon: 'bookmark', label: 'Tersimpan' }
+	];
 	const joinedText = $derived(formatJoined(user?.createdAt));
+
+	let activeFetchUserId: number | null = null;
 
 	$effect(() => {
 		const id = userId;
@@ -77,22 +142,37 @@
 			user = null;
 			isLoading = false;
 			errorMessage = 'Profil tidak valid';
+			activeFetchUserId = null;
 			return;
 		}
 
-		const controller = new AbortController();
+		if (activeFetchUserId === id) return;
+		activeFetchUserId = id;
+
 		isLoading = true;
 		errorMessage = '';
 
-		fetchUser(id, controller.signal);
+		historyItems = [];
+		historyLoaded = false;
+		historyError = '';
+		commentItems = [];
+		commentsLoaded = false;
+		commentsError = '';
+		savedItems = [];
+		savedLoaded = false;
+		savedError = '';
+		activeTab = 'history';
 
-		return () => controller.abort();
+		fetchUser(id);
+		loadTab('history', id);
 	});
 
-	async function fetchUser(id: number, signal: AbortSignal) {
+	async function fetchUser(id: number) {
 		try {
-			const response = await fetch(`${config.API_BASE_URL}/api/users/${id}`, { signal });
+			const response = await fetch(`${config.API_BASE_URL}/api/users/${id}`);
 			const json = (await response.json().catch(() => null)) as ApiEnvelope<PublicUser> | null;
+
+			if (activeFetchUserId !== id) return;
 
 			if (!response.ok) {
 				throw new Error(json?.message ?? 'Gagal memuat profil');
@@ -101,12 +181,92 @@
 			user = json?.data ?? null;
 			if (!user) throw new Error('Profil tidak ditemukan');
 		} catch (error) {
-			if (signal.aborted) return;
+			if (activeFetchUserId !== id) return;
 			user = null;
 			errorMessage = error instanceof Error ? error.message : 'Gagal memuat profil';
 		} finally {
-			if (!signal.aborted) isLoading = false;
+			if (activeFetchUserId === id) isLoading = false;
 		}
+	}
+
+	async function loadTab(tab: TabKey, id: number) {
+		if (tab === 'history') {
+			if (historyLoaded || historyLoading) return;
+			historyLoading = true;
+			historyError = '';
+			try {
+				const response = await fetch(`${config.API_BASE_URL}/api/users/${id}/history?limit=10`);
+				const json = (await response.json().catch(() => null)) as ApiEnvelope<HistoryItem[]> | null;
+				if (activeFetchUserId !== id) return;
+				if (!response.ok) throw new Error(json?.message ?? 'Gagal memuat riwayat');
+				historyItems = json?.data ?? [];
+				historyLoaded = true;
+			} catch (error) {
+				if (activeFetchUserId !== id) return;
+				historyError = error instanceof Error ? error.message : 'Gagal memuat riwayat';
+			} finally {
+				if (activeFetchUserId === id) historyLoading = false;
+			}
+		} else if (tab === 'comments') {
+			if (commentsLoaded || commentsLoading) return;
+			commentsLoading = true;
+			commentsError = '';
+			try {
+				const response = await fetch(`${config.API_BASE_URL}/api/users/${id}/comments?limit=10`);
+				const json = (await response.json().catch(() => null)) as ApiEnvelope<CommentItem[]> | null;
+				if (activeFetchUserId !== id) return;
+				if (!response.ok) throw new Error(json?.message ?? 'Gagal memuat komentar');
+				commentItems = json?.data ?? [];
+				commentsLoaded = true;
+			} catch (error) {
+				if (activeFetchUserId !== id) return;
+				commentsError = error instanceof Error ? error.message : 'Gagal memuat komentar';
+			} finally {
+				if (activeFetchUserId === id) commentsLoading = false;
+			}
+		} else if (tab === 'saved') {
+			if (savedLoaded || savedLoading) return;
+			savedLoading = true;
+			savedError = '';
+			try {
+				const response = await fetch(`${config.API_BASE_URL}/api/users/${id}/saved?limit=10`);
+				const json = (await response.json().catch(() => null)) as ApiEnvelope<SavedItem[]> | null;
+				if (activeFetchUserId !== id) return;
+				if (!response.ok) throw new Error(json?.message ?? 'Gagal memuat tersimpan');
+				savedItems = json?.data ?? [];
+				savedLoaded = true;
+			} catch (error) {
+				if (activeFetchUserId !== id) return;
+				savedError = error instanceof Error ? error.message : 'Gagal memuat tersimpan';
+			} finally {
+				if (activeFetchUserId === id) savedLoading = false;
+			}
+		}
+	}
+
+	function selectTab(tab: TabKey) {
+		activeTab = tab;
+		const id = userId;
+		if (id) loadTab(tab, id);
+	}
+
+	function formatRelativeDate(value: string | null | undefined) {
+		if (!value) return '';
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return '';
+		const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+		if (diff < 60) return 'baru saja';
+		if (diff < 3600) return `${Math.floor(diff / 60)} mnt lalu`;
+		if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
+		if (diff < 604800) return `${Math.floor(diff / 86400)} hari lalu`;
+		if (diff < 2592000) return `${Math.floor(diff / 604800)} mgg lalu`;
+		return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+	}
+
+	function commentLink(item: CommentItem) {
+		if (!item.anime?.slug) return null;
+		if (item.episode?.slug) return `/anime/${item.anime.slug}/${item.episode.slug}`;
+		return `/anime/${item.anime.slug}`;
 	}
 
 	function formatNumber(value: number) {
@@ -170,7 +330,25 @@
 				style="contain: layout paint style; transform: translateZ(0);"
 			>
 				{#each profileEffects as effect}
-					<ProfileEffect src={effect.src} loop={effect.loop} duration={effect.duration} />
+					<ProfileEffect
+						src={effect.src}
+						// loop={effect.loop}
+						duration={effect.duration}
+						onFinishLoaded={(img) => {
+							const fadeTimeoutId = setTimeout(
+								() => {
+									clearTimeout(fadeTimeoutId);
+									img.style.transition = 'opacity 0.8s ease-out';
+									img.style.opacity = '0';
+									const removeTimeoutId = setTimeout(() => {
+										clearTimeout(removeTimeoutId);
+										img.remove();
+									}, 800);
+								},
+								(effect.duration ?? 5000) > 5000 ? (effect.duration ?? 5000) : 5000
+							);
+						}}
+					/>
 				{/each}
 			</div>
 		{/if}
@@ -306,6 +484,334 @@
 					{/each}
 				</div>
 			</div>
+		</div>
+
+		<div
+			class="sticky top-0 z-30 -mx-4 mb-4 backdrop-blur-md md:mx-0 md:rounded-[var(--radius-xl)]"
+			style="background: oklch(from var(--surface) l c h / 0.85); border-bottom: 1px solid var(--border);"
+		>
+			<div class="flex items-center justify-around" role="tablist" aria-label="Aktivitas user">
+				{#each tabs as tab}
+					<button
+						type="button"
+						role="tab"
+						aria-selected={activeTab === tab.key}
+						onclick={() => selectTab(tab.key)}
+						class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-3 transition-all active:scale-95"
+						style="color: {activeTab === tab.key ? 'var(--text-primary)' : 'var(--text-faint)'};"
+					>
+						<span class="material-symbols-rounded" style="font-size:20px;">
+							{tab.icon}
+						</span>
+						<span class="text-[10px] font-black uppercase tracking-wider">{tab.label}</span>
+						{#if activeTab === tab.key}
+							<span
+								class="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full"
+								style="background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);"
+							></span>
+						{/if}
+					</button>
+				{/each}
+			</div>
+		</div>
+
+		<div class="px-1">
+			{#if activeTab === 'history'}
+				{#if historyLoading && !historyLoaded}
+					<div class="space-y-2.5">
+						{#each Array(4) as _}
+							<div
+								class="flex gap-3 p-2.5 rounded-[var(--radius-2xl)] animate-pulse"
+								style="background: var(--surface); border: 1px solid var(--border);"
+							>
+								<div class="h-[68px] w-[120px] rounded-[var(--radius-xl)] bg-white/10"></div>
+								<div class="flex-1 space-y-2 py-1">
+									<div class="h-3 w-3/4 rounded-full bg-white/10"></div>
+									<div class="h-2.5 w-1/2 rounded-full bg-white/10"></div>
+									<div class="h-1.5 w-full rounded-full bg-white/5"></div>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{:else if historyError}
+					<div class="py-12 text-center">
+						<p class="text-[13px]" style="color: var(--text-muted);">{historyError}</p>
+					</div>
+				{:else if historyItems.length === 0}
+					<div class="flex flex-col items-center justify-center py-16 text-center">
+						<div
+							class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl"
+							style="background: var(--surface); border: 1px solid var(--border);"
+						>
+							<span
+								class="material-symbols-rounded"
+								style="font-size:24px; color: var(--text-faint);"
+							>
+								history
+							</span>
+						</div>
+						<p class="text-[13px] font-bold" style="color: var(--text-muted);">
+							Belum ada riwayat tontonan
+						</p>
+					</div>
+				{:else}
+					<div class="space-y-2.5">
+						{#each historyItems as item (item.episodeId)}
+							<a
+								href="/anime/{item.animeSlug}/{item.episodeSlug}"
+								class="group flex items-stretch gap-3 p-2.5 rounded-[var(--radius-2xl)] transition-all"
+								style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
+							>
+								<div
+									class="relative shrink-0 rounded-[var(--radius-xl)] overflow-hidden"
+									style="width: 120px; aspect-ratio: 16/9;"
+								>
+									<img
+										src={item.animeThumbnail}
+										alt={item.animeTitle}
+										loading="lazy"
+										class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+										style="background: var(--surface-offset);"
+									/>
+									<div
+										class="absolute bottom-0 left-0 right-0 h-[3px]"
+										style="background: oklch(0 0 0 / 0.3);"
+									>
+										<div
+											class="h-full rounded-full"
+											style="width: {item.progressPct}%; background: var(--accent); box-shadow: 0 0 6px var(--accent-glow);"
+										></div>
+									</div>
+									<div class="absolute top-1.5 left-1.5">
+										<span
+											class="px-1.5 py-0.5 rounded-md text-[8px] font-black text-white backdrop-blur-md"
+											style="background: oklch(0 0 0 / 0.55); border: 1px solid oklch(1 0 0 / 0.1);"
+										>
+											Ep {item.episodeNumber}
+										</span>
+									</div>
+								</div>
+								<div class="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+									<div>
+										<p
+											class="text-[13px] font-black leading-tight line-clamp-2 mb-0.5"
+											style="color: var(--text-primary);"
+										>
+											{item.animeTitle}
+										</p>
+										{#if item.episodeTitle}
+											<p class="text-[10px] line-clamp-1" style="color: var(--text-faint);">
+												{item.episodeTitle}
+											</p>
+										{/if}
+									</div>
+									<div class="flex items-center justify-between gap-2">
+										<span
+											class="text-[9px] font-black tabular-nums"
+											style="color: {item.progressPct >= 90 ? '#10b981' : 'var(--accent)'};"
+										>
+											{#if item.progressPct >= 90}
+												✓ Selesai
+											{:else}
+												{Math.round(item.progressPct)}% ditonton
+											{/if}
+										</span>
+										<span class="text-[9px]" style="color: var(--text-faint);">
+											{formatRelativeDate(item.watchedAt)}
+										</span>
+									</div>
+								</div>
+							</a>
+						{/each}
+					</div>
+				{/if}
+			{:else if activeTab === 'comments'}
+				{#if commentsLoading && !commentsLoaded}
+					<div class="space-y-2.5">
+						{#each Array(4) as _}
+							<div
+								class="p-3 rounded-[var(--radius-2xl)] animate-pulse space-y-2"
+								style="background: var(--surface); border: 1px solid var(--border);"
+							>
+								<div class="h-2.5 w-1/3 rounded-full bg-white/10"></div>
+								<div class="h-3 w-full rounded-full bg-white/10"></div>
+								<div class="h-3 w-2/3 rounded-full bg-white/10"></div>
+							</div>
+						{/each}
+					</div>
+				{:else if commentsError}
+					<div class="py-12 text-center">
+						<p class="text-[13px]" style="color: var(--text-muted);">{commentsError}</p>
+					</div>
+				{:else if commentItems.length === 0}
+					<div class="flex flex-col items-center justify-center py-16 text-center">
+						<div
+							class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl"
+							style="background: var(--surface); border: 1px solid var(--border);"
+						>
+							<span
+								class="material-symbols-rounded"
+								style="font-size:24px; color: var(--text-faint);"
+							>
+								chat_bubble
+							</span>
+						</div>
+						<p class="text-[13px] font-bold" style="color: var(--text-muted);">
+							Belum ada komentar
+						</p>
+					</div>
+				{:else}
+					<div class="space-y-2.5">
+						{#each commentItems as item (item.id)}
+							{@const link = commentLink(item)}
+							<svelte:element
+								this={link ? 'a' : 'div'}
+								href={link ?? undefined}
+								class="block p-3 rounded-[var(--radius-2xl)] transition-all"
+								style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
+							>
+								{#if item.anime}
+									<div class="mb-2 flex items-center gap-2">
+										{#if item.anime.thumbnail}
+											<img
+												src={item.anime.thumbnail}
+												alt=""
+												class="h-8 w-8 rounded-lg object-cover shrink-0"
+												style="background: var(--surface-offset);"
+											/>
+										{/if}
+										<div class="min-w-0 flex-1">
+											<p
+												class="text-[11px] font-black truncate"
+												style="color: var(--text-primary);"
+											>
+												{item.anime.title}
+											</p>
+											{#if item.episode}
+												<p class="text-[9px] truncate" style="color: var(--text-faint);">
+													Ep {item.episode.number}
+													{#if item.episode.title}
+														· {item.episode.title}
+													{/if}
+												</p>
+											{/if}
+										</div>
+										{#if item.parentId !== null}
+											<span
+												class="px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider"
+												style="background: var(--accent-surface); color: var(--accent);"
+											>
+												Reply
+											</span>
+										{/if}
+									</div>
+								{/if}
+								<p
+									class="text-[13px] leading-relaxed whitespace-pre-wrap break-words"
+									style="color: var(--text-primary);"
+								>
+									{item.content ?? '[Komentar dihapus]'}
+								</p>
+								<div
+									class="mt-2 flex items-center gap-3 text-[10px]"
+									style="color: var(--text-faint);"
+								>
+									<span class="flex items-center gap-1">
+										<span class="material-symbols-rounded" style="font-size:13px;">favorite</span>
+										{item.likeCount}
+									</span>
+									<span class="flex items-center gap-1">
+										<span class="material-symbols-rounded" style="font-size:13px;">reply</span>
+										{item.replyCount}
+									</span>
+									<span class="ml-auto">
+										{formatRelativeDate(item.createdAt)}
+										{#if item.isEdited}
+											· diedit
+										{/if}
+									</span>
+								</div>
+							</svelte:element>
+						{/each}
+					</div>
+				{/if}
+			{:else if activeTab === 'saved'}
+				{#if savedLoading && !savedLoaded}
+					<div class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+						{#each Array(6) as _}
+							<div
+								class="aspect-[2/3] rounded-[var(--radius-2xl)] animate-pulse"
+								style="background: var(--surface); border: 1px solid var(--border);"
+							></div>
+						{/each}
+					</div>
+				{:else if savedError}
+					<div class="py-12 text-center">
+						<p class="text-[13px]" style="color: var(--text-muted);">{savedError}</p>
+					</div>
+				{:else if savedItems.length === 0}
+					<div class="flex flex-col items-center justify-center py-16 text-center">
+						<div
+							class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl"
+							style="background: var(--surface); border: 1px solid var(--border);"
+						>
+							<span
+								class="material-symbols-rounded"
+								style="font-size:24px; color: var(--text-faint);"
+							>
+								bookmarks
+							</span>
+						</div>
+						<p class="text-[13px] font-bold" style="color: var(--text-muted);">
+							Belum ada anime tersimpan
+						</p>
+					</div>
+				{:else}
+					<div class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+						{#each savedItems as item (item.animeId)}
+							<a
+								href="/anime/{item.animeSlug}"
+								class="group relative block overflow-hidden rounded-[var(--radius-2xl)] transition-all"
+								style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
+							>
+								<div class="relative aspect-[2/3] w-full overflow-hidden">
+									<img
+										src={item.animeThumbnail}
+										alt={item.animeTitle}
+										loading="lazy"
+										class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+										style="background: var(--surface-offset);"
+									/>
+									<div
+										class="absolute inset-0"
+										style="background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, transparent 70%);"
+									></div>
+									<div class="absolute top-1.5 left-1.5">
+										<span
+											class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider backdrop-blur-md"
+											style="background: {item.animeStatus === 'Ongoing'
+												? 'oklch(0.5 0.18 160 / 0.4)'
+												: 'oklch(0 0 0 / 0.45)'}; color: {item.animeStatus === 'Ongoing'
+												? '#86efac'
+												: 'rgba(255,255,255,0.7)'};"
+										>
+											{#if item.animeStatus === 'Ongoing'}
+												<span class="h-1 w-1 rounded-full bg-green-400 animate-pulse"></span>
+											{/if}
+											{item.animeStatus === 'Ongoing' ? 'Tayang' : 'Tamat'}
+										</span>
+									</div>
+									<div class="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-6">
+										<p class="text-[10px] font-black leading-tight line-clamp-2 text-white">
+											{item.animeTitle}
+										</p>
+									</div>
+								</div>
+							</a>
+						{/each}
+					</div>
+				{/if}
+			{/if}
 		</div>
 	</div>
 {/if}

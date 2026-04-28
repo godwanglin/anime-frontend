@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { cubicOut, quintOut } from 'svelte/easing';
-	import type { PublicUser } from '$lib/stores/auth.svelte';
+	import { auth, type PublicUser } from '$lib/stores/auth.svelte';
 	import { getEffectSrc, getEffectLoop, getEffectDuration } from '$lib/decorations';
 	import { getCultivationBadge, getLevelProgress } from '$lib/exp';
 	import AvatarFrame from './AvatarFrame.svelte';
@@ -272,17 +272,6 @@
 		{#each profileEffects as effect}
 			<ProfileEffect src={effect.src} loop={effect.loop} duration={effect.duration} />
 		{/each}
-		<!-- <ProfileEffect
-			src="https://cdn.discordapp.com/assets/content/3507e936802583b79c956d08db8babd92b183f7006a28457aba9f778910e7201"
-		/> -->
-		<!-- <ProfileEffect
-			src="https://cdn.discordapp.com/assets/content/05a494f1ee6675d460c9b8e98b1cfd1d6405b0b7cab6a11b421143d165e853b1"
-			loop
-		/>
-		<ProfileEffect
-			src="https://cdn.discordapp.com/assets/content/6898a8357b824710c262b697192bc8240eb9280b5c2e2d86ed1f8401bd78cee9"
-			loop
-		/> -->
 	</div>
 {/snippet}
 
@@ -316,20 +305,39 @@
 {#snippet cardContent()}
 	<div class="flex items-center gap-4 mb-6">
 		<div class="relative shrink-0">
-			<AvatarFrame
-				src={user.avatar}
-				alt={user.username ?? 'Avatar'}
-				size={60}
-				frame={{
-					id: user.frame?.id as any,
-					name: user.frame?.name as any,
-					type: user.frame?.type as any,
-					asset: user.frame?.asset as any,
-					assetUrl: user.frame?.assetUrl as any,
-					config: user.frame?.config as any
-				}}
-				fallbackInitial={user.username?.[0] ?? 'A'}
-			/>
+			{#if auth.user?.id !== user?.id}
+				<a href="/profile/@{user?.username?.replaceAll(' ', '')}-{user?.exp}-{user?.id}">
+					<AvatarFrame
+						src={user.avatar}
+						alt={user.username ?? 'Avatar'}
+						size={60}
+						frame={{
+							id: user.frame?.id as any,
+							name: user.frame?.name as any,
+							type: user.frame?.type as any,
+							asset: user.frame?.asset as any,
+							assetUrl: user.frame?.assetUrl as any,
+							config: user.frame?.config as any
+						}}
+						fallbackInitial={user.username?.[0] ?? 'A'}
+					/>
+				</a>
+			{:else}
+				<AvatarFrame
+					src={user.avatar}
+					alt={user.username ?? 'Avatar'}
+					size={60}
+					frame={{
+						id: user.frame?.id as any,
+						name: user.frame?.name as any,
+						type: user.frame?.type as any,
+						asset: user.frame?.asset as any,
+						assetUrl: user.frame?.assetUrl as any,
+						config: user.frame?.config as any
+					}}
+					fallbackInitial={user.username?.[0] ?? 'A'}
+				/>
+			{/if}
 			<div
 				class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2"
 				style="background: #22c55e; border-color: oklch(0.1 0.01 280);"

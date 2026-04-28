@@ -5,8 +5,16 @@
 	let {
 		src,
 		loop = false,
-		duration = 10000
-	}: { src: string; loop?: boolean; duration?: number } = $props();
+		duration = 10000,
+		class: _class = '',
+		onFinishLoaded
+	}: {
+		src: string;
+		loop?: boolean;
+		duration?: number;
+		class?: string;
+		onFinishLoaded?: (img: HTMLImageElement) => void;
+	} = $props();
 
 	// Resolved src = blob URL hasil preloader. Kalau sudah ter-cache di pre-fetch
 	// (lewat halaman store), pakai langsung — tidak ada flicker. Kalau belum,
@@ -17,7 +25,9 @@
 
 	$effect(() => {
 		// Re-resolve kalau prop src berubah
-		const current = src;
+		// console.log(src);
+
+		const current = `${src}?_=${Date.now()}`;
 		const cached = getCachedEffect(current);
 		if (cached) {
 			resolvedSrc = cached;
@@ -44,13 +54,16 @@
 		if (!loop) return;
 		timeoutId = setTimeout(() => {
 			iteration++;
+			const current = `${src}?_=${Date.now()}`;
+			resolvedSrc = current;
 		}, duration);
 	}
 
 	// Timer di-arm SETELAH image load — 1 siklus = duration ms dari munculnya
 	// animasi, konsisten antar iterasi.
-	function handleLoad() {
+	function handleLoad(event: Event) {
 		scheduleNext();
+		onFinishLoaded?.(event.currentTarget as HTMLImageElement);
 	}
 
 	function handleVisibility() {
@@ -67,10 +80,18 @@
 		return () => document.removeEventListener('visibilitychange', handleVisibility);
 	});
 
+	$effect(() => {
+		// console.log('iteration:', iteration, 'with duration:', duration, 'and src:', resolvedSrc);
+
+		return () => {
+			clearTimer();
+		};
+	});
+
 	onDestroy(clearTimer);
 </script>
 
-<div class="effect-layer" aria-hidden="true">
+<div class="effect-layer {_class}" aria-hidden="true">
 	{#if resolvedSrc}
 		{#key iteration}
 			<img

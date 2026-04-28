@@ -4,7 +4,9 @@
 	import NameTag from '$lib/components/NameTag.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
+	import ProfileEffect from '$lib/components/ProfileEffect.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import config from '$lib/config';
 	import { getFrameTweak } from '$lib/decorations';
 	import { getCultivationBadge, getLevelProgress } from '$lib/exp';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -22,7 +24,7 @@
 	const userLevel = $derived(Math.max(1, Number(auth.user?.level ?? 1)));
 	const userBadge = $derived(auth.user?.badge ?? getCultivationBadge(userLevel));
 	const levelProgress = $derived(auth.user?.levelProgress ?? getLevelProgress(userExp, userLevel));
-	const frameTweak = $derived(getFrameTweak(auth.user?.frame?.asset));
+	const effects = $derived(auth.user?.effects ?? []);
 	// const framePct = $derived(Math.round(frameTweak.scale * 100));
 	// const frameOffsetX = $derived(frameTweak.offsetX ?? 0);
 	// const frameOffsetY = $derived(frameTweak.offsetY ?? 0);
@@ -32,6 +34,7 @@
 	// 	history.items[0]?.animeThumbnail || saved.items[0]?.animeThumbnail || null
 	// );
 	// console.log(heroBg);
+	// console.log(auth.user);
 </script>
 
 <SEO title="Profil" noindex />
@@ -60,30 +63,46 @@
 		</button>
 	</div>
 {:else}
-	<div class="max-w-2xl mx-auto pb-16">
+	<div class="relative max-w-2xl mx-auto pb-16">
+		{#if effects.length > 0}
+			<div
+				class="absolute inset-y-0 -left-4 -right-4 z-50 pointer-events-none overflow-hidden md:left-0 md:right-0"
+				style="contain: layout paint style; transform: translateZ(0);"
+			>
+				{#each effects as effect}
+					{#if effect.config.src}
+						<ProfileEffect
+							src={effect.config.src}
+							// loop={effect.config.loop}
+							duration={effect.config.duration}
+							onFinishLoaded={(img) => {
+								const fadeTimeoutId = setTimeout(
+									() => {
+										clearTimeout(fadeTimeoutId);
+										img.style.transition = 'opacity 0.8s ease-out';
+										img.style.opacity = '0';
+										const removeTimeoutId = setTimeout(() => {
+											clearTimeout(removeTimeoutId);
+											img.remove();
+										}, 800);
+									},
+									(effect.config.duration ?? 5000) > 5000 ? (effect.config.duration ?? 5000) : 5000
+								);
+							}}
+						/>
+					{/if}
+				{/each}
+			</div>
+		{/if}
+
 		<!-- ══════════════════════════════════════
              HERO CARD — full bleed, blurred bg
         ══════════════════════════════════════ -->
+
 		<div
 			class="-mx-4 -mt-4 md:mx-0 md:mt-0 md:rounded-[var(--radius-2xl)] overflow-hidden mb-6 relative"
 			style="min-height: 260px;"
 		>
-			<!--
-                Layer 1: blurred anime thumbnail as atmospheric bg.
-                Falls back to accent gradient if no thumbnail available.
-            -->
-			<!-- {#if heroBg}
-				<OptimizedImage
-					src={heroBg}
-					alt=""
-					aria-hidden="true"
-					className="profile-hero-bg absolute inset-0 h-full w-full scale-110"
-					imageClass="h-full w-full object-cover"
-					loading="lazy"
-					fetchpriority="low"
-					sizes="(max-width: 768px) 100vw, 672px"
-				/>
-			{/if} -->
 			<!-- Accent gradient overlay (always present, dims the bg) -->
 			<div
 				class="absolute inset-0"
@@ -345,7 +364,7 @@
 				class="rounded-[var(--radius-2xl)] overflow-hidden"
 				style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
 			>
-				{#each [{ href: '/profile/history', icon: 'history', label: 'Riwayat Menonton', desc: 'Lanjutkan episode terakhir', badge: history.items.length || null }, { href: '/profile/saved', icon: 'bookmark', label: 'Anime Tersimpan', desc: 'Daftar anime favoritmu', badge: saved.items.length || null }, { href: '/exp', icon: 'workspace_premium', label: 'Level & EXP', desc: 'Cara naik level dan badge kultivasi', badge: `Lv ${userLevel}` }, { href: '/decorations', icon: 'auto_awesome', label: 'Frame Avatar', desc: 'Buka & pasang frame dari level kamu', badge: null }, { href: '/profile/decorations', icon: 'backpack', label: 'Inventaris Dekorasi', desc: 'Frame yang sudah kamu miliki', badge: null }, { href: '/profile/preferences', icon: 'tune', label: 'Preferensi', desc: 'Tema, kualitas, volume, subtitle, notifikasi', badge: null }, { href: '/notifications', icon: 'notifications', label: 'Notifikasi', desc: 'Inbox personal masuk', badge: null }, { href: '/profile/settings', icon: 'manage_accounts', label: 'Pengaturan Akun', desc: 'Username, avatar, password', badge: null }] as item, i}
+				{#each [{ href: '/profile/history', icon: 'history', label: 'Riwayat Menonton', desc: 'Lanjutkan episode terakhir', badge: history.items.length || null }, { href: '/profile/saved', icon: 'bookmark', label: 'Anime Tersimpan', desc: 'Daftar anime favoritmu', badge: saved.items.length || null }, { href: '/exp', icon: 'workspace_premium', label: 'Level & EXP', desc: 'Cara naik level dan badge kultivasi', badge: `Lv ${userLevel}` }, { href: '/decorations', icon: 'auto_awesome', label: 'Toko Dekorasi', desc: 'Buka & pasang frame dari level kamu', badge: null }, { href: '/profile/decorations', icon: 'backpack', label: 'Inventaris Dekorasi', desc: 'Frame yang sudah kamu miliki', badge: null }, { href: '/profile/preferences', icon: 'tune', label: 'Preferensi', desc: 'Tema, kualitas, volume, subtitle, notifikasi', badge: null }, { href: '/notifications', icon: 'notifications', label: 'Notifikasi', desc: 'Inbox personal masuk', badge: null }, { href: '/profile/settings', icon: 'manage_accounts', label: 'Pengaturan Akun', desc: 'Username, avatar, password', badge: null }] as item, i}
 					<a
 						href={item.href}
 						class="flex items-center gap-3 px-4 py-3.5 transition-colors"
@@ -428,15 +447,6 @@
 		filter: blur(18px) brightness(0.35) saturate(150%);
 	}
 
-	.profile-frame-overlay {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		object-fit: contain;
-		user-select: none;
-		z-index: 2;
-		will-change: transform;
-	}
 	.badge-shine {
 		position: absolute;
 		inset: -45% auto -45% -35%;

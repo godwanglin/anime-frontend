@@ -182,7 +182,8 @@
 						/>
 					{/if}
 				</p>
-				<p class="text-[11px] mt-1" style="color: var(--text-muted);">
+
+				<p class="text-[11px] mt-1" style="color: #fff">
 					{#if activeTab === 'effect'}
 						{ownedCount} dari {totalCount} efek dimiliki - max
 						{MAX_EQUIPPED_EFFECTS} bisa dipasang
@@ -400,8 +401,8 @@
 									type="button"
 									onclick={() => handleEquip(item.id)}
 									disabled={decorations.isMutating}
-									class="w-full h-9 rounded-full text-[11px] font-black inline-flex items-center justify-center gap-1.5 text-white disabled:opacity-60"
-									style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow);"
+									class="w-full h-9 rounded-full text-[11px] font-black inline-flex items-center justify-center gap-1.5 disabled:opacity-60"
+									style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow); color: #fff;"
 								>
 									<span class="material-symbols-rounded" style="font-size:14px;">checkroom</span>
 									Pasang
@@ -434,7 +435,7 @@
 								onclick={() => handleEquip(item.id)}
 								disabled={decorations.isMutating}
 								class="w-full h-9 rounded-full text-[11px] font-black inline-flex items-center justify-center gap-1.5 text-white disabled:opacity-60"
-								style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow);"
+								style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow); color: #fff;"
 							>
 								<span class="material-symbols-rounded" style="font-size:14px;">checkroom</span>
 								Pasang

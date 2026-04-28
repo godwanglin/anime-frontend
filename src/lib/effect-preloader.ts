@@ -1,21 +1,11 @@
 /**
- * Pre-fetch profile effect asset → blob URL → decoded image.
+ * Pre-fetch profile effect asset -> blob URL -> decoded image.
  *
- * Discord profile effect asset bisa lambat di-fetch & di-decode (~beberapa MB
- * APNG/WEBP). Untuk store kita prefetch sekaligus decode di muka supaya saat
- * user scroll grid effect, `<img>` udah siap paint instant — tidak ada decode
- * jitter yang bikin frame jatuh dan animasi tampak "patah-patah".
- *
- * Strategi:
- * 1. fetch(src) → blob (bypass Image.crossOrigin issue, juga kasih kontrol
- *    progress kalau dibutuhkan)
- * 2. createObjectURL(blob) → URL lokal yang dijamin tersedia synchronously
- * 3. new Image(); img.decode() → Promise resolve setelah decoder selesai
- * 4. Return blob URL — caller pakai langsung di `<img src>` tanpa fetch ulang
- *
- * Kalau salah satu step gagal (CORS, network, dll), kita fallback ke src
- * original — bukan masalah fatal, cuma effect-nya fetch saat render.
+ * Absolute effect URL harus lewat server proxy khusus cdn-static.weebin.site
+ * supaya browser tidak kena CORS dan proxy tidak bisa dipakai untuk host lain.
+ * Path lokal tetap di-fetch same-origin.
  */
+const ALLOWED_EFFECT_CDN_ORIGIN = 'https://cdn-static.weebin.site';
 const cache = new Map<string, string>();
 const inflight = new Map<string, Promise<string>>();
 
@@ -23,16 +13,31 @@ function isAbsoluteUrl(url: string) {
 	return /^https?:\/\//i.test(url);
 }
 
+function isAllowedEffectCdn(src: string) {
+	try {
+		return new URL(src).origin === ALLOWED_EFFECT_CDN_ORIGIN;
+	} catch {
+		return false;
+	}
+}
+
+function proxiedEffectUrl(src: string) {
+	if (!isAbsoluteUrl(src)) return src;
+	if (!isAllowedEffectCdn(src)) {
+		throw new Error('Effect CDN tidak diperbolehkan');
+	}
+	const srcReal = `${src}${src.includes('?') ? '&' : '?'}_=${Date.now()}`;
+	return `/decorations-effect?url=${encodeURIComponent(srcReal)}`;
+}
+
 async function loadOne(src: string): Promise<string> {
 	const cached = cache.get(src);
 	if (cached) return cached;
 
 	try {
-		// Discord CDN melayani CORS, jadi fetch + blob aman. Untuk path lokal
-		// (mis. /frame-border/...) juga aman karena same-origin.
-		const response = await fetch(src, {
-			mode: isAbsoluteUrl(src) ? 'cors' : 'same-origin',
-			credentials: 'omit',
+		const response = await fetch(proxiedEffectUrl(src), {
+			mode: 'same-origin',
+			credentials: 'same-origin',
 			cache: 'force-cache'
 		});
 		if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -53,10 +58,10 @@ async function loadOne(src: string): Promise<string> {
 		cache.set(src, url);
 		return url;
 	} catch (err) {
-		// Fallback: fetch gagal (CORS, offline, dll). Pakai src apa adanya.
-		console.warn('[effect-preloader] fallback to direct src', src, err);
-		cache.set(src, src);
-		return src;
+		console.warn('[effect-preloader] gagal preload effect', src, err);
+		const fallback = isAbsoluteUrl(src) ? '' : src;
+		cache.set(src, fallback);
+		return fallback;
 	}
 }
 

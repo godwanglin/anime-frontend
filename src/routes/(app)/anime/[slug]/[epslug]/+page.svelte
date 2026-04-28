@@ -322,7 +322,12 @@
          VIDEO PLAYER — full bleed, always black
     ══════════════════════════════════════════ -->
 	<div
-		class="watch-player-shell w-full bg-black md:mx-8 md:w-[calc(100%-4rem)] md:bg-transparent md:rounded-2xl md:shadow-2xl md:shadow-black/20"
+		class="watch-player-fixed-spacer w-full aspect-video md:mx-8 md:w-[calc(100%-4rem)]"
+		aria-hidden="true"
+	></div>
+
+	<div
+		class="watch-player-shell watch-player-fixed w-full bg-black md:bg-transparent md:rounded-2xl md:shadow-2xl md:shadow-black/20"
 	>
 		{#if streamUrls.length}
 			<div class="relative w-full aspect-video">
@@ -1160,6 +1165,23 @@
 </div>
 
 <style>
+	.watch-player-fixed {
+		position: fixed;
+		top: 56px;
+		left: 0;
+		right: 0;
+		z-index: 20;
+	}
+
+	@media (min-width: 768px) {
+		.watch-player-fixed {
+			top: 60px;
+			left: calc(max((100vw - 80rem) / 2, 0px) + 220px + 2rem);
+			right: calc(max((100vw - 80rem) / 2, 0px) + 2rem);
+			width: auto;
+		}
+	}
+
 	:global(.watch-player-shell .vp-ambient) {
 		inset: -72px -28px;
 		border-radius: 9999px;

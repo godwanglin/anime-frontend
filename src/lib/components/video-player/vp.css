@@ -53,6 +53,7 @@
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	-webkit-font-smoothing: antialiased;
 	box-shadow: 0 20px 80px rgba(0, 0, 0, 0.42);
+	touch-action: pan-y;
 }
 
 /* ── Video ──────────────────────────────────────────────────────────────── */
@@ -64,6 +65,27 @@
 	object-fit: contain;
 	cursor: pointer;
 	display: block;
+	filter: brightness(var(--vp-video-brightness, 1));
+}
+
+.vp-brightness-gesture-zone,
+.vp-volume-gesture-zone {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	z-index: 2;
+	width: 28%;
+	background: transparent;
+	touch-action: none;
+	pointer-events: auto;
+}
+
+.vp-brightness-gesture-zone {
+	left: 0;
+}
+
+.vp-volume-gesture-zone {
+	right: 0;
 }
 
 /* ── Spinner ────────────────────────────────────────────────────────────── */
@@ -252,6 +274,71 @@
 	right: 10%;
 }
 
+.vp-brightness-gesture-toast,
+.vp-volume-gesture-toast {
+	position: absolute;
+	top: 50%;
+	z-index: 34;
+	transform: translateY(-50%);
+	display: grid;
+	justify-items: center;
+	gap: 8px;
+	min-width: 48px;
+	padding: 12px 10px;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	border-radius: 999px;
+	color: #fff;
+	background: rgba(10, 10, 14, 0.72);
+	box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+	backdrop-filter: blur(14px) saturate(150%);
+	-webkit-backdrop-filter: blur(14px) saturate(150%);
+	pointer-events: none;
+}
+
+.vp-brightness-gesture-toast {
+	left: 22px;
+}
+
+.vp-volume-gesture-toast {
+	right: 22px;
+}
+
+.vp-brightness-gesture-toast svg,
+.vp-volume-gesture-toast svg {
+	width: 20px;
+	height: 20px;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.vp-brightness-gesture-toast span,
+.vp-volume-gesture-toast span {
+	font-size: 11px;
+	font-weight: 900;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.vp-brightness-gesture-meter,
+.vp-volume-gesture-meter {
+	position: relative;
+	width: 5px;
+	height: 76px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.22);
+}
+
+.vp-brightness-gesture-meter div,
+.vp-volume-gesture-meter div {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	border-radius: inherit;
+	background: var(--vp-accent-color);
+}
+
 @keyframes vp-toast-fade {
 	from {
 		opacity: 0;
@@ -274,6 +361,7 @@
 	opacity: 0;
 	transition: opacity 0.25s ease;
 	pointer-events: none;
+	touch-action: none;
 }
 
 .vp-controls-top {
@@ -539,6 +627,11 @@
 
 .vp-settings-btn-active {
 	background: var(--vp-control-background);
+}
+
+.vp-settings-mobile-backdrop,
+.vp-settings-mobile-handle {
+	display: none;
 }
 
 .vp-fullscreen-topbar {
@@ -837,6 +930,108 @@
 	color: rgba(255, 255, 255, 0.4);
 	font-size: 0.72rem;
 	margin-left: auto;
+}
+
+@media (max-width: 768px) {
+	.vp-settings-wrap {
+		position: static;
+	}
+
+	.vp-settings-mobile-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 49;
+		display: block;
+		border: 0;
+		background: rgba(0, 0, 0, 0.44);
+		backdrop-filter: blur(2px);
+		-webkit-backdrop-filter: blur(2px);
+		cursor: default;
+	}
+
+	.vp-settings-panel {
+		position: fixed;
+		right: max(10px, env(safe-area-inset-right));
+		bottom: max(8px, env(safe-area-inset-bottom));
+		left: max(10px, env(safe-area-inset-left));
+		z-index: 50;
+		width: auto;
+		max-height: min(72vh, 420px);
+		overflow: hidden;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		border-radius: 18px 18px 16px 16px;
+		background: rgba(15, 15, 18, 0.96);
+		box-shadow: 0 -18px 52px rgba(0, 0, 0, 0.48);
+		backdrop-filter: blur(18px) saturate(150%);
+		-webkit-backdrop-filter: blur(18px) saturate(150%);
+		animation: vp-settings-sheet-in 0.18s ease-out;
+	}
+
+	.vp-settings-mobile-handle {
+		display: block;
+		width: 42px;
+		height: 4px;
+		margin: 9px auto 5px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.32);
+	}
+
+	.vp-settings-main,
+	.vp-settings-subpanel {
+		max-height: calc(min(72vh, 420px) - 18px);
+		overflow-y: auto;
+		padding: 4px 0 10px;
+	}
+
+	.vp-settings-row {
+		min-height: 48px;
+		padding: 12px 16px;
+		font-size: 0.92rem;
+	}
+
+	.vp-settings-row-icon {
+		width: 18px;
+		height: 18px;
+	}
+
+	.vp-settings-row-value {
+		font-size: 0.85rem;
+	}
+
+	.vp-settings-back {
+		min-height: 48px;
+		padding: 12px 16px;
+		font-size: 0.92rem;
+	}
+
+	.vp-settings-list {
+		max-height: none;
+		overflow: visible;
+	}
+
+	.vp-settings-item {
+		min-height: 46px;
+		padding: 11px 16px;
+		font-size: 0.92rem;
+	}
+
+	.vp-settings-check,
+	.vp-settings-check-placeholder {
+		width: 16px;
+		height: 16px;
+	}
+}
+
+@keyframes vp-settings-sheet-in {
+	from {
+		transform: translateY(18px);
+		opacity: 0;
+	}
+
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
 }
 
 /* ── Center controls (prev / play / next) ────────────────────────────────── */

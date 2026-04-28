@@ -200,6 +200,7 @@
 	style:--vp-ambient-opacity={vp.ambientOpacity}
 	style:--vp-ambient-blur={`${vp.ambientBlur}px`}
 	style:--vp-ambient-saturation={vp.ambientSaturation}
+	style:--vp-video-brightness={vp.videoBrightness}
 	style:--vp-primary-color={vp.themeCfg.primaryColor}
 	style:--vp-accent-color={vp.themeCfg.accentColor}
 	style:--vp-control-text-color={vp.themeCfg.controlTextColor}
@@ -214,6 +215,11 @@
 		bind:this={containerEl}
 		onmousemove={vp.onMouseMove}
 		onmouseleave={vp.onMouseLeave}
+		onpointerdowncapture={vp.onSurfacePointerDown}
+		onpointermovecapture={vp.onSurfacePointerMove}
+		onpointerupcapture={vp.onSurfacePointerUp}
+		onpointercancelcapture={vp.onSurfacePointerCancel}
+		onclickcapture={vp.onSurfaceClickCapture}
 		role="region"
 		aria-label={title}
 	>
@@ -227,6 +233,8 @@
 			ontimeupdate={handleTimeUpdate}
 			onloadedmetadata={handleLoadedMetadata}
 		/>
+		<div class="vp-brightness-gesture-zone" aria-hidden="true"></div>
+		<div class="vp-volume-gesture-zone" aria-hidden="true"></div>
 		<SubtitleOverlay
 			{vp}
 			externalLines={externalSubtitleLines}

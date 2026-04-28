@@ -7,6 +7,15 @@
 </script>
 
 {#if vp.showSettings}
+	<button
+		type="button"
+		class="vp-settings-mobile-backdrop"
+		aria-label="Close settings"
+		onclick={(e) => {
+			e.stopPropagation();
+			vp.closeAllMenus();
+		}}
+	></button>
 	<div
 		class="vp-settings-panel"
 		role="dialog"
@@ -15,6 +24,7 @@
 		onclick={(e) => e.stopPropagation()}
 		onkeydown={(e) => e.stopPropagation()}
 	>
+		<div class="vp-settings-mobile-handle" aria-hidden="true"></div>
 		{#if vp.settingsSubPanel === null}
 			<div class="vp-settings-main">
 				<button class="vp-settings-row" onclick={() => vp.toggleSettings('speed')}>

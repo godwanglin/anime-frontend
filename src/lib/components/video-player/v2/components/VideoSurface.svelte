@@ -38,7 +38,6 @@
 	onplaying={vp.onPlaying}
 	onvolumechange={vp.onVolumeChange}
 	onprogress={vp.onProgress}
-	onclick={vp.onVideoClick}
 	aria-label={title}
 >
 	{#each vp.allSubtitles as track, i (`${track.lang}:${track.label}:${track.src}:${i}`)}

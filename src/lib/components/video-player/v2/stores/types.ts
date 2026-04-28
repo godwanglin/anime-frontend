@@ -175,6 +175,7 @@ export interface PlayerEpisodeList {
 export const STORAGE_KEYS = {
 	volume: 'vp_volume',
 	muted: 'vp_muted',
+	brightness: 'vp_brightness',
 	quality: 'vp_quality',
 	progressPrefix: 'vp_progress:'
 };

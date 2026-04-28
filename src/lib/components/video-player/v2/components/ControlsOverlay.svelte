@@ -31,7 +31,7 @@
 {#if vp.controlsCfg.enabled !== false}
 	<div
 		class="vp-controls-wrapper vp-controls-{vp.controlsCfg.position ?? 'bottom'}"
-		class:vp-controls-visible={vp.showControls || !vp.isPlaying}
+		class:vp-controls-visible={vp.showControls || !vp.isPlaying || vp.showSettings}
 	>
 		<div class="vp-gradient" aria-hidden="true"></div>
 
@@ -79,7 +79,15 @@
 							max={vp.duration || 100}
 							step="0.1"
 							value={vp.currentTime}
-							oninput={(e) => vp.seek(parseFloat((e.target as HTMLInputElement).value))}
+							oninput={(e) => {
+								vp.onSeekbarInput();
+								vp.seek(parseFloat((e.target as HTMLInputElement).value));
+							}}
+							onpointerdown={vp.onSeekbarPointerDown}
+							onpointerup={vp.onSeekbarPointerRelease}
+							onpointercancel={vp.onSeekbarPointerRelease}
+							onlostpointercapture={vp.onSeekbarPointerRelease}
+							onblur={vp.onSeekbarPointerRelease}
 							onmousemove={vp.onSeekbarMouseMove}
 							onmouseleave={vp.onSeekbarMouseLeave}
 							aria-label="Seek"

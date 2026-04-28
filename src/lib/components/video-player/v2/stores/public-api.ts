@@ -30,6 +30,7 @@ export function createPublicApi(ctx: any) {
 		skipBackward: playback.skipBackward,
 		skipForward: playback.skipForward,
 		setVolume: playback.setVolume,
+		setVideoBrightness: playback.setVideoBrightness,
 		toggleMute: playback.toggleMute,
 		setPlaybackRate: playback.setPlaybackRate,
 		setQuality: hls.setQuality,
@@ -46,6 +47,14 @@ export function createPublicApi(ctx: any) {
 		onMouseLeave: playback.onMouseLeave,
 		onSeekbarMouseMove: thumbnail.onSeekbarMouseMove,
 		onSeekbarMouseLeave: thumbnail.onSeekbarMouseLeave,
+		onSurfacePointerDown: playback.onSurfacePointerDown,
+		onSurfacePointerMove: playback.onSurfacePointerMove,
+		onSurfacePointerUp: playback.onSurfacePointerUp,
+		onSurfacePointerCancel: playback.onSurfacePointerCancel,
+		onSeekbarPointerDown: playback.onSeekbarPointerDown,
+		onSeekbarPointerRelease: playback.onSeekbarPointerRelease,
+		onSeekbarInput: playback.onSeekbarInput,
+		onSurfaceClickCapture: playback.onSurfaceClickCapture,
 		onVideoClick: playback.onVideoClick,
 		onPlay: ctx.onPlay,
 		onPause: ctx.onPause,
@@ -93,6 +102,9 @@ export function createPublicApi(ctx: any) {
 		},
 		get volume() {
 			return playback.volume;
+		},
+		get videoBrightness() {
+			return playback.videoBrightness;
 		},
 		get currentTime() {
 			return playback.currentTime;
@@ -187,6 +199,12 @@ export function createPublicApi(ctx: any) {
 		get tapToastVisible() {
 			return playback.tapToastVisible;
 		},
+		get volumeGestureVisible() {
+			return playback.volumeGestureVisible;
+		},
+		get brightnessGestureVisible() {
+			return playback.brightnessGestureVisible;
+		},
 		get skipIntroSeconds() {
 			return skipIntro.seconds;
 		},
@@ -209,6 +227,12 @@ export function createPublicApi(ctx: any) {
 		},
 		get volumePercent() {
 			return playback.volumePercent;
+		},
+		get brightnessPercent() {
+			return playback.brightnessPercent;
+		},
+		get brightnessMeterPercent() {
+			return playback.brightnessMeterPercent;
 		},
 		get ambientPrimary() {
 			return ambient.primary;

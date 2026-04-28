@@ -12,6 +12,7 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 	let isPlaying = $state(false);
 	let isMuted = $state(false);
 	let volume = $state(1);
+	let videoBrightness = $state(1);
 	let currentTime = $state(0);
 	let duration = $state(0);
 	let buffered = $state(0);
@@ -20,20 +21,33 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 	let showControls = $state(true);
 
 	const DEFAULT_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+	const MAX_VIDEO_BRIGHTNESS = 2;
 	const RATES = $derived(
 		ctx.getPlaybackConfig()?.speeds?.length ? ctx.getPlaybackConfig()!.speeds! : DEFAULT_RATES
 	);
 	const seekPercent = $derived(duration > 0 ? (currentTime / duration) * 100 : 0);
 	const bufferedPercent = $derived(duration > 0 ? (buffered / duration) * 100 : 0);
 	const volumePercent = $derived(isMuted ? 0 : volume * 100);
+	const brightnessPercent = $derived(videoBrightness * 100);
+	const brightnessMeterPercent = $derived((videoBrightness / MAX_VIDEO_BRIGHTNESS) * 100);
+
+	function getPlaybackActive() {
+		const trackedIsPlaying = isPlaying;
+		const videoEl = ctx.getVideoEl();
+		if (!videoEl) return trackedIsPlaying;
+		return trackedIsPlaying || (!videoEl.paused && !videoEl.ended);
+	}
 
 	const interactions = createPlaybackInteractions({
 		getContainerEl: ctx.getContainerEl,
-		getIsPlaying: () => isPlaying,
+		getIsPlaying: getPlaybackActive,
+		getControlsVisible: () => showControls,
 		getCurrentTime: () => currentTime,
 		getVolume: () => (isMuted ? 0 : volume),
+		getBrightness: () => videoBrightness,
 		getPlaybackConfig: ctx.getPlaybackConfig,
 		setVolume,
+		setBrightness: setVideoBrightness,
 		toggleMute,
 		seek,
 		togglePlay,
@@ -46,8 +60,15 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		try {
 			const savedVol = localStorage.getItem(STORAGE_KEYS.volume);
 			const savedMuted = localStorage.getItem(STORAGE_KEYS.muted);
+			const savedBrightness = localStorage.getItem(STORAGE_KEYS.brightness);
 			if (savedVol !== null) volume = clamp(parseFloat(savedVol), 0, 1);
 			if (savedMuted !== null) isMuted = savedMuted === 'true';
+			if (savedBrightness !== null) {
+				const nextBrightness = parseFloat(savedBrightness);
+				if (Number.isFinite(nextBrightness)) {
+					videoBrightness = clamp(nextBrightness, 0, MAX_VIDEO_BRIGHTNESS);
+				}
+			}
 		} catch {
 			// localStorage may be unavailable.
 		}
@@ -57,6 +78,7 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		try {
 			localStorage.setItem(STORAGE_KEYS.volume, String(volume));
 			localStorage.setItem(STORAGE_KEYS.muted, String(isMuted));
+			localStorage.setItem(STORAGE_KEYS.brightness, String(videoBrightness));
 		} catch {
 			// ignore storage failures
 		}
@@ -103,6 +125,12 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		videoEl.volume = volume;
 		isMuted = volume === 0;
 		videoEl.muted = isMuted;
+		persistState();
+	}
+
+	function setVideoBrightness(val: number) {
+		if (!Number.isFinite(val)) return;
+		videoBrightness = clamp(val, 0, MAX_VIDEO_BRIGHTNESS);
 		persistState();
 	}
 
@@ -172,12 +200,21 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		skipBackward: interactions.skipBackward,
 		skipForward: interactions.skipForward,
 		setVolume,
+		setVideoBrightness,
 		toggleMute,
 		setPlaybackRate,
 		toggleFullscreen: interactions.toggleFullscreen,
 		handleTap: interactions.handleTap,
 		onKeydown: interactions.onKeydown,
 		onFullscreenChange: interactions.onFullscreenChange,
+		onSurfacePointerDown: interactions.onSurfacePointerDown,
+		onSurfacePointerMove: interactions.onSurfacePointerMove,
+		onSurfacePointerUp: interactions.onSurfacePointerUp,
+		onSurfacePointerCancel: interactions.onSurfacePointerCancel,
+		onSeekbarPointerDown: interactions.onSeekbarPointerDown,
+		onSeekbarPointerRelease: interactions.onSeekbarPointerRelease,
+		onSeekbarInput: interactions.onSeekbarInput,
+		onSurfaceClickCapture: interactions.onSurfaceClickCapture,
 		onMouseMove: interactions.onMouseMove,
 		onMouseLeave: interactions.onMouseLeave,
 		onVideoClick: interactions.onVideoClick,
@@ -202,6 +239,9 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		},
 		get volume() {
 			return volume;
+		},
+		get videoBrightness() {
+			return videoBrightness;
 		},
 		get currentTime() {
 			return currentTime;
@@ -233,6 +273,12 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		get tapToastVisible() {
 			return interactions.tapToastVisible;
 		},
+		get volumeGestureVisible() {
+			return interactions.volumeGestureVisible;
+		},
+		get brightnessGestureVisible() {
+			return interactions.brightnessGestureVisible;
+		},
 		get seekPercent() {
 			return seekPercent;
 		},
@@ -241,6 +287,12 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		},
 		get volumePercent() {
 			return volumePercent;
+		},
+		get brightnessPercent() {
+			return brightnessPercent;
+		},
+		get brightnessMeterPercent() {
+			return brightnessMeterPercent;
 		}
 	};
 }

@@ -7,26 +7,38 @@
 	import AvatarFrame from './AvatarFrame.svelte';
 	import NameTag from './NameTag.svelte';
 	import ProfileEffect from './ProfileEffect.svelte';
-	import { onMount } from 'svelte';
-	import { assetLoader } from '$lib/effect-preloader';
 
 	const {
 		user,
 		isOpen,
 		onClose,
-		anchorEl = null
+		anchorEl = null,
+		allowLoop = false
 	}: {
 		user: PublicUser;
 		isOpen: boolean;
 		onClose?: () => void;
+		allowLoop?: boolean;
 		anchorEl?: HTMLElement | null;
 	} = $props();
 
 	let isMobile = $state(false);
 	let popoverStyle = $state('');
 	let popoverEl = $state<HTMLDivElement | null>(null);
+	let sheetEl = $state<HTMLDivElement | null>(null);
 	let placement = $state<'right' | 'left' | 'bottom' | 'top'>('right');
 	let repositionTick = $state(0);
+	let isDraggingSheet = $state(false);
+
+	let sheetDragOffset = 0;
+	let pendingSheetDragOffset = 0;
+	let sheetDragFrame: number | null = null;
+	let sheetDragPointerId: number | null = null;
+	let sheetDragStartY = 0;
+	let sheetDragLastY = 0;
+	let sheetDragLastAt = 0;
+	let sheetDragVelocity = 0;
+	let sheetResetTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 	// Deteksi mobile / desktop
 	$effect(() => {
@@ -112,6 +124,20 @@
 		placement = nextPlacement;
 	});
 
+	$effect(() => {
+		if (isOpen) {
+			clearSheetResetTimer();
+			resetSheetDrag();
+		}
+	});
+
+	$effect(() => {
+		return () => {
+			clearSheetResetTimer();
+			if (sheetDragFrame !== null) cancelAnimationFrame(sheetDragFrame);
+		};
+	});
+
 	function clamp(v: number, min: number, max: number) {
 		return Math.max(min, Math.min(max, v));
 	}
@@ -128,8 +154,9 @@
 
 	async function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
+			resetSheetDrag();
 			onClose?.();
-			profileEffects = await assetLoader(baseProfileEffects);
+			// profileEffects = await assetLoader(baseProfileEffects);
 		}
 	}
 
@@ -151,12 +178,121 @@
 
 	function sheetTransition(node: HTMLElement) {
 		return {
-			duration: 500,
+			duration: 320,
 			css: (t: number) => {
 				const eased = quintOut(t);
-				return `transform: translateY(${(1 - eased) * 110}%);`;
+				return `
+					opacity: ${Math.max(0.001, eased)};
+					transform: translate3d(0, ${(1 - eased) * 108}%, 0);
+				`;
 			}
 		};
+	}
+
+	function clearSheetResetTimer() {
+		if (sheetResetTimeoutId !== null) {
+			clearTimeout(sheetResetTimeoutId);
+			sheetResetTimeoutId = null;
+		}
+	}
+
+	function setSheetDragOffset(nextOffset: number) {
+		sheetDragOffset = nextOffset;
+		pendingSheetDragOffset = nextOffset;
+
+		if (sheetDragFrame !== null) return;
+		sheetDragFrame = requestAnimationFrame(() => {
+			sheetDragFrame = null;
+			sheetEl?.style.setProperty('--sheet-drag-y', `${pendingSheetDragOffset}px`);
+		});
+	}
+
+	function resetSheetDrag() {
+		if (sheetDragFrame !== null) {
+			cancelAnimationFrame(sheetDragFrame);
+			sheetDragFrame = null;
+		}
+		sheetDragPointerId = null;
+		sheetDragStartY = 0;
+		sheetDragLastY = 0;
+		sheetDragLastAt = 0;
+		sheetDragVelocity = 0;
+		sheetDragOffset = 0;
+		pendingSheetDragOffset = 0;
+		isDraggingSheet = false;
+		sheetEl?.style.setProperty('--sheet-drag-y', '0px');
+	}
+
+	function resetSheetDragAfterClose() {
+		clearSheetResetTimer();
+		sheetResetTimeoutId = setTimeout(() => {
+			sheetResetTimeoutId = null;
+			resetSheetDrag();
+		}, 340);
+	}
+
+	function handleSheetPointerDown(event: PointerEvent) {
+		if (!isMobile || event.button !== 0) return;
+		clearSheetResetTimer();
+
+		const target = event.target as HTMLElement | null;
+		const fromHandle = Boolean(target?.closest('[data-sheet-drag-handle]'));
+		if (!fromHandle && (sheetEl?.scrollTop ?? 0) > 0) return;
+
+		if (sheetDragFrame !== null) {
+			cancelAnimationFrame(sheetDragFrame);
+			sheetDragFrame = null;
+		}
+
+		sheetDragPointerId = event.pointerId;
+		sheetDragStartY = event.clientY;
+		sheetDragLastY = event.clientY;
+		sheetDragLastAt = performance.now();
+		sheetDragVelocity = 0;
+		sheetEl?.setPointerCapture(event.pointerId);
+	}
+
+	function handleSheetPointerMove(event: PointerEvent) {
+		if (sheetDragPointerId !== event.pointerId) return;
+
+		const now = performance.now();
+		const elapsed = Math.max(1, now - sheetDragLastAt);
+		const deltaY = event.clientY - sheetDragStartY;
+		const nextOffset = Math.max(0, deltaY);
+
+		sheetDragVelocity = (event.clientY - sheetDragLastY) / elapsed;
+		sheetDragLastY = event.clientY;
+		sheetDragLastAt = now;
+
+		if (nextOffset < 6) return;
+		if ((sheetEl?.scrollTop ?? 0) > 0 && !isDraggingSheet) return;
+
+		if (event.cancelable) event.preventDefault();
+		isDraggingSheet = true;
+		setSheetDragOffset(nextOffset * 0.82);
+	}
+
+	function handleSheetPointerEnd(event: PointerEvent) {
+		if (sheetDragPointerId !== event.pointerId) return;
+
+		if (sheetEl?.hasPointerCapture(event.pointerId)) {
+			sheetEl.releasePointerCapture(event.pointerId);
+		}
+		const closeDistance = Math.min(150, window.innerHeight * 0.2);
+		const shouldClose = sheetDragOffset > closeDistance || sheetDragVelocity > 0.75;
+
+		if (shouldClose && onClose) {
+			onClose?.();
+			resetSheetDragAfterClose();
+			return;
+		}
+
+		resetSheetDrag();
+	}
+
+	function handleSheetPointerCancel(event: PointerEvent) {
+		if (sheetDragPointerId !== event.pointerId) return;
+		resetSheetDrag();
 	}
 
 	// Profile effects diambil langsung dari user data (dari backend), bukan
@@ -169,7 +305,7 @@
 		blob?: string;
 	};
 
-	let baseProfileEffects = $derived(
+	let profileEffects = $derived(
 		(user?.effects ?? []).flatMap((effect): ResolvedEffect[] => {
 			const src = getEffectSrc(effect);
 			if (!src) return [];
@@ -186,11 +322,11 @@
 		})
 	);
 
-	let profileEffects = $state<ResolvedEffect[]>([]);
+	// let profileEffects = $state<ResolvedEffect[]>([]);
 
-	onMount(async () => {
-		profileEffects = await assetLoader(baseProfileEffects);
-	});
+	// onMount(async () => {
+	// 	profileEffects = await assetLoader(baseProfileEffects);
+	// });
 
 	// console.log('Efekk', user?.effects);
 
@@ -228,10 +364,10 @@
 		class="fixed inset-0 z-40"
 		style="background: oklch(0 0 0 / {isMobile ? '0.6' : '0.35'});"
 		onclick={async () => {
+			resetSheetDrag();
 			onClose?.();
-			profileEffects = await assetLoader(baseProfileEffects);
+			// profileEffects = await assetLoader(baseProfileEffects);
 		}}
-		role="button"
 		tabindex="-1"
 		aria-label="Tutup"
 		transition:fade={{ duration: 220 }}
@@ -239,24 +375,28 @@
 
 	{#if isMobile}
 		<!-- Bottom sheet -->
-		<div
-			class="fixed bottom-0 left-0 right-0 z-50 rounded-t-[28px] overflow-hidden"
-			style="background: var(--page-bg, var(--surface)); max-height: 92dvh; overflow-y: auto;"
-			transition:sheetTransition
-		>
+		<div class="mobile-sheet-shell fixed bottom-0 left-0 right-0 z-50" transition:sheetTransition>
 			<div
-				class="sticky top-0 flex justify-center pt-3 pb-2 z-10"
-				style="background: var(--page-bg, var(--surface));"
+				bind:this={sheetEl}
+				class="mobile-sheet rounded-t-[28px] overflow-hidden"
+				class:sheet-dragging={isDraggingSheet}
+				style="max-height: 92dvh; overflow-y: auto;"
+				role="dialog"
+				aria-modal="true"
+				aria-label="Profil pengguna"
+				tabindex="-1"
+				onpointerdown={handleSheetPointerDown}
+				onpointermove={handleSheetPointerMove}
+				onpointerup={handleSheetPointerEnd}
+				onpointercancel={handleSheetPointerCancel}
 			>
-				<div class="w-10 h-[5px] rounded-full" style="background: oklch(0.5 0 0 / 0.3);"></div>
-			</div>
-
-			<!-- Container efek + konten -->
-			<div class="relative overflow-hidden" style="min-height: 260px;">
-				{@render profileEffectOverlay()}
-				{@render gradientBackground()}
-				<div class="relative z-10 px-5 pt-8 pb-8">
-					{@render cardContent()}
+				<!-- Container efek + konten -->
+				<div class="relative overflow-hidden" style="min-height: 260px;">
+					{@render profileEffectOverlay()}
+					{@render gradientBackground()}
+					<div class="relative z-10 px-5 pb-8 pt-5">
+						{@render cardContent()}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -297,8 +437,8 @@
 		{#each profileEffects as effect}
 			<ProfileEffect
 				src={effect.src}
-				loop={effect.loop}
-				duration={effect.duration}
+				loop={allowLoop}
+				duration={10000}
 				blob={effect.blob}
 				class="pc-effect-fill"
 			/>
@@ -334,7 +474,17 @@
 {/snippet}
 
 {#snippet cardContent()}
-	<div class="flex items-center gap-4 mb-6">
+	{#if isMobile}
+		<div
+			data-sheet-drag-handle
+			class="mobile-sheet-header sticky top-0 z-[80] flex justify-center"
+			aria-hidden="true"
+		>
+			<div class="h-1.5 w-11 rounded-full bg-white/30 shadow-sm shadow-black/20"></div>
+		</div>
+	{/if}
+
+	<div class="flex items-center gap-4 mb-6 mt-8">
 		<div class="relative shrink-0">
 			{#if auth.user?.id !== user?.id}
 				<a href="/profile/@{user?.username?.replaceAll(' ', '')}-{user?.exp}-{user?.id}">
@@ -460,6 +610,49 @@
 {/snippet}
 
 <style>
+	.mobile-sheet-shell {
+		contain: layout paint style;
+		will-change: transform, opacity;
+		backface-visibility: hidden;
+	}
+
+	.mobile-sheet {
+		--sheet-drag-y: 0px;
+		background: oklch(0.06 0.01 180);
+		box-shadow:
+			0 -28px 80px oklch(0 0 0 / 0.48),
+			0 0 0 1px oklch(1 0 0 / 0.08);
+		overscroll-behavior: contain;
+		transform: translate3d(0, var(--sheet-drag-y), 0);
+		transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+		will-change: transform;
+		backface-visibility: hidden;
+		touch-action: pan-y;
+	}
+
+	.mobile-sheet.sheet-dragging {
+		transition: none;
+		cursor: grabbing;
+	}
+
+	.mobile-sheet [data-sheet-drag-handle] {
+		touch-action: none;
+	}
+
+	.mobile-sheet-header {
+		position: sticky;
+	}
+
+	.mobile-sheet-header::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: -18px;
+		height: 18px;
+		pointer-events: none;
+	}
+
 	/* Override default ProfileEffect mobile rule (yang force `width: 100vw` +
 	   `object-fit: contain` untuk halaman patternUser). Di ProfileCard kita
 	   pengen efek mengisi penuh lebar card, bukan dipotong ke ukuran viewport

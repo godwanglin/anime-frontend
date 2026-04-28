@@ -395,8 +395,8 @@
 								background: {equipped || maxEffectReached ? 'var(--accent-surface)' : 'var(--accent)'};
 								color: {equipped || maxEffectReached ? 'var(--accent-text)' : '#fff'};
 								border: 1px solid {equipped || maxEffectReached
-									? 'oklch(from var(--accent) l c h / 0.3)'
-									: 'transparent'};
+								? 'oklch(from var(--accent) l c h / 0.3)'
+								: 'transparent'};
 								box-shadow: {equipped || maxEffectReached ? 'none' : '0 4px 12px var(--accent-glow)'};
 							"
 						>
@@ -435,7 +435,13 @@
 <NavigationBottom />
 
 {#if previewUser && previewEffect}
-	<ProfileCard user={previewUser as any} isOpen={true} onClose={closePreview} anchorEl={null} />
+	<ProfileCard
+		user={previewUser as any}
+		allowLoop
+		isOpen={true}
+		onClose={closePreview}
+		anchorEl={null}
+	/>
 {/if}
 
 <style>

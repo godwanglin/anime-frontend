@@ -3,11 +3,11 @@
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
-	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
+	// import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import ProfileEffect from '$lib/components/ProfileEffect.svelte';
 	import SEO from '$lib/components/SEO.svelte';
-	import config from '$lib/config';
-	import { getFrameTweak } from '$lib/decorations';
+	// import config from '$lib/config';
+	// import { getFrameTweak } from '$lib/decorations';
 	import { getCultivationBadge, getLevelProgress } from '$lib/exp';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';

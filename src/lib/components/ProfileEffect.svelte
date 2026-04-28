@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
-	import { preloadEffect, getCachedEffect } from '$lib/effect-preloader';
+	import { onDestroy, onMount } from 'svelte';
+	import { getCachedEffectV2, preloadEffectV2, refreshEffectV2 } from '$lib/effect-preloader';
 
 	let {
 		src,
@@ -18,33 +18,19 @@
 		onFinishLoaded?: (img: HTMLImageElement) => void;
 	} = $props();
 
-	// Resolved src = blob URL hasil preloader. Kalau sudah ter-cache di pre-fetch
-	// (lewat halaman store), pakai langsung — tidak ada flicker. Kalau belum,
-	// kita resolve di mount.
 	let resolvedSrc = $state<string>('');
 	let iteration = $state(0);
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
+	let precacheTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	let renderVersion = 0;
 
-	// console.log(blob);
-
-	$effect(() => {
-		// Re-resolve kalau prop src berubah
-		// console.log(src);
-
-		const current = src;
-		const cached = getCachedEffect(current);
-		if (cached) {
-			resolvedSrc = cached;
-			return;
-		}
-		let cancelled = false;
-		preloadEffect(current).then((url) => {
-			if (!cancelled) resolvedSrc = url;
-		});
-		return () => {
-			cancelled = true;
-		};
-	});
+	// Token bertambah tiap kali deps berubah / unmount, dipakai untuk
+	// invalidate async callback yang sudah basi tanpa harus mutate $state
+	// dari luar tracking scope.
+	let runToken = 0;
+	// Buffer non-state untuk URL iterasi berikutnya. Tidak perlu reaktif —
+	// hanya dibaca imperatively saat timer fire.
+	let nextBlobUrl = '';
 
 	function clearTimer() {
 		if (timeoutId !== null) {
@@ -53,30 +39,120 @@
 		}
 	}
 
-	function scheduleNext() {
-		clearTimer();
-		if (!loop) return;
-		timeoutId = setTimeout(() => {
-			iteration++;
-			const current = `${src}?_=${Date.now()}`;
-			resolvedSrc = current;
-		}, duration);
+	function clearPrecacheTimer() {
+		if (precacheTimeoutId !== null) {
+			clearTimeout(precacheTimeoutId);
+			precacheTimeoutId = null;
+		}
 	}
 
-	// Timer di-arm SETELAH image load — 1 siklus = duration ms dari munculnya
-	// animasi, konsisten antar iterasi.
+	function bust(url: string) {
+		return `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+	}
+
+	function advanceIteration() {
+		renderVersion += 1;
+		iteration = renderVersion;
+	}
+
+	function precacheLatest(currentSrc: string) {
+		if (!currentSrc) return;
+		void refreshEffectV2(currentSrc, bust(currentSrc));
+	}
+
+	function scheduleMountPrecache(currentSrc: string) {
+		clearPrecacheTimer();
+		precacheTimeoutId = setTimeout(() => {
+			precacheTimeoutId = null;
+			precacheLatest(currentSrc);
+		}, 500);
+	}
+
+	// Fire-and-forget: warming the V2 cache for the next loop iteration so that
+	// when the timer fires we already have the blob URL ready.
+	function warmNext(currentSrc: string, token: number) {
+		const nextUrl = bust(currentSrc);
+		refreshEffectV2(currentSrc, nextUrl)
+			.then((url) => {
+				if (token !== runToken) return;
+				nextBlobUrl = url;
+			})
+			.catch(() => {
+				// stale or fetch failed — biarkan, fallback di scheduleNext
+			});
+	}
+
+	function scheduleNext(currentSrc: string, currentDuration: number, token: number) {
+		clearTimer();
+		timeoutId = setTimeout(() => {
+			if (token !== runToken) return;
+			const ready = nextBlobUrl;
+			nextBlobUrl = '';
+			if (ready) {
+				resolvedSrc = ready;
+				advanceIteration();
+				warmNext(currentSrc, token);
+				return;
+			}
+			// Belum siap (CDN lambat) — load on the fly, lalu lanjutkan.
+			refreshEffectV2(currentSrc, bust(currentSrc))
+				.then((url) => {
+					if (token !== runToken) return;
+					resolvedSrc = url;
+					advanceIteration();
+					warmNext(currentSrc, token);
+				})
+				.catch(() => {});
+		}, currentDuration);
+	}
+
 	function handleLoad(event: Event) {
-		scheduleNext();
+		if (loop) scheduleNext(src, duration, runToken);
 		onFinishLoaded?.(event.currentTarget as HTMLImageElement);
 	}
 
 	function handleVisibility() {
 		if (document.hidden) {
 			clearTimer();
-		} else if (loop && timeoutId === null) {
-			scheduleNext();
+		} else if (loop && timeoutId === null && resolvedSrc) {
+			scheduleNext(src, duration, runToken);
 		}
 	}
+
+	// Re-init setiap kali src / loop / blob berubah. Mutasi state dilakukan
+	// SECARA SINKRON di dalam effect body kalau cache hit; kalau miss, mutasi
+	// dilakukan di .then() dengan token guard untuk invalidasi.
+	$effect(() => {
+		const currentSrc = src;
+		const currentBlob = blob;
+		const currentLoop = loop;
+
+		runToken += 1;
+		const token = runToken;
+		clearTimer();
+		nextBlobUrl = '';
+
+		const cached = currentBlob ?? getCachedEffectV2(currentSrc);
+		if (cached) {
+			resolvedSrc = cached;
+			advanceIteration();
+			if (currentLoop) warmNext(currentSrc, token);
+		} else {
+			resolvedSrc = '';
+			preloadEffectV2(currentSrc, currentSrc)
+				.then((url) => {
+					if (token !== runToken) return;
+					resolvedSrc = url;
+					advanceIteration();
+					if (currentLoop) warmNext(currentSrc, token);
+				})
+				.catch(() => {});
+		}
+
+		return () => {
+			clearTimer();
+		};
+	});
 
 	$effect(() => {
 		if (typeof document === 'undefined') return;
@@ -84,22 +160,23 @@
 		return () => document.removeEventListener('visibilitychange', handleVisibility);
 	});
 
-	$effect(() => {
-		// console.log('iteration:', iteration, 'with duration:', duration, 'and src:', resolvedSrc);
-
-		return () => {
-			clearTimer();
-		};
+	onMount(() => {
+		scheduleMountPrecache(src);
+		return clearPrecacheTimer;
 	});
 
-	onDestroy(clearTimer);
+	onDestroy(() => {
+		runToken += 1;
+		clearTimer();
+		clearPrecacheTimer();
+	});
 </script>
 
 <div class="effect-layer {_class}" aria-hidden="true">
 	{#if resolvedSrc}
-		{#key iteration}
+		{#key `${iteration}-${resolvedSrc}`}
 			<img
-				src={blob ? blob : resolvedSrc}
+				src={resolvedSrc}
 				alt=""
 				class="effect-img"
 				onload={handleLoad}

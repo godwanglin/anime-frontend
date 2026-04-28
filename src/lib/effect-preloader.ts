@@ -119,7 +119,7 @@ export async function preloadEffect(src: string): Promise<string> {
 	if (inflight.has(src)) return inflight.get(src)!;
 	const promise = loadOne(src).finally(() => inflight.delete(src));
 	inflight.set(src, promise);
-	return promise;
+	return await promise;
 }
 
 export async function preloadEffects(srcs: Array<string | null | undefined>) {
@@ -154,3 +154,136 @@ export const assetLoader = async (assets: any[]) => {
 	);
 	return effectsWithBlob;
 };
+
+// -----------------------------
+// PRELOAD V2
+// -----------------------------
+
+/**
+ * Preload V2:
+ * - key: identity logis (misal src tanpa bust)
+ * - url: URL aktual (boleh ada query bust seperti ?_t=...)
+ *
+ * Cache & inflight disimpan per key supaya tidak bocor
+ * gara-gara bust timestamp.
+ */
+
+type EffectKey = string;
+
+const keyCache = new Map<EffectKey, string>();
+const keyInflight = new Map<EffectKey, Promise<string>>();
+const keyRefreshInflight = new Map<EffectKey, Promise<string>>();
+
+/**
+ * Normalisasi key logis dari src mentah.
+ * Misal kamu ingin semua varian ?_t=... tetap dianggap satu efek.
+ */
+function effectKeyFromSrc(src: string): EffectKey {
+	// Contoh sederhana: buang param _ dan _t jika ada
+	try {
+		const u = new URL(src, 'http://dummy.local');
+		u.searchParams.delete('_');
+		u.searchParams.delete('_t');
+		return u.pathname + (u.searchParams.toString() ? `?${u.searchParams.toString()}` : '');
+	} catch {
+		return src;
+	}
+}
+
+/**
+ * Preload gambar berdasarkan key logis dan URL aktual.
+ * - key: string identitas (misal src original)
+ * - url: URL yang benar-benar akan di-fetch (boleh dibust)
+ */
+export async function preloadEffectV2(key: string, url: string): Promise<string> {
+	if (!url) return '';
+
+	const k = effectKeyFromSrc(key);
+
+	if (keyCache.has(k)) return keyCache.get(k)!;
+	if (keyInflight.has(k)) return keyInflight.get(k)!;
+
+	const promise = (async () => {
+		const resolved = await loadOne(url);
+		keyCache.set(k, resolved);
+		return resolved;
+	})().finally(() => {
+		keyInflight.delete(k);
+	});
+
+	keyInflight.set(k, promise);
+	return promise;
+}
+
+/**
+ * Refresh cache V2 dengan URL aktual terbaru.
+ *
+ * Bedanya dengan preloadEffectV2:
+ * - preloadEffectV2 return cache lama kalau key sudah ada.
+ * - refreshEffectV2 tetap fetch `url`, lalu replace cache key dengan blob baru.
+ *
+ * Kalau refresh gagal, cache lama tetap dipertahankan supaya UI tidak flicker.
+ */
+export async function refreshEffectV2(key: string, url: string): Promise<string> {
+	if (!url) return getCachedEffectV2(key) ?? '';
+
+	const k = effectKeyFromSrc(key);
+	const existing = keyCache.get(k) ?? '';
+
+	if (keyRefreshInflight.has(k)) return keyRefreshInflight.get(k)!;
+
+	const promise = (async () => {
+		const resolved = await loadOne(url);
+		if (resolved) {
+			keyCache.set(k, resolved);
+			return resolved;
+		}
+		return existing;
+	})().finally(() => {
+		keyRefreshInflight.delete(k);
+	});
+
+	keyRefreshInflight.set(k, promise);
+	return promise;
+}
+
+/**
+ * Ambil cached blob berdasarkan key logis.
+ */
+export function getCachedEffectV2(key: string): string | null {
+	const k = effectKeyFromSrc(key);
+	return keyCache.get(k) ?? null;
+}
+
+/**
+ * Batch preload V2 untuk banyak efek.
+ * assets: [{ id, src, ... }]
+ */
+export async function assetLoaderV2<T extends { src: string }>(
+	assets: T[],
+	options?: { bust?: boolean }
+) {
+	const { bust = false } = options ?? {};
+
+	const effectsWithBlob = await Promise.all(
+		(assets ?? [])
+			.filter((effect) => effect?.src)
+			.map(async (effect) => {
+				const key = effect.src;
+				const url = bust
+					? `${effect.src}${effect.src.includes('?') ? '&' : '?'}_t=${Date.now()}`
+					: effect.src;
+
+				const blobUrl = bust
+					? await refreshEffectV2(key, url)
+					: await preloadEffectV2(key, url);
+
+				return {
+					...effect,
+					blob: blobUrl
+				};
+			})
+	);
+
+	return effectsWithBlob;
+}

@@ -76,18 +76,18 @@
 							// loop={effect.config.loop}
 							duration={effect.config.duration}
 							onFinishLoaded={(img) => {
-								// const fadeTimeoutId = setTimeout(
-								// 	() => {
-								// 		clearTimeout(fadeTimeoutId);
-								// 		img.style.transition = 'opacity 0.8s ease-out';
-								// 		img.style.opacity = '0';
-								// 		const removeTimeoutId = setTimeout(() => {
-								// 			clearTimeout(removeTimeoutId);
-								// 			img.remove();
-								// 		}, 800);
-								// 	},
-								// 	(effect.config.duration ?? 5000) > 5000 ? (effect.config.duration ?? 5000) : 5000
-								// );
+								const fadeTimeoutId = setTimeout(
+									() => {
+										clearTimeout(fadeTimeoutId);
+										img.style.transition = 'opacity 0.8s ease-out';
+										img.style.opacity = '0';
+										const removeTimeoutId = setTimeout(() => {
+											clearTimeout(removeTimeoutId);
+											img.remove();
+										}, 800);
+									},
+									(effect.config.duration ?? 5000) > 5000 ? (effect.config.duration ?? 5000) : 5000
+								);
 							}}
 						/>
 					{/if}

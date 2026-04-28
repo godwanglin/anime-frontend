@@ -11,6 +11,7 @@
 	const siteConfig = $derived((pageState.data.siteConfig ?? {}) as Record<string, string>);
 	const siteName = $derived(siteConfig['site.name'] ?? 'AniMe');
 	const siteLogo = $derived(siteConfig['site.logo'] ?? '/icon.png');
+	const visibleError = $derived(error || $page.url.searchParams.get('error') || '');
 
 	async function submit() {
 		error = '';
@@ -37,11 +38,17 @@
 		class="w-full max-w-sm rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 shadow-xl shadow-black/5"
 	>
 		<a href="/" class="inline-flex items-center gap-2 mb-6">
-			<img src={siteLogo} alt={siteName} class="h-9 w-9 rounded-full object-contain bg-violet-50 dark:bg-violet-950/40" />
+			<img
+				src={siteLogo}
+				alt={siteName}
+				class="h-9 w-9 rounded-full object-contain bg-violet-50 dark:bg-violet-950/40"
+			/>
 			<span class="font-black text-xl">{siteName}</span>
 		</a>
 		<h1 class="text-2xl font-black mb-1">Masuk</h1>
-		<p class="text-sm text-zinc-500 dark:text-zinc-400 mb-5">Lanjut nonton dari episode terakhir.</p>
+		<p class="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
+			Lanjut nonton dari episode terakhir.
+		</p>
 
 		<label class="block text-xs font-bold text-zinc-500 mb-1.5" for="email">Email</label>
 		<input
@@ -61,8 +68,8 @@
 			class="w-full h-11 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-4 text-sm outline-none focus:border-violet-500"
 		/>
 
-		{#if error}
-			<p class="mt-3 text-sm font-semibold text-red-500">{error}</p>
+		{#if visibleError}
+			<p class="mt-3 text-sm font-semibold text-red-500">{visibleError}</p>
 		{/if}
 
 		<button
@@ -72,6 +79,22 @@
 		>
 			{auth.isLoading ? 'Memproses...' : 'Masuk'}
 		</button>
+
+		<div
+			class="my-5 flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400"
+		>
+			<span class="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></span>
+			<span>atau</span>
+			<span class="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></span>
+		</div>
+
+		<a
+			href="/creds/google/start"
+			class="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white text-sm font-black text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+		>
+			<span class="text-base font-black text-[#4285f4]">G</span>
+			Login with Google
+		</a>
 
 		<p class="mt-5 text-center text-sm text-zinc-500">
 			Belum punya akun?

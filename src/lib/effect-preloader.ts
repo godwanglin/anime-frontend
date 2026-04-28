@@ -26,8 +26,8 @@ function proxiedEffectUrl(src: string) {
 	if (!isAllowedEffectCdn(src)) {
 		throw new Error('Effect CDN tidak diperbolehkan');
 	}
-	return src;
-	// return `/decorations-effect?url=${encodeURIComponent(srcReal)}`;
+	// return src;
+	return `/decorations-effect?url=${encodeURIComponent(src)}`;
 }
 
 async function loadOne(src: string): Promise<string> {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getFrameTweak, type EquippedFrame } from '$lib/decorations';
+	import { getFrameAssetUrl, getFrameTweak, type EquippedFrame } from '$lib/decorations';
 
 	type Props = {
 		src?: string | null;
@@ -35,23 +35,15 @@
 
 	const radius = $derived(rounded === 'full' ? '9999px' : 'var(--radius-xl, 14px)');
 	const initial = $derived(((fallbackInitial ?? alt.trim().charAt(0)) || '?').toUpperCase());
-	const tweak = $derived(getFrameTweak(frame?.asset));
+	const tweak = $derived(getFrameTweak(frame));
+	const frameSrc = $derived(getFrameAssetUrl(frame));
 	const framePct = $derived(Math.round(tweak.scale * frameScale * 100));
 
 	const offsetX = $derived(tweak.offsetX ?? 0);
-	const offsetYperAsset: any = {
-		'border5.gif': -4,
-		'border8.webp': 1
-	};
-
-	const getoffsetYdefault = () => {
-		if (fromComment) {
-			return offsetYperAsset[frame?.asset as any] ?? tweak.offsetY ?? 0;
-		}
-		return tweak.offsetY ?? 0;
-	};
 	const offsetY = $derived(
-		fromComment && getoffsetYdefault() ? getoffsetYdefault() : (tweak.offsetY ?? 0)
+		fromComment && typeof tweak.commentOffsetY === 'number'
+			? tweak.commentOffsetY
+			: (tweak.offsetY ?? 0)
 	);
 	const showInner = $derived(!framePreviewOnly);
 </script>
@@ -72,9 +64,9 @@
 		</span>
 	{/if}
 
-	{#if frame?.assetUrl}
+	{#if frameSrc}
 		<img
-			src={frame.assetUrl}
+			src={frameSrc}
 			alt=""
 			aria-hidden="true"
 			loading="lazy"

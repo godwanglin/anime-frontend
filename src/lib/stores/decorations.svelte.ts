@@ -93,6 +93,14 @@ async function fetchOwned() {
 	}
 }
 
+async function invalidate() {
+	await fetchShop();
+	if (auth.isLoggedIn) {
+		await fetchOwned();
+		await auth.fetchMe();
+	}
+}
+
 function setEquippedFlag(items: ShopDecoration[] | OwnedDecoration[], next: EquippedDecorations) {
 	const equippedIds = new Set<number>();
 	if (next.frame) equippedIds.add(next.frame.id);
@@ -250,6 +258,7 @@ export const decorations = {
 	},
 	fetchShop,
 	fetchOwned,
+	invalidate,
 	equip,
 	equipDecoration,
 	unequip,

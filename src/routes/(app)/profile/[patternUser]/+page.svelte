@@ -3,6 +3,7 @@
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
+	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import ProfileEffect from '$lib/components/ProfileEffect.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import config from '$lib/config';
@@ -566,15 +567,15 @@
 									class="relative shrink-0 rounded-[var(--radius-xl)] overflow-hidden"
 									style="width: 120px; aspect-ratio: 16/9;"
 								>
-									<img
+									<OptimizedImage
 										src={item.animeThumbnail}
 										alt={item.animeTitle}
-										loading="lazy"
-										class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-										style="background: var(--surface-offset);"
+										className="h-full w-full"
+										imageClass="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+										sizes="120px"
 									/>
 									<div
-										class="absolute bottom-0 left-0 right-0 h-[3px]"
+										class="absolute bottom-0 left-0 right-0 h-[3px] z-[2]"
 										style="background: oklch(0 0 0 / 0.3);"
 									>
 										<div
@@ -582,7 +583,7 @@
 											style="width: {item.progressPct}%; background: var(--accent); box-shadow: 0 0 6px var(--accent-glow);"
 										></div>
 									</div>
-									<div class="absolute top-1.5 left-1.5">
+									<div class="absolute top-1.5 left-1.5 z-[2]">
 										<span
 											class="px-1.5 py-0.5 rounded-md text-[8px] font-black text-white backdrop-blur-md"
 											style="background: oklch(0 0 0 / 0.55); border: 1px solid oklch(1 0 0 / 0.1);"
@@ -673,11 +674,12 @@
 								{#if item.anime}
 									<div class="mb-2 flex items-center gap-2">
 										{#if item.anime.thumbnail}
-											<img
+											<OptimizedImage
 												src={item.anime.thumbnail}
 												alt=""
-												class="h-8 w-8 rounded-lg object-cover shrink-0"
-												style="background: var(--surface-offset);"
+												className="h-8 w-8 rounded-lg shrink-0"
+												imageClass="h-full w-full object-cover"
+												sizes="32px"
 											/>
 										{/if}
 										<div class="min-w-0 flex-1">
@@ -775,18 +777,18 @@
 								style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
 							>
 								<div class="relative aspect-[2/3] w-full overflow-hidden">
-									<img
+									<OptimizedImage
 										src={item.animeThumbnail}
 										alt={item.animeTitle}
-										loading="lazy"
-										class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-										style="background: var(--surface-offset);"
+										className="h-full w-full"
+										imageClass="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+										sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
 									/>
 									<div
-										class="absolute inset-0"
+										class="absolute inset-0 z-[2]"
 										style="background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, transparent 70%);"
 									></div>
-									<div class="absolute top-1.5 left-1.5">
+									<div class="absolute top-1.5 left-1.5 z-[3]">
 										<span
 											class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider backdrop-blur-md"
 											style="background: {item.animeStatus === 'Ongoing'
@@ -801,7 +803,7 @@
 											{item.animeStatus === 'Ongoing' ? 'Tayang' : 'Tamat'}
 										</span>
 									</div>
-									<div class="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-6">
+									<div class="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-6 z-[3]">
 										<p class="text-[10px] font-black leading-tight line-clamp-2 text-white">
 											{item.animeTitle}
 										</p>

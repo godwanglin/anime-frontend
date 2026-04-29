@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { goto } from '$app/navigation';
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
@@ -16,6 +17,7 @@
 		pollChatMessages,
 		searchChatContexts,
 		searchChatMentionUsers,
+		WEEBIN_AI_MENTION_USER,
 		type ChatApiMessage,
 		type ChatAllowedLink,
 		type ChatContextItem,
@@ -90,7 +92,7 @@
 	let isLoading = $state(true);
 	let chatNotice = $state('');
 	let socketState = $state<'idle' | 'connecting' | 'open' | 'closed' | 'error'>('idle');
-	let typingUsers = $state<{ id: string; name: string }[]>([]);
+	let typingUsers = $state<{ id: string; name: string; status?: string | null }[]>([]);
 	let mentionKeyword = $state('');
 	let mentionSuggestions = $state<ChatMentionUser[]>([]);
 	let mentionLoading = $state(false);
@@ -120,8 +122,14 @@
 	let profileCardAnchor = $state<HTMLButtonElement | null>(null);
 	const publicUserCache = new Map<number, PublicUser>();
 	const typingUserTimers = new Map<string, ReturnType<typeof setTimeout>>();
-	const CHAT_ONBOARDING_STORAGE_KEY = 'weebin:chat:onboarding:v1';
+	const aiNavigationMessageIds = new Set<string>();
+	const CHAT_ONBOARDING_STORAGE_KEY = 'weebin:chat:onboarding:v2';
 	const chatOnboardingItems = [
+		{
+			icon: 'smart_toy',
+			title: 'WeebinAI siap dipanggil',
+			description: 'Tekan tombol AI melayang atau ketik @WeebinAI untuk tanya anime, episode, dan rekomendasi di Weebin.'
+		},
 		{
 			icon: 'add_link',
 			title: 'Bagikan anime & episode',
@@ -134,13 +142,13 @@
 		},
 		{
 			icon: 'alternate_email',
-			title: 'Mention user',
-			description: 'Ketik @ lalu minimal 2 huruf. Mention bisa diklik untuk buka profile card.'
+			title: 'Mention & notifikasi',
+			description: 'Ketik @ untuk mention user. Badge @ akan bantu lompat ke pesan yang manggil kamu.'
 		},
 		{
-			icon: 'manage_accounts',
-			title: 'Aksi pesan',
-			description: 'Pesan sendiri bisa diedit atau dihapus. Admin bisa moderasi pesan dari client.'
+			icon: 'dynamic_feed',
+			title: 'Streaming & kartu AI',
+			description: 'Jawaban WeebinAI muncul bertahap dari server dan bisa membawa kartu anime atau episode yang cocok.'
 		},
 		{
 			icon: 'timer',
@@ -173,6 +181,8 @@
 	const isElevatedUser = $derived(auth.user?.role === 'admin' || auth.user?.role === 'moderator');
 	const knownMentionNames = $derived.by(() => {
 		const names = new Set<string>();
+		names.add('WeebinAI');
+		names.add('weebinai');
 		if (auth.user) {
 			names.add(displayUserName(auth.user));
 			if (auth.user.username) names.add(auth.user.username);
@@ -189,6 +199,15 @@
 	});
 	const knownMentionUsers = $derived.by(() => {
 		const users = new Map<string, ChatUser>();
+		users.set('weebinai', {
+			id: WEEBIN_AI_MENTION_USER.id,
+			username: WEEBIN_AI_MENTION_USER.username,
+			fullName: WEEBIN_AI_MENTION_USER.fullName,
+			avatar: WEEBIN_AI_MENTION_USER.avatar,
+			isVerified: WEEBIN_AI_MENTION_USER.isVerified,
+			role: 'user',
+			level: 1
+		});
 		if (auth.user) {
 			users.set(displayUserName(auth.user).toLocaleLowerCase(), auth.user);
 			if (auth.user.username) users.set(auth.user.username.toLocaleLowerCase(), auth.user);
@@ -397,7 +416,7 @@
 		void scrollToLatest();
 	}
 
-	function setTypingUser(userId: string, name: string, typing: boolean) {
+	function setTypingUser(userId: string, name: string, typing: boolean, status?: string | null) {
 		const currentUserId = auth.user?.id ? String(auth.user.id) : '';
 		if (!userId || userId === currentUserId) return;
 
@@ -412,7 +431,7 @@
 
 		const cleanName = name.trim() || 'User';
 		const withoutUser = typingUsers.filter((user) => user.id !== userId);
-		typingUsers = [...withoutUser, { id: userId, name: cleanName }];
+		typingUsers = [...withoutUser, { id: userId, name: cleanName, status: status ?? null }];
 		typingUserTimers.set(
 			userId,
 			setTimeout(() => {
@@ -632,7 +651,7 @@
 
 	function typingLabel() {
 		if (typingUsers.length === 0) return '';
-		if (typingUsers.length === 1) return `${typingUsers[0].name} sedang mengetik`;
+		if (typingUsers.length === 1) return typingUsers[0].status || `${typingUsers[0].name} sedang mengetik`;
 		if (typingUsers.length === 2)
 			return `${typingUsers[0].name}, ${typingUsers[1].name} sedang mengetik`;
 		return `${typingUsers[0].name} dan ${typingUsers.length - 1} lainnya sedang mengetik`;
@@ -777,12 +796,20 @@
 			if (payload.event === 'chat:message:update') {
 				const updated = toChatMessage(payload.message);
 				mergeMessages([updated]);
+				maybeNavigateFromWeebinAiReply(updated);
 				if (replyTarget?.id === updated.id && updated.deletedAt) replyTarget = null;
 				if (editTarget?.id === updated.id) editTarget = null;
 				return;
 			}
 			if (payload.event === 'chat:typing:update') {
-				setTypingUser(payload.userId, payload.username, payload.typing);
+				setTypingUser(payload.userId, payload.username, payload.typing, payload.status);
+				return;
+			}
+			if (payload.event === 'chat:ai:status') {
+				setTypingUser('21', 'WeebinAI', true, payload.status);
+				return;
+			}
+			if (payload.event === 'chat:ai:delta' || payload.event === 'chat:ai:cards') {
 				return;
 			}
 			if (payload.event === 'chat:slowmode:error') {
@@ -823,6 +850,39 @@
 
 	function contextTypeLabel(type: ChatContextType) {
 		return type === 'episode' ? 'Episode' : 'Anime';
+	}
+
+	function contextActionLabel(type: ChatContextType) {
+		return type === 'episode' ? 'Buka episode' : 'Buka anime';
+	}
+
+	function hasAiNavigationIntent(content: string | null | undefined) {
+		return /\b(?:buka|bukain|open|go\s*to|goto|arahin|arahkan|masuk|klik|click|tonton|nonton|play)\b/i.test(
+			content ?? ''
+		);
+	}
+
+	function pickNavigationContext(content: string | null | undefined, contexts: ChatContextItem[]) {
+		if (!contexts.length) return null;
+		if (/\b(?:ep|eps|episode)\b/i.test(content ?? '')) {
+			return contexts.find((context) => context.type === 'episode') ?? contexts[0];
+		}
+		return contexts[0];
+	}
+
+	function maybeNavigateFromWeebinAiReply(message: ChatMessage) {
+		if (aiNavigationMessageIds.has(message.id)) return;
+		if (message.user.username?.toLowerCase() !== WEEBIN_AI_MENTION_USER.username) return;
+		if (message.replyTo?.senderId !== String(auth.user?.id)) return;
+		if (!hasAiNavigationIntent(message.replyTo?.content)) return;
+
+		const target = pickNavigationContext(message.replyTo?.content, message.contexts);
+		if (!target?.url) return;
+
+		aiNavigationMessageIds.add(message.id);
+		setTimeout(() => {
+			void goto(target.url);
+		}, 450);
 	}
 
 	function contextSubtitle(context: ChatContextItem) {
@@ -1015,9 +1075,23 @@
 			try {
 				const users = await searchChatMentionUsers(keyword, 8);
 				if (mentionKeyword !== keyword) return;
-				mentionSuggestions = users.filter((user) => user.id !== auth.user?.id);
+				const normalized = keyword.toLocaleLowerCase();
+				const botMatch =
+					'weebinai'.includes(normalized) || 'weebin ai'.includes(normalized);
+				const filtered = users.filter((user) => user.id !== auth.user?.id);
+				mentionSuggestions = botMatch
+					? [
+							WEEBIN_AI_MENTION_USER,
+							...filtered.filter(
+								(user) => user.username.toLocaleLowerCase() !== WEEBIN_AI_MENTION_USER.username
+							)
+						]
+					: filtered;
 			} catch {
-				if (mentionKeyword === keyword) mentionSuggestions = [];
+				if (mentionKeyword === keyword) {
+					const normalized = keyword.toLocaleLowerCase();
+					mentionSuggestions = 'weebinai'.includes(normalized) ? [WEEBIN_AI_MENTION_USER] : [];
+				}
 			} finally {
 				if (mentionKeyword === keyword) mentionLoading = false;
 			}
@@ -1031,6 +1105,34 @@
 		draft = `${draft.slice(0, token.start)}@${mentionName} ${draft.slice(token.end)}`;
 		const nextCursor = token.start + mentionName.length + 2;
 		closeMentionSuggestions();
+		await tick();
+		composerInputEl?.focus();
+		composerInputEl?.setSelectionRange(nextCursor, nextCursor);
+	}
+
+	async function triggerWeebinAiShortcut() {
+		if (!auth.isLoggedIn || editTarget) return;
+		const mention = '@WeebinAI';
+		closeMentionSuggestions();
+
+		if (messageMentionsUser(draft, WEEBIN_AI_MENTION_USER.username)) {
+			await tick();
+			composerInputEl?.focus();
+			const cursor = draft.length;
+			composerInputEl?.setSelectionRange(cursor, cursor);
+			return;
+		}
+
+		const cursorStart = composerInputEl?.selectionStart ?? draft.length;
+		const cursorEnd = composerInputEl?.selectionEnd ?? cursorStart;
+		const before = draft.slice(0, cursorStart);
+		const after = draft.slice(cursorEnd);
+		const beforeSpace = before && !/\s$/.test(before) ? ' ' : '';
+		const afterSpace = after && !/^\s/.test(after) ? ' ' : '';
+		const trailingSpace = after ? afterSpace : ' ';
+		draft = `${before}${beforeSpace}${mention}${trailingSpace}${after}`;
+		const nextCursor = before.length + beforeSpace.length + mention.length + 1;
+		sendTypingStart();
 		await tick();
 		composerInputEl?.focus();
 		composerInputEl?.setSelectionRange(nextCursor, nextCursor);
@@ -1295,6 +1397,10 @@
 													<span class="context-badge">{contextTypeLabel(context.type)}</span>
 													<strong>{context.title}</strong>
 													<small>{contextSubtitle(context)}</small>
+													<span class="context-action">
+														<span class="material-symbols-rounded">open_in_new</span>
+														{contextActionLabel(context.type)}
+													</span>
 												</span>
 											</a>
 										{/each}
@@ -1369,6 +1475,10 @@
 															? contextSubtitle(link.preview)
 															: 'Link internal weebin.site'}</small
 													>
+													<span class="context-action">
+														<span class="material-symbols-rounded">open_in_new</span>
+														{link.preview ? contextActionLabel(link.preview.type) : 'Buka link'}
+													</span>
 												</span>
 											</a>
 										{/each}
@@ -1582,6 +1692,19 @@
 		<span class="material-symbols-rounded">info</span>
 		{replyJumpToast}
 	</div>
+{/if}
+
+{#if auth.isLoggedIn}
+	<button
+		type="button"
+		class="weebin-ai-shortcut"
+		disabled={Boolean(editTarget)}
+		aria-label="Mention WeebinAI"
+		title="Mention WeebinAI"
+		onclick={triggerWeebinAiShortcut}
+	>
+		<img src="https://cdn-static.weebin.site/content/avatar/weebin-ai.png" alt="" loading="lazy" />
+	</button>
 {/if}
 
 {#if mentionJumpQueue.length}
@@ -2465,6 +2588,51 @@
 		color: var(--text-muted);
 	}
 
+	.weebin-ai-shortcut {
+		position: fixed;
+		right: 16px;
+		bottom: calc(134px + env(safe-area-inset-bottom));
+		z-index: 82;
+		width: 46px;
+		min-width: 0;
+		height: 46px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		border-radius: 9999px;
+		border: 0;
+		background: transparent;
+		box-shadow: none;
+		transition:
+			transform 0.18s ease,
+			opacity 0.18s ease;
+	}
+
+	.weebin-ai-shortcut:hover:not(:disabled) {
+		transform: translateY(-1px);
+	}
+
+	.weebin-ai-shortcut:active:not(:disabled) {
+		transform: scale(0.95);
+	}
+
+	.weebin-ai-shortcut:disabled {
+		cursor: not-allowed;
+		opacity: 0.44;
+	}
+
+	.weebin-ai-shortcut img {
+		width: 42px;
+		height: 42px;
+		flex: 0 0 auto;
+		border-radius: 9999px;
+		object-fit: cover;
+		box-shadow:
+			0 0 0 2px oklch(from #ffffff l c h / 0.22),
+			0 12px 24px oklch(0 0 0 / 0.32);
+	}
+
 	.mention-jump-button {
 		position: fixed;
 		right: 16px;
@@ -2724,6 +2892,29 @@
 		font-size: 10px;
 		font-weight: 750;
 		line-height: 1.35;
+	}
+
+	.context-action {
+		width: fit-content;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin-top: 1px;
+		border-radius: 9999px;
+		padding: 3px 8px;
+		background: oklch(from var(--accent) l c h / 0.14);
+		color: var(--accent);
+		font-size: 9.5px;
+		font-weight: 950;
+	}
+
+	.context-action span {
+		font-size: 13px;
+	}
+
+	.message-row.mine .context-action {
+		background: oklch(from #ffffff l c h / 0.18);
+		color: #fff;
 	}
 
 	.message-row.mine .context-copy small {

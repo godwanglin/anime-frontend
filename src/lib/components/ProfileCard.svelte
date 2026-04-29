@@ -335,6 +335,9 @@
 	const userLevel = $derived(Math.max(1, Number(user?.level ?? 1)));
 	const profileBadge = $derived(user?.badge ?? getCultivationBadge(userLevel));
 	const levelProgress = $derived(user?.levelProgress ?? getLevelProgress(userExp, userLevel));
+	const profileTitle = $derived(
+		user?.username?.toLowerCase() === 'weebinai' ? 'Weebin Assistant' : 'Anime Watcher'
+	);
 	const profileStats = $derived({
 		episodeCount: Math.max(0, Number(user?.profileStats?.episodeCount ?? 0)),
 		watchHours: Math.max(
@@ -531,7 +534,7 @@
 				class="text-[9px] font-black uppercase tracking-[0.22em] mb-1"
 				style="color: oklch(1 0 0 / 0.4);"
 			>
-				Anime Watcher
+				{profileTitle}
 			</p>
 			<div class="mb-1 flex min-w-0 items-center gap-2">
 				<h1 class="truncate text-[22px] font-black leading-none text-white">

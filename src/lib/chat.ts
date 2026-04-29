@@ -74,6 +74,14 @@ export type ChatReplyPreview = {
 
 export type ChatMentionUser = Pick<PublicUser, 'id' | 'username' | 'fullName' | 'avatar' | 'isVerified'>;
 
+export const WEEBIN_AI_MENTION_USER: ChatMentionUser = {
+	id: 21,
+	username: 'weebinai',
+	fullName: 'WeebinAI',
+	avatar: null,
+	isVerified: false
+};
+
 function escapeRegExp(value: string) {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -147,6 +155,26 @@ export type ChatSocketEvent =
 			userId: string;
 			username: string;
 			typing: boolean;
+			status?: string | null;
+	  }
+	| {
+			event: 'chat:ai:status';
+			roomId: string;
+			messageId: string;
+			status: string;
+	  }
+	| {
+			event: 'chat:ai:delta';
+			roomId: string;
+			messageId: string;
+			delta: string;
+			text: string;
+	  }
+	| {
+			event: 'chat:ai:cards';
+			roomId: string;
+			messageId: string;
+			cards: ChatContextItem[];
 	  };
 
 function chatWsUrl(token: string) {

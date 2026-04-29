@@ -325,7 +325,7 @@
 	}
 </script>
 
-<SEO title={user ? `${user.username} - Profil` : 'Profil User'} noindex />
+<SEO title={user ? `${user.fullName?.trim() || user.username} - Profil` : 'Profil User'} noindex />
 
 <svelte:head>
 	{#if frameAssetUrl}
@@ -423,10 +423,10 @@
 					<div class="relative shrink-0">
 						<AvatarFrame
 							src={avatar}
-							alt={user.username ?? 'Avatar'}
+					alt={user.fullName?.trim() || user.username || 'Avatar'}
 							size={60}
 							frame={user.frame ?? null}
-							fallbackInitial={user.username?.[0] ?? 'A'}
+					fallbackInitial={(user.fullName?.trim() || user.username || 'A').slice(0, 1)}
 						/>
 						<div
 							class="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2"
@@ -443,7 +443,7 @@
 						</p>
 						<div class="mb-1 flex min-w-0 items-center gap-2">
 							<h1 class="truncate text-[22px] font-black leading-none text-white md:text-[26px]">
-								<NameTag name={user.username ?? 'User'} nametag={user.nametag ?? null} />
+					<NameTag name={user.fullName?.trim() || user.username || 'User'} nametag={user.nametag ?? null} />
 							</h1>
 							{#if user.isVerified}
 								<img

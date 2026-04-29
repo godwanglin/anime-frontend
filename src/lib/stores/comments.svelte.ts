@@ -23,6 +23,7 @@ export type CommentWithMeta = {
 	user: {
 		id: number;
 		username: string;
+		fullName?: string | null;
 		avatar: string | null;
 		isVerified?: boolean;
 		exp?: number;
@@ -184,6 +185,7 @@ async function postComment(payload: {
 		user: {
 			id: auth.user.id,
 			username: auth.user.username,
+			fullName: auth.user.fullName,
 			avatar: auth.user.avatar,
 			isVerified: auth.user.isVerified,
 			exp: auth.user.exp,

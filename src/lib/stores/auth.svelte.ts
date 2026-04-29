@@ -14,6 +14,7 @@ export type AuthUser = {
 	id: number;
 	email: string;
 	username: string;
+	fullName?: string | null;
 	avatar: string | null;
 	role?: string;
 	isVerified?: boolean;
@@ -32,6 +33,7 @@ export type AuthUser = {
 export type PublicUser = {
 	id: number;
 	username: string;
+	fullName?: string | null;
 	avatar: string | null;
 	role?: string;
 	isVerified?: boolean;
@@ -176,7 +178,7 @@ async function login(payload: { email: string; password: string }) {
 	}
 }
 
-async function register(payload: { email: string; username: string; password: string }) {
+async function register(payload: { email: string; username?: string; fullName?: string; password: string }) {
 	isLoading = true;
 	try {
 		const response = await fetch('/creds/register', {
@@ -202,7 +204,7 @@ async function logout(callApi = true) {
 	rememberUser(null);
 }
 
-async function updateProfile(payload: { username?: string; avatar?: string | null }) {
+async function updateProfile(payload: { username?: string; fullName?: string; avatar?: string | null }) {
 	const response = await authFetch('/creds/me', {
 		method: 'PUT',
 		body: JSON.stringify(payload)

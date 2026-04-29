@@ -7,8 +7,9 @@
 	import AdminSearchBar from '$lib/components/admin/AdminSearchBar.svelte';
 	import AdminTable from '$lib/components/admin/AdminTable.svelte';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
+	import { displayUserName } from '$lib/user-display';
 
-	type Comment = { id: number; content: string | null; isDeleted: boolean; createdAt: string; user: { username: string }; anime?: { title: string }; episode?: { number: number; title: string } };
+	type Comment = { id: number; content: string | null; isDeleted: boolean; createdAt: string; user: { username: string; fullName?: string | null }; anime?: { title: string }; episode?: { number: number; title: string } };
 	let items = $state<Comment[]>([]);
 	let selected = $state<number[]>([]);
 	let total = $state(0);
@@ -79,7 +80,7 @@
 	<AdminTable columns={[{ key: 'content', label: 'Komentar' }, { key: 'user', label: 'User' }, { key: 'anime', label: 'Anime/Episode' }, { key: 'time', label: 'Waktu' }, { key: 'actions', label: 'Aksi' }]} data={items as any} bind:selected selectable {isLoading}>
 		{#snippet children(row)}
 			<td class="max-w-md px-4 py-3"><p class="line-clamp-2 {row.isDeleted ? 'italic text-zinc-500' : ''}">{row.isDeleted ? '[Komentar dihapus]' : row.content}</p></td>
-			<td class="px-4 py-3">{row.user?.username}</td>
+			<td class="px-4 py-3">{displayUserName(row.user)}</td>
 			<td class="px-4 py-3"><p>{row.anime?.title ?? '-'}</p>{#if row.episode}<p class="text-xs text-zinc-500">Ep {row.episode.number}</p>{/if}</td>
 			<td class="px-4 py-3">{new Date(row.createdAt).toLocaleString('id-ID')}</td>
 			<td class="px-4 py-3">

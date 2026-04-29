@@ -5,7 +5,7 @@
 	import { auth } from '$lib/stores/auth.svelte';
 
 	let email = $state('');
-	let username = $state('');
+	let fullName = $state('');
 	let password = $state('');
 	let error = $state('');
 	const siteConfig = $derived((page.data.siteConfig ?? {}) as Record<string, string>);
@@ -15,7 +15,7 @@
 	async function submit() {
 		error = '';
 		try {
-			await auth.register({ email, username, password });
+			await auth.register({ email, username: fullName, password });
 			await auth.login({ email, password });
 			goto('/');
 		} catch (err) {
@@ -52,10 +52,10 @@
 			class="w-full h-11 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-4 text-sm outline-none focus:border-violet-500 mb-4"
 		/>
 
-		<label class="block text-xs font-bold text-zinc-500 mb-1.5" for="username">Username</label>
+		<label class="block text-xs font-bold text-zinc-500 mb-1.5" for="fullName">Nama</label>
 		<input
-			id="username"
-			bind:value={username}
+			id="fullName"
+			bind:value={fullName}
 			required
 			class="w-full h-11 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-4 text-sm outline-none focus:border-violet-500 mb-4"
 		/>

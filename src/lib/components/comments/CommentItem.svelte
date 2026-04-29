@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
+	import { displayUserName } from '$lib/user-display';
 	import type { EquippedEffect, EquippedFrame, EquippedNameTag } from '$lib/decorations';
 	import { getCultivationBadge, type ExpBadge, type LevelProgress } from '$lib/exp';
 	import type { ProfileStats } from '$lib/stores/auth.svelte';
@@ -24,6 +25,7 @@
 		user: {
 			id: number;
 			username: string;
+			fullName?: string | null;
 			avatar?: string | null;
 			isVerified?: boolean;
 			exp?: number;
@@ -133,7 +135,7 @@
 		<!-- Username + time -->
 		<div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
 			<span class="text-[12px] font-black" style="color: var(--text-primary);">
-				<NameTag name={comment.user?.username ?? 'Anonim'} nametag={userNameTag} />
+				<NameTag name={displayUserName(comment.user, 'Anonim')} nametag={userNameTag} />
 			</span>
 			{#if comment.user?.isVerified}
 				<img src="/badges/verify.png" alt="Verified" class="h-3.5 w-3.5 shrink-0 object-contain" />

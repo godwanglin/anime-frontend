@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import { messageMentionsUser, openChatSocket, type ChatSocketEvent } from '$lib/chat';
 import { auth } from '$lib/stores/auth.svelte';
+import { displayUserName } from '$lib/user-display';
 
 let unreadCount = $state(0);
 let mentionCount = $state(0);
@@ -41,7 +42,10 @@ function isMentionForCurrentUser(message: {
 }) {
 	const currentUserId = auth.user?.id ? String(auth.user.id) : '';
 	if (currentUserId && message.replyTo?.senderId === currentUserId) return true;
-	return messageMentionsUser(message.content, auth.user?.username);
+	return (
+		messageMentionsUser(message.content, displayUserName(auth.user, '')) ||
+		messageMentionsUser(message.content, auth.user?.username)
+	);
 }
 
 function disconnect() {

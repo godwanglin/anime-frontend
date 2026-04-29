@@ -7,6 +7,7 @@
 	import AvatarFrame from './AvatarFrame.svelte';
 	import NameTag from './NameTag.svelte';
 	import ProfileEffect from './ProfileEffect.svelte';
+	import { displayUserName, userInitial } from '$lib/user-display';
 
 	const {
 		user,
@@ -490,7 +491,7 @@
 				<a href="/profile/@{user?.username?.replaceAll(' ', '')}-{user?.exp}-{user?.id}">
 					<AvatarFrame
 						src={user.avatar}
-						alt={user.username ?? 'Avatar'}
+						alt={displayUserName(user, 'Avatar')}
 						size={60}
 						frame={{
 							id: user.frame?.id as any,
@@ -500,13 +501,13 @@
 							assetUrl: user.frame?.assetUrl as any,
 							config: user.frame?.config as any
 						}}
-						fallbackInitial={user.username?.[0] ?? 'A'}
+						fallbackInitial={userInitial(user)}
 					/>
 				</a>
 			{:else}
 				<AvatarFrame
 					src={user.avatar}
-					alt={user.username ?? 'Avatar'}
+					alt={displayUserName(user, 'Avatar')}
 					size={60}
 					frame={{
 						id: user.frame?.id as any,
@@ -516,7 +517,7 @@
 						assetUrl: user.frame?.assetUrl as any,
 						config: user.frame?.config as any
 					}}
-					fallbackInitial={user.username?.[0] ?? 'A'}
+					fallbackInitial={userInitial(user)}
 				/>
 			{/if}
 			<div
@@ -534,7 +535,7 @@
 			</p>
 			<div class="mb-1 flex min-w-0 items-center gap-2">
 				<h1 class="truncate text-[22px] font-black leading-none text-white">
-					<NameTag name={user.username ?? 'User'} nametag={user.nametag ?? null} />
+					<NameTag name={displayUserName(user)} nametag={user.nametag ?? null} />
 				</h1>
 				{#if user.isVerified}
 					<img src="/badges/verify.png" alt="Verified" class="h-5 w-5 shrink-0 object-contain" />

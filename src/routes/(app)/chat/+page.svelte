@@ -5,6 +5,7 @@
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import ProfileCard from '$lib/components/ProfileCard.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import { getCultivationBadge } from '$lib/exp';
 	import {
 		fetchChatPublicUser,
 		fetchChatMessages,
@@ -28,10 +29,19 @@
 	import { auth } from '$lib/stores/auth.svelte';
 	import { chatPresence } from '$lib/stores/chat-presence.svelte';
 	import { pageTitle } from '$lib/stores/page.svelte';
+	import { displayUserName, userHandle, userInitial } from '$lib/user-display';
 
 	type ChatUser = Pick<
 		PublicUser,
-		'id' | 'username' | 'avatar' | 'frame' | 'nametag' | 'isVerified' | 'role'
+		| 'id'
+		| 'username'
+		| 'fullName'
+		| 'avatar'
+		| 'frame'
+		| 'nametag'
+		| 'isVerified'
+		| 'role'
+		| 'level'
 	> &
 		Partial<PublicUser>;
 	type ChatMessage = {
@@ -106,9 +116,38 @@
 	let slowmodeRemaining = $state(0);
 	let currentClickedUser = $state<PublicUser | null>(null);
 	let showUserCard = $state(false);
+	let showChatOnboarding = $state(false);
 	let profileCardAnchor = $state<HTMLButtonElement | null>(null);
 	const publicUserCache = new Map<number, PublicUser>();
 	const typingUserTimers = new Map<string, ReturnType<typeof setTimeout>>();
+	const CHAT_ONBOARDING_STORAGE_KEY = 'weebin:chat:onboarding:v1';
+	const chatOnboardingItems = [
+		{
+			icon: 'add_link',
+			title: 'Bagikan anime & episode',
+			description: 'Tekan tombol plus untuk kirim kartu anime atau episode dari riwayat, tersimpan, atau pencarian.'
+		},
+		{
+			icon: 'reply',
+			title: 'Reply cepat',
+			description: 'Swipe bubble ke kanan di mobile, atau klik kanan di desktop untuk reply pesan.'
+		},
+		{
+			icon: 'alternate_email',
+			title: 'Mention user',
+			description: 'Ketik @ lalu minimal 2 huruf. Mention bisa diklik untuk buka profile card.'
+		},
+		{
+			icon: 'manage_accounts',
+			title: 'Aksi pesan',
+			description: 'Pesan sendiri bisa diedit atau dihapus. Admin bisa moderasi pesan dari client.'
+		},
+		{
+			icon: 'timer',
+			title: 'Realtime & slowmode',
+			description: 'Status koneksi ada di composer, dan tombol kirim otomatis jadi timer saat slowmode aktif.'
+		}
+	];
 	let reconnectAttempt = 0;
 	let allowReconnect = true;
 	let hasRealtimeSession = false;
@@ -134,17 +173,29 @@
 	const isElevatedUser = $derived(auth.user?.role === 'admin' || auth.user?.role === 'moderator');
 	const knownMentionNames = $derived.by(() => {
 		const names = new Set<string>();
-		if (auth.user?.username) names.add(auth.user.username);
+		if (auth.user) {
+			names.add(displayUserName(auth.user));
+			if (auth.user.username) names.add(auth.user.username);
+		}
 		for (const message of messages) {
+			const displayName = displayUserName(message.user, '');
+			if (displayName) names.add(displayName);
 			if (message.user.username) names.add(message.user.username);
 			if (message.replyTo?.senderName) names.add(message.replyTo.senderName);
+			if (message.replyTo?.senderUsername) names.add(message.replyTo.senderUsername);
+			if (message.replyTo?.senderFullName) names.add(message.replyTo.senderFullName);
 		}
 		return Array.from(names).sort((a, b) => b.length - a.length);
 	});
 	const knownMentionUsers = $derived.by(() => {
 		const users = new Map<string, ChatUser>();
-		if (auth.user?.username) users.set(auth.user.username.toLocaleLowerCase(), auth.user);
+		if (auth.user) {
+			users.set(displayUserName(auth.user).toLocaleLowerCase(), auth.user);
+			if (auth.user.username) users.set(auth.user.username.toLocaleLowerCase(), auth.user);
+		}
 		for (const message of messages) {
+			const displayName = displayUserName(message.user, '');
+			if (displayName) users.set(displayName.toLocaleLowerCase(), message.user);
 			if (message.user.username) users.set(message.user.username.toLocaleLowerCase(), message.user);
 		}
 		return users;
@@ -177,12 +228,14 @@
 			id: message.id,
 			user: {
 				id: Number.isFinite(senderId) ? senderId : 0,
-				username: sender?.name ?? message.senderName,
+				username: sender?.username ?? message.senderUsername ?? message.senderName,
+				fullName: sender?.fullName ?? message.senderFullName ?? sender?.name ?? message.senderName,
 				avatar: sender?.avatar ?? message.senderAvatar,
 				frame: sender?.frame ?? message.senderFrame,
 				nametag: sender?.nageTag ?? message.senderNageTag,
 				isVerified: Boolean(sender?.isVerified),
-				role: sender?.role ?? undefined
+				role: sender?.role ?? undefined,
+				level: Math.max(1, Number(sender?.level ?? message.senderLevel ?? 1))
 			},
 			body: message.content,
 			contexts: message.contexts?.length
@@ -207,6 +260,23 @@
 			: 'Pesan telah dihapus';
 	}
 
+	function dismissChatOnboarding() {
+		showChatOnboarding = false;
+		try {
+			localStorage.setItem(CHAT_ONBOARDING_STORAGE_KEY, 'done');
+		} catch {
+			// Local storage may be blocked; closing for this session is enough.
+		}
+	}
+
+	function userLevelMeta(user: ChatUser) {
+		const level = Math.max(1, Number(user.level ?? 1));
+		return {
+			level,
+			badge: getCultivationBadge(level)
+		};
+	}
+
 	function replyPreviewText(reply: ChatReplyPreview | ChatMessage | null) {
 		if (!reply) return '';
 		if ('deletedAt' in reply && reply.deletedAt) {
@@ -221,21 +291,38 @@
 	}
 
 	function messageTextSegments(body: string) {
-		const segments: { text: string; mention: boolean; user?: ChatUser | null }[] = [];
+		const segments: { text: string; mention?: boolean; link?: string; user?: ChatUser | null }[] = [];
 		let index = 0;
 
 		while (index < body.length) {
-			const atIndex = body.indexOf('@', index);
-			if (atIndex === -1) {
-				segments.push({ text: body.slice(index), mention: false });
+			const remaining = body.slice(index);
+			const nextMention = body.indexOf('@', index);
+			const linkMatch = remaining.match(/\b(?:https?:\/\/|www\.)[^\s<>"']+/i);
+			const nextLink = linkMatch?.index !== undefined ? index + linkMatch.index : -1;
+			const candidates = [nextMention, nextLink].filter((value) => value >= 0);
+			const nextSpecial = candidates.length ? Math.min(...candidates) : -1;
+
+			if (nextSpecial === -1) {
+				segments.push({ text: body.slice(index) });
 				break;
 			}
 
-			if (atIndex > index) segments.push({ text: body.slice(index, atIndex), mention: false });
+			if (nextSpecial > index) segments.push({ text: body.slice(index, nextSpecial) });
 
+			if (nextSpecial === nextLink && linkMatch) {
+				const rawUrl = linkMatch[0].replace(/[),.!?]+$/g, '');
+				segments.push({
+					text: rawUrl,
+					link: /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`
+				});
+				index = nextLink + rawUrl.length;
+				continue;
+			}
+
+			const atIndex = nextSpecial;
 			const before = atIndex > 0 ? body[atIndex - 1] : '';
 			if (!isMentionBoundary(before)) {
-				segments.push({ text: '@', mention: false });
+				segments.push({ text: '@' });
 				index = atIndex + 1;
 				continue;
 			}
@@ -267,7 +354,7 @@
 				continue;
 			}
 
-			segments.push({ text: '@', mention: false });
+			segments.push({ text: '@' });
 			index = atIndex + 1;
 		}
 
@@ -285,8 +372,16 @@
 		}
 
 		const users = await searchChatMentionUsers(username, 6).catch(() => []);
-		const found = users.find((user) => user.username.toLocaleLowerCase() === username.toLocaleLowerCase());
-		if (!found) return;
+		const normalized = username.toLocaleLowerCase();
+		const found = users.find(
+			(user) =>
+				user.username.toLocaleLowerCase() === normalized ||
+				displayUserName(user).toLocaleLowerCase() === normalized
+		);
+		if (!found) {
+			showReplyJumpToast('User mention tidak ditemukan.');
+			return;
+		}
 		await openProfileCard(found as ChatUser, anchorEl);
 	}
 
@@ -466,9 +561,14 @@
 	}
 
 	function queueMentionJump(message: ChatMessage) {
-		if (!auth.user?.username || message.isMine || message.deletedAt) return;
+		if (!auth.user || message.isMine || message.deletedAt) return;
 		const isReplyToMe = message.replyTo?.senderId === String(auth.user.id);
-		if (!isReplyToMe && !messageMentionsUser(message.body, auth.user.username)) return;
+		if (
+			!isReplyToMe &&
+			!messageMentionsUser(message.body, displayUserName(auth.user)) &&
+			!messageMentionsUser(message.body, auth.user.username)
+		)
+			return;
 		mentionJumpQueue = [message.id, ...mentionJumpQueue.filter((id) => id !== message.id)].slice(0, 20);
 	}
 
@@ -927,8 +1027,9 @@
 	async function insertMention(user: ChatMentionUser) {
 		const token = currentMentionToken();
 		if (!token) return;
-		draft = `${draft.slice(0, token.start)}@${user.username} ${draft.slice(token.end)}`;
-		const nextCursor = token.start + user.username.length + 2;
+		const mentionName = displayUserName(user);
+		draft = `${draft.slice(0, token.start)}@${mentionName} ${draft.slice(token.end)}`;
+		const nextCursor = token.start + mentionName.length + 2;
 		closeMentionSuggestions();
 		await tick();
 		composerInputEl?.focus();
@@ -1011,6 +1112,11 @@
 
 	onMount(() => {
 		pageTitle.value = 'Chat';
+		try {
+			showChatOnboarding = localStorage.getItem(CHAT_ONBOARDING_STORAGE_KEY) !== 'done';
+		} catch {
+			showChatOnboarding = false;
+		}
 		pendingPresenceMentionIds = chatPresence.consumeMentionIds();
 		chatPresence.markSeen();
 		chatPresence.disconnect();
@@ -1091,10 +1197,10 @@
 						{#if !message.isMine}
 							<AvatarFrame
 								src={message.user.avatar}
-								alt={message.user.username}
+								alt={displayUserName(message.user)}
 								size={38}
 								frame={message.user.frame ?? null}
-								fallbackInitial={message.user.username}
+								fallbackInitial={displayUserName(message.user)}
 								onclick={(event) =>
 									openProfileCard(message.user, event.currentTarget as HTMLButtonElement)}
 							/>
@@ -1102,16 +1208,25 @@
 
 						<div class="message-stack">
 							{#if !message.isMine}
-								<div class="message-author">
-									<NameTag name={message.user.username} nametag={message.user.nametag ?? null} />
-									{#if message.user.isVerified}
-										<img
-											src="/badges/verify.png"
-											alt="Verified user"
-											title="Verified user"
-											class="verified-badge"
-										/>
-									{/if}
+								{@const levelMeta = userLevelMeta(message.user)}
+								<div class="message-author-block">
+									<div class="message-author">
+										<NameTag name={displayUserName(message.user)} nametag={message.user.nametag ?? null} />
+										{#if message.user.isVerified}
+											<img
+												src="/badges/verify.png"
+												alt="Verified user"
+												title="Verified user"
+												class="verified-badge"
+											/>
+										{/if}
+									</div>
+									<div class="message-level-line">
+										<span class="message-level-title" style="background: {levelMeta.badge.color};">
+											{levelMeta.badge.name}
+										</span>
+										<span class="message-level-number">Lv {levelMeta.level}</span>
+									</div>
 								</div>
 							{/if}
 							<div
@@ -1190,7 +1305,7 @@
 										{#if message.deletedAt}
 											{deletedMessageText(message)}
 										{:else}
-											{#each messageTextSegments(message.body) as segment}
+										{#each messageTextSegments(message.body) as segment}
 												{#if segment.mention}
 													<button
 														type="button"
@@ -1206,6 +1321,16 @@
 													>
 														{segment.text}
 													</button>
+												{:else if segment.link}
+													<a
+														class="message-inline-link"
+														href={segment.link}
+														target="_blank"
+														rel="noreferrer"
+														onclick={(event) => event.stopPropagation()}
+													>
+														{segment.text}
+													</a>
 												{:else}
 													{segment.text}
 												{/if}
@@ -1256,10 +1381,10 @@
 						{#if message.isMine}
 							<AvatarFrame
 								src={message.user.avatar}
-								alt={message.user.username}
+								alt={displayUserName(message.user)}
 								size={38}
 								frame={message.user.frame ?? null}
-								fallbackInitial={message.user.username}
+								fallbackInitial={displayUserName(message.user)}
 								onclick={(event) =>
 									openProfileCard(message.user, event.currentTarget as HTMLButtonElement)}
 							/>
@@ -1290,7 +1415,7 @@
 				{#if replyTarget}
 					<div class="reply-preview composer-reply">
 						<div>
-							<strong>Reply ke {replyTarget.user.username}</strong>
+						<strong>Reply ke {displayUserName(replyTarget.user)}</strong>
 							<span>{replyPreviewText(replyTarget)}</span>
 						</div>
 						<button type="button" aria-label="Batal reply" onclick={() => (replyTarget = null)}>
@@ -1374,12 +1499,12 @@
 											{#if user.avatar}
 												<img src={user.avatar} alt="" loading="lazy" />
 											{:else}
-												{user.username.slice(0, 1).toUpperCase()}
+												{userInitial(user)}
 											{/if}
 										</span>
 										<span class="mention-copy">
-											<strong>{user.username}</strong>
-											<small>@{user.username}</small>
+											<strong>{displayUserName(user)}</strong>
+											<small>@{userHandle(user) || displayUserName(user)}</small>
 										</span>
 										{#if user.isVerified}
 											<img
@@ -1469,6 +1594,52 @@
 		<span>@</span>
 		<strong>{Math.min(mentionJumpQueue.length, 99)}</strong>
 	</button>
+{/if}
+
+{#if showChatOnboarding}
+	<div
+		class="chat-onboarding-layer"
+		role="presentation"
+		onclick={dismissChatOnboarding}
+		onkeydown={(event) => {
+			if (event.key === 'Escape') dismissChatOnboarding();
+		}}
+	>
+		<div
+			class="chat-onboarding"
+			role="dialog"
+			aria-modal="true"
+			aria-label="Pengenalan fitur chat"
+			tabindex="-1"
+			onclick={(event) => event.stopPropagation()}
+			onkeydown={(event) => event.stopPropagation()}
+		>
+			<div class="chat-onboarding-hero">
+				<span class="material-symbols-rounded">forum</span>
+				<div>
+					<p>Selamat datang di Chat</p>
+					<h2>Ngobrol lebih enak dengan fitur komunitas.</h2>
+				</div>
+			</div>
+
+			<div class="chat-onboarding-grid">
+				{#each chatOnboardingItems as item}
+					<div class="chat-onboarding-item">
+						<span class="material-symbols-rounded">{item.icon}</span>
+						<div>
+							<strong>{item.title}</strong>
+							<p>{item.description}</p>
+						</div>
+					</div>
+				{/each}
+			</div>
+
+			<button type="button" class="chat-onboarding-action" onclick={dismissChatOnboarding}>
+				Mulai Chat
+				<span class="material-symbols-rounded">arrow_forward</span>
+			</button>
+		</div>
+	</div>
 {/if}
 
 {#if messageMenu.open && messageMenu.message}
@@ -1678,6 +1849,7 @@
 		display: flex;
 		justify-content: center;
 		overflow: hidden;
+		user-select: none;
 	}
 
 	.chat-shell {
@@ -1770,6 +1942,136 @@
 	.chat-state p {
 		margin-top: 4px;
 		color: var(--text-muted);
+	}
+
+	.chat-onboarding-layer {
+		position: fixed;
+		inset: 0;
+		z-index: 90;
+		display: grid;
+		place-items: center;
+		padding: 18px;
+		background: oklch(0 0 0 / 0.58);
+		backdrop-filter: blur(14px) saturate(140%);
+	}
+
+	.chat-onboarding {
+		width: min(100%, 440px);
+		max-height: min(720px, calc(100dvh - 36px));
+		overflow-y: auto;
+		border: 1px solid oklch(from var(--accent) l c h / 0.28);
+		border-radius: 26px;
+		background:
+			radial-gradient(circle at 18% 0%, oklch(from var(--accent) l c h / 0.24), transparent 18rem),
+			linear-gradient(180deg, oklch(from var(--surface) calc(l + 0.03) c h / 0.98), var(--surface));
+		box-shadow: 0 24px 80px oklch(0 0 0 / 0.48);
+		padding: 18px;
+	}
+
+	.chat-onboarding-hero {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		gap: 14px;
+		align-items: center;
+		padding: 4px 2px 16px;
+	}
+
+	.chat-onboarding-hero > span {
+		width: 46px;
+		height: 46px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 18px;
+		background: linear-gradient(145deg, var(--accent), var(--accent-hover));
+		color: #fff;
+		box-shadow: 0 14px 30px var(--accent-glow);
+	}
+
+	.chat-onboarding-hero p,
+	.chat-onboarding-hero h2,
+	.chat-onboarding-item p {
+		margin: 0;
+	}
+
+	.chat-onboarding-hero p {
+		color: var(--accent);
+		font-size: 11px;
+		font-weight: 1000;
+		text-transform: uppercase;
+	}
+
+	.chat-onboarding-hero h2 {
+		margin-top: 4px;
+		color: var(--text-primary);
+		font-size: 20px;
+		font-weight: 1000;
+		line-height: 1.12;
+	}
+
+	.chat-onboarding-grid {
+		display: grid;
+		gap: 9px;
+	}
+
+	.chat-onboarding-item {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		gap: 11px;
+		align-items: flex-start;
+		padding: 12px;
+		border: 1px solid var(--border);
+		border-radius: 18px;
+		background: oklch(from var(--card-bg) l c h / 0.74);
+	}
+
+	.chat-onboarding-item > span {
+		width: 34px;
+		height: 34px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 13px;
+		background: oklch(from var(--accent) l c h / 0.15);
+		color: var(--accent);
+		font-size: 19px;
+	}
+
+	.chat-onboarding-item strong {
+		display: block;
+		color: var(--text-primary);
+		font-size: 13px;
+		font-weight: 1000;
+	}
+
+	.chat-onboarding-item p {
+		margin-top: 4px;
+		color: var(--text-muted);
+		font-size: 11.5px;
+		font-weight: 750;
+		line-height: 1.35;
+	}
+
+	.chat-onboarding-action {
+		width: 100%;
+		height: 46px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		margin-top: 14px;
+		border: 0;
+		border-radius: 999px;
+		background: linear-gradient(145deg, var(--accent), var(--accent-hover));
+		color: #fff;
+		font-size: 13px;
+		font-weight: 1000;
+		box-shadow: 0 14px 34px var(--accent-glow);
+		cursor: pointer;
+	}
+
+	.chat-onboarding-action span {
+		font-size: 18px;
 	}
 
 	.chat-skeleton {
@@ -1918,10 +2220,44 @@
 		display: flex;
 		align-items: center;
 		gap: 5px;
-		margin: 0 0 5px 2px;
 		font-size: 12px;
 		font-weight: 900;
 		color: var(--text-primary);
+	}
+
+	.message-author-block {
+		margin: 0 0 6px 2px;
+	}
+
+	.message-level-line {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		margin-top: 2px;
+		min-width: 0;
+	}
+
+	.message-level-title {
+		display: inline-flex;
+		align-items: center;
+		height: 15px;
+		border-radius: 999px;
+		padding: 0 6px;
+		color: #fff;
+		font-size: 9px;
+		font-weight: 1000;
+		line-height: 1;
+		box-shadow: 0 4px 10px oklch(0 0 0 / 0.2);
+	}
+
+	.message-level-number {
+		overflow: hidden;
+		color: var(--text-faint);
+		font-size: 9.5px;
+		font-weight: 900;
+		line-height: 1;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.verified-badge {
@@ -1985,9 +2321,21 @@
 		text-underline-offset: 2px;
 	}
 
+	.message-inline-link {
+		color: #38bdf8;
+		font-weight: 900;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		overflow-wrap: anywhere;
+	}
+
 	.message-row.mine .message-mention {
 		color: #bfdbfe;
 		text-shadow: 0 0 16px oklch(from #bfdbfe l c h / 0.26);
+	}
+
+	.message-row.mine .message-inline-link {
+		color: #e0f2fe;
 	}
 
 	.reply-preview {
@@ -2521,6 +2869,7 @@
 	}
 
 	.composer-input input {
+		user-select: text;
 		min-width: 0;
 		flex: 1;
 		border: 0;

@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { adminApi } from '$lib/admin/api';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
+	import { displayUserName } from '$lib/user-display';
 
-	type Reporter  = { id: number; username: string; avatar: string | null };
-	type CommentUser = { id: number; username: string };
+	type Reporter  = { id: number; username: string; fullName?: string | null; avatar: string | null };
+	type CommentUser = { id: number; username: string; fullName?: string | null };
 	type ReportComment = { id: number; content: string | null; deletedAt: string | null; user: CommentUser };
 	type Report = {
 		id: number;
@@ -138,12 +139,12 @@
 					<div class="flex flex-wrap items-start justify-between gap-3">
 						<div class="flex items-center gap-3 min-w-0">
 							<img
-								src={report.reporter.avatar ?? `https://api.dicebear.com/9.x/initials/svg?seed=${report.reporter.username}`}
-								alt={report.reporter.username}
+								src={report.reporter.avatar ?? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayUserName(report.reporter))}`}
+								alt={displayUserName(report.reporter)}
 								class="h-8 w-8 rounded-full bg-zinc-800 shrink-0"
 							/>
 							<div class="min-w-0">
-								<p class="text-sm font-bold">@{report.reporter.username}</p>
+								<p class="text-sm font-bold">{displayUserName(report.reporter)}</p>
 								<p class="text-xs text-zinc-500">{new Date(report.createdAt).toLocaleString('id-ID')}</p>
 							</div>
 						</div>
@@ -159,7 +160,7 @@
 
 					<!-- Reported comment -->
 					<div class="rounded-lg bg-zinc-800/60 p-3 text-sm">
-						<p class="mb-1 text-xs text-zinc-500">Komentar dari @{report.comment.user.username}:</p>
+						<p class="mb-1 text-xs text-zinc-500">Komentar dari {displayUserName(report.comment.user)}:</p>
 						{#if report.comment.deletedAt}
 							<p class="italic text-zinc-500">[Komentar sudah dihapus]</p>
 						{:else}
@@ -172,7 +173,7 @@
 					{/if}
 
 					{#if report.resolvedBy}
-						<p class="text-xs text-zinc-500">Diselesaikan oleh @{report.resolvedBy.username}</p>
+						<p class="text-xs text-zinc-500">Diselesaikan oleh {displayUserName(report.resolvedBy)}</p>
 					{/if}
 
 					<!-- Actions -->

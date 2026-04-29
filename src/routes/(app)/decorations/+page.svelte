@@ -14,13 +14,15 @@
 	import { preloadEffects } from '$lib/effect-preloader';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { decorations } from '$lib/stores/decorations.svelte';
+	import { displayUserName, userInitial } from '$lib/user-display';
 
+	const displayName = $derived(displayUserName(auth.user));
 	const userLevel = $derived(Math.max(1, Number(auth.user?.level ?? 0)));
 	const userExp = $derived(Number(auth.user?.exp ?? 0));
 	const userAvatar = $derived(
 		auth.user?.avatar ||
 			(auth.user
-				? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(auth.user.username)}&backgroundColor=7c3aed`
+				? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=7c3aed`
 				: null)
 	);
 
@@ -160,10 +162,10 @@
 		>
 			<AvatarFrame
 				src={userAvatar}
-				alt={auth.user?.username ?? ''}
+				alt={displayName}
 				size={56}
 				frame={decorations.frame ?? auth.user?.frame ?? null}
-				fallbackInitial={auth.user?.username?.[0]}
+				fallbackInitial={userInitial(auth.user)}
 			/>
 			<div class="flex-1 min-w-0">
 				<p
@@ -177,7 +179,7 @@
 						{userExp.toLocaleString('id-ID')} EXP
 					{:else}
 						<NameTag
-							name={auth.user?.username ?? 'User'}
+							name={displayName}
 							nametag={decorations.nametag ?? auth.user?.nametag ?? null}
 						/>
 					{/if}
@@ -287,7 +289,7 @@
 						{#if item.type === 'frame'}
 							<AvatarFrame
 								src={userAvatar}
-								alt={auth.user?.username ?? 'Avatar'}
+								alt={displayName}
 								size={88}
 								frame={{
 									id: item.id,
@@ -297,7 +299,7 @@
 									assetUrl: item.assetUrl,
 									config: item.config
 								}}
-								fallbackInitial={auth.user?.username?.[0] ?? 'A'}
+								fallbackInitial={userInitial(auth.user)}
 							/>
 						{:else if item.type === 'nametag'}
 							<div
@@ -305,7 +307,7 @@
 								style="background: var(--surface-offset); border: 1px solid var(--border);"
 							>
 								<NameTag
-									name={auth.user?.username ?? 'Denis'}
+									name={displayName}
 									nametag={{
 										id: item.id,
 										name: item.name,

@@ -2,8 +2,9 @@
 	import { goto } from '$app/navigation';
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
+	import { displayUserName } from '$lib/user-display';
 
-	let username = $state(auth.user?.username ?? '');
+	let username = $state(displayUserName(auth.user, ''));
 	let avatar = $state(auth.user?.avatar ?? '');
 	let currentPassword = $state('');
 	let newPassword = $state('');
@@ -25,14 +26,14 @@
 
 	async function saveProfile() {
 		if (!username.trim()) {
-			error = 'Username tidak boleh kosong';
+			error = 'Nama tidak boleh kosong';
 			return;
 		}
 		error = '';
 		message = '';
 		savingProfile = true;
 		try {
-			await auth.updateProfile({ username, avatar: avatar.trim() || null });
+			await auth.updateProfile({ fullName: username, avatar: avatar.trim() || null });
 			message = 'Profil berhasil disimpan';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Gagal menyimpan profil';
@@ -88,7 +89,7 @@
 			Login diperlukan
 		</h1>
 		<p class="text-[13px] mb-6 max-w-[240px]" style="color: var(--text-muted);">
-			Masuk untuk mengatur username, avatar, dan password akunmu.
+			Masuk untuk mengatur nama, avatar, dan password akunmu.
 		</p>
 		<button
 			onclick={() => goto('/login?redirect=/profile/settings')}
@@ -106,7 +107,7 @@
 				Pengaturan Akun
 			</h1>
 			<p class="text-[12px] mt-0.5" style="color: var(--text-faint);">
-				Ubah username, foto profil, dan password
+				Edit nama tampilan, foto profil, dan password
 			</p>
 		</div>
 
@@ -192,7 +193,7 @@
 						class="flex items-center gap-1.5 text-[13px] font-black"
 						style="color: var(--text-primary);"
 					>
-						<span class="truncate">{username || 'Username'}</span>
+						<span class="truncate">{username || 'Nama'}</span>
 						{#if auth.user?.isVerified}
 							<img src="/badges/verify.png" alt="Verified" class="h-3.5 w-3.5 shrink-0 object-contain" />
 						{/if}
@@ -203,14 +204,17 @@
 
 			<!-- Form fields -->
 			<div class="px-4 py-4 space-y-4">
-				<!-- Username field -->
+				<!-- Display name field -->
 				<div>
 					<label
 						for="profile-username"
-						class="block text-[9px] font-black uppercase tracking-[0.15em] mb-1.5"
-						style="color: var(--text-faint);"
+						class="mb-1.5 flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-[0.15em]"
+						style="color: var(--accent-text);"
 					>
-						Username
+						<span>Edit Nama Tampilan</span>
+						<span class="normal-case tracking-normal" style="color: var(--text-faint);">
+							Tampil di chat & profil
+						</span>
 					</label>
 					<div class="relative">
 						<span
@@ -222,13 +226,48 @@
 						<input
 							id="profile-username"
 							bind:value={username}
-							autocomplete="username"
-							placeholder="Masukkan username"
+							autocomplete="name"
+							placeholder="Masukkan nama tampilan"
 							class="w-full h-11 pl-9 pr-4 rounded-[var(--radius-xl)] text-[13px] outline-none transition-all"
 							style="
-                                background: var(--surface-offset);
-                                border: 1px solid var(--border-strong);
+                                background: color-mix(in oklch, var(--accent) 8%, var(--surface-offset));
+                                border: 1px solid color-mix(in oklch, var(--accent) 35%, var(--border-strong));
                                 color: var(--text-primary);
+                            "
+						/>
+					</div>
+					<p class="mt-1.5 text-[10px] font-semibold" style="color: var(--text-faint);">
+						Username login tetap otomatis dari email. Yang bisa diedit di sini adalah nama tampilan.
+					</p>
+				</div>
+
+				<!-- Username readonly field -->
+				<div>
+					<label
+						for="profile-handle"
+						class="block text-[9px] font-black uppercase tracking-[0.15em] mb-1.5"
+						style="color: var(--text-faint);"
+					>
+						Username
+					</label>
+					<div class="relative">
+						<span
+							class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+							style="font-size:16px; color: var(--text-faint);"
+						>
+							alternate_email
+						</span>
+						<input
+							id="profile-handle"
+							value={auth.user?.username ?? ''}
+							disabled
+							aria-disabled="true"
+							class="w-full h-11 pl-9 pr-4 rounded-[var(--radius-xl)] text-[13px] outline-none cursor-not-allowed"
+							style="
+                                background: color-mix(in oklch, var(--surface-offset) 82%, #000);
+                                border: 1px solid var(--border);
+                                color: var(--text-faint);
+                                opacity: 0.85;
                             "
 						/>
 					</div>
@@ -283,7 +322,7 @@
 						Menyimpan...
 					{:else}
 						<span class="material-symbols-rounded" style="font-size:16px;">save</span>
-						Simpan Profil
+						Simpan Nama & Profil
 					{/if}
 				</button>
 			</div>

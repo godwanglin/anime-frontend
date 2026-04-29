@@ -12,10 +12,12 @@
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
+	import { displayUserName, userInitial } from '$lib/user-display';
 
+	const displayName = $derived(displayUserName(auth.user));
 	const avatar = $derived(
 		auth.user?.avatar ||
-			`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(auth.user?.username ?? 'Anime')}&backgroundColor=7c3aed`
+			`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=7c3aed`
 	);
 	const watchedHours = $derived(
 		Math.round(history.items.reduce((total, item) => total + item.progressSec, 0) / 3600)
@@ -128,7 +130,7 @@
 					<div class="relative shrink-0">
 						<AvatarFrame
 							src={avatar}
-							alt={auth.user?.username ?? 'Avatar'}
+							alt={displayName}
 							size={60}
 							frame={{
 								id: auth.user?.frame?.id as any,
@@ -138,7 +140,7 @@
 								assetUrl: auth.user?.frame?.assetUrl as any,
 								config: auth.user?.frame?.config as any
 							}}
-							fallbackInitial={auth.user?.username?.[0] ?? 'A'}
+							fallbackInitial={userInitial(auth.user)}
 						/>
 
 						<!-- Online dot -->
@@ -158,7 +160,7 @@
 						<div class="mb-1 flex min-w-0 items-center gap-2">
 							<h1 class="truncate text-[22px] font-black leading-none text-white md:text-[26px]">
 								<NameTag
-									name={auth.user?.username ?? 'User'}
+									name={displayName}
 									nametag={auth.user?.nametag ?? null}
 								/>
 							</h1>
@@ -364,7 +366,7 @@
 				class="rounded-[var(--radius-2xl)] overflow-hidden"
 				style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
 			>
-				{#each [{ href: '/profile/history', icon: 'history', label: 'Riwayat Menonton', desc: 'Lanjutkan episode terakhir', badge: history.items.length || null }, { href: '/profile/saved', icon: 'bookmark', label: 'Anime Tersimpan', desc: 'Daftar anime favoritmu', badge: saved.items.length || null }, { href: '/exp', icon: 'workspace_premium', label: 'Level & EXP', desc: 'Cara naik level dan badge kultivasi', badge: `Lv ${userLevel}` }, { href: '/decorations', icon: 'auto_awesome', label: 'Toko Dekorasi', desc: 'Buka & pasang frame dari level kamu', badge: null }, { href: '/profile/decorations', icon: 'backpack', label: 'Inventaris Dekorasi', desc: 'Frame yang sudah kamu miliki', badge: null }, { href: '/profile/preferences', icon: 'tune', label: 'Preferensi', desc: 'Tema, kualitas, volume, subtitle, notifikasi', badge: null }, { href: '/notifications', icon: 'notifications', label: 'Notifikasi', desc: 'Inbox personal masuk', badge: null }, { href: '/profile/settings', icon: 'manage_accounts', label: 'Pengaturan Akun', desc: 'Username, avatar, password', badge: null }] as item, i}
+				{#each [{ href: '/profile/history', icon: 'history', label: 'Riwayat Menonton', desc: 'Lanjutkan episode terakhir', badge: history.items.length || null }, { href: '/profile/saved', icon: 'bookmark', label: 'Anime Tersimpan', desc: 'Daftar anime favoritmu', badge: saved.items.length || null }, { href: '/exp', icon: 'workspace_premium', label: 'Level & EXP', desc: 'Cara naik level dan badge kultivasi', badge: `Lv ${userLevel}` }, { href: '/decorations', icon: 'auto_awesome', label: 'Toko Dekorasi', desc: 'Buka & pasang frame dari level kamu', badge: null }, { href: '/profile/decorations', icon: 'backpack', label: 'Inventaris Dekorasi', desc: 'Frame yang sudah kamu miliki', badge: null }, { href: '/profile/preferences', icon: 'tune', label: 'Preferensi', desc: 'Tema, kualitas, volume, subtitle, notifikasi', badge: null }, { href: '/notifications', icon: 'notifications', label: 'Notifikasi', desc: 'Inbox personal masuk', badge: null }, { href: '/profile/settings', icon: 'manage_accounts', label: 'Pengaturan Akun', desc: 'Nama, avatar, password', badge: null }] as item, i}
 					<a
 						href={item.href}
 						class="flex items-center gap-3 px-4 py-3.5 transition-colors"

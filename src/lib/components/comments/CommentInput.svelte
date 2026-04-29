@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { auth } from '$lib/stores/auth.svelte';
 	import { comments } from '$lib/stores/comments.svelte';
+	import { userInitial } from '$lib/user-display';
 
 	type Props = {
 		animeId: number;
@@ -65,7 +66,7 @@
                     border: 1.5px solid oklch(from var(--accent) l c h / 0.2);
                 "
 			>
-				{(auth.user?.username?.[0] ?? '?').toUpperCase()}
+				{userInitial(auth.user, '?')}
 			</div>
 		{/if}
 

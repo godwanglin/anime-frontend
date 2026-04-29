@@ -9,14 +9,20 @@ export type ChatApiMessage = {
 	sender?: {
 		id: string;
 		name: string;
+		username?: string;
+		fullName?: string | null;
 		avatar: string | null;
 		isVerified: boolean;
 		verifiedAt: string | null;
+		level?: number;
 		nageTag: EquippedNameTag;
 		frame: EquippedFrame;
 		role: string | null;
 	};
 	senderName: string;
+	senderUsername?: string;
+	senderFullName?: string | null;
+	senderLevel?: number;
 	senderAvatar: string | null;
 	senderNageTag: EquippedNameTag;
 	senderFrame: EquippedFrame;
@@ -60,11 +66,13 @@ export type ChatReplyPreview = {
 	id: string;
 	senderId: string;
 	senderName: string;
+	senderUsername?: string;
+	senderFullName?: string | null;
 	content: string;
 	deletedAt: number | null;
 };
 
-export type ChatMentionUser = Pick<PublicUser, 'id' | 'username' | 'avatar' | 'isVerified'>;
+export type ChatMentionUser = Pick<PublicUser, 'id' | 'username' | 'fullName' | 'avatar' | 'isVerified'>;
 
 function escapeRegExp(value: string) {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

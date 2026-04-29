@@ -15,11 +15,13 @@
 	import { preloadEffects } from '$lib/effect-preloader';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { decorations } from '$lib/stores/decorations.svelte';
+	import { displayUserName, userInitial } from '$lib/user-display';
 
+	const displayName = $derived(displayUserName(auth.user));
 	const userAvatar = $derived(
 		auth.user?.avatar ||
 			(auth.user
-				? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(auth.user.username)}&backgroundColor=7c3aed`
+				? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=7c3aed`
 				: null)
 	);
 	let activeTab = $state<DecorationType>('frame');
@@ -226,10 +228,10 @@
 			{#if activeTab === 'frame'}
 				<AvatarFrame
 					src={userAvatar}
-					alt={auth.user?.username ?? ''}
+					alt={displayName}
 					size={64}
 					frame={decorations.frame}
-					fallbackInitial={auth.user?.username?.[0]}
+					fallbackInitial={userInitial(auth.user)}
 				/>
 			{:else}
 				<div
@@ -237,7 +239,7 @@
 					style="background: var(--surface); border: 1px solid var(--border);"
 				>
 					<NameTag
-						name={auth.user?.username ?? 'User'}
+						name={displayName}
 						nametag={decorations.nametag}
 						class="text-[15px]"
 					/>
@@ -328,7 +330,7 @@
 						{#if item.type === 'frame'}
 							<AvatarFrame
 								src={userAvatar}
-								alt={auth.user?.username ?? 'Avatar'}
+								alt={displayName}
 								size={88}
 								frame={{
 									id: item.id,
@@ -338,7 +340,7 @@
 									assetUrl: item.assetUrl,
 									config: item.config
 								}}
-								fallbackInitial={auth.user?.username?.[0] ?? 'A'}
+								fallbackInitial={userInitial(auth.user)}
 							/>
 						{:else if item.type === 'nametag'}
 							<div
@@ -346,7 +348,7 @@
 								style="background: var(--surface-offset); border: 1px solid var(--border);"
 							>
 								<NameTag
-									name={auth.user?.username ?? 'User'}
+									name={displayName}
 									nametag={{
 										id: item.id,
 										name: item.name,

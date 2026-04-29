@@ -9,10 +9,12 @@
 	import AdminStatusBadge from '$lib/components/admin/AdminStatusBadge.svelte';
 	import AdminTable from '$lib/components/admin/AdminTable.svelte';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
+	import { displayUserName, userInitial } from '$lib/user-display';
 
 	type User = {
 		id: number;
 		username: string;
+		fullName?: string | null;
 		email: string;
 		avatar?: string;
 		role: string;
@@ -95,7 +97,7 @@
 	</div>
 	<AdminTable columns={[{ key: 'user', label: 'User' }, { key: 'email', label: 'Email' }, { key: 'level', label: 'Level' }, { key: 'exp', label: 'EXP' }, { key: 'role', label: 'Role' }, { key: 'joined', label: 'Bergabung' }, { key: 'actions', label: 'Aksi' }]} data={users as any} {isLoading}>
 		{#snippet children(row)}
-			<td class="px-4 py-3"><button onclick={() => openUser(row.id)} class="flex items-center gap-3 text-left"><img src={row.avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${row.username}`} alt={row.username} class="h-10 w-10 rounded-full" /><span class="inline-flex items-center gap-1.5 font-bold">{row.username}{#if row.isVerified}<img src="/badges/verify.png" alt="Verified" class="h-4 w-4 object-contain" />{/if}</span></button></td>
+			<td class="px-4 py-3"><button onclick={() => openUser(row.id)} class="flex items-center gap-3 text-left"><img src={row.avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayUserName(row))}`} alt={displayUserName(row)} class="h-10 w-10 rounded-full" /><span class="inline-flex items-center gap-1.5 font-bold">{displayUserName(row)}{#if row.isVerified}<img src="/badges/verify.png" alt="Verified" class="h-4 w-4 object-contain" />{/if}</span></button></td>
 			<td class="px-4 py-3">{row.email}</td>
 			<td class="px-4 py-3"><span class="rounded-full border border-violet-900/60 bg-violet-950/40 px-2.5 py-1 text-xs font-black text-violet-200">Lv {row.level ?? 1}</span></td>
 			<td class="px-4 py-3 font-semibold text-zinc-300">{formatExp(row.exp)} EXP</td>
@@ -111,9 +113,9 @@
 	{#if selectedUser}
 		<div class="space-y-5">
 			<div class="text-center">
-				<img src={selectedUser.avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${selectedUser.username}`} alt={selectedUser.username} class="mx-auto h-24 w-24 rounded-full bg-zinc-800" />
+				<img src={selectedUser.avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayUserName(selectedUser))}`} alt={displayUserName(selectedUser)} class="mx-auto h-24 w-24 rounded-full bg-zinc-800" />
 				<h3 class="mt-3 inline-flex items-center justify-center gap-2 text-xl font-black">
-					{selectedUser.username}
+					{displayUserName(selectedUser) || userInitial(selectedUser)}
 					{#if selectedUser.isVerified}
 						<img src="/badges/verify.png" alt="Verified" class="h-5 w-5 object-contain" />
 					{/if}

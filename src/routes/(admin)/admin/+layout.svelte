@@ -8,11 +8,13 @@
 	import { imageUploader } from '$lib/stores/image-uploader.svelte';
 	import { notifications } from '$lib/stores/notifications.svelte';
 	import type { AppNotification } from '$lib/stores/notifications.svelte';
+	import { displayUserName, userInitial } from '$lib/user-display';
 
 	type AdminUser = {
 		id?: number;
 		email?: string;
 		username?: string;
+		fullName?: string | null;
 		avatar?: string | null;
 		role?: string;
 	};
@@ -22,6 +24,7 @@
 	let notificationPanelOpen = $state(false);
 	let selectedNotificationCategory = $state('all');
 	const adminUser = $derived((data.adminUser ?? {}) as AdminUser);
+	const adminDisplayName = $derived(displayUserName(adminUser, 'Admin'));
 	const siteConfig = $derived((page.data.siteConfig ?? {}) as Record<string, string>);
 	const siteName = $derived(siteConfig['site.name'] ?? 'AniStream');
 	const siteLogo = $derived(siteConfig['site.logo'] ?? '/icon.png');
@@ -186,12 +189,12 @@
 				<div class="mb-3 flex items-center gap-3">
 					<img
 						src={adminUser.avatar ||
-							`https://api.dicebear.com/9.x/initials/svg?seed=${adminUser.username ?? 'Admin'}`}
-						alt={adminUser.username}
+							`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(adminDisplayName)}`}
+						alt={adminDisplayName}
 						class="h-10 w-10 rounded-full bg-zinc-800"
 					/>
 					<div class="min-w-0">
-						<p class="truncate text-sm font-black">{adminUser.username ?? 'Admin'}</p>
+						<p class="truncate text-sm font-black">{adminDisplayName || userInitial(adminUser)}</p>
 						<p class="text-xs text-zinc-500">{adminUser.email}</p>
 					</div>
 				</div>

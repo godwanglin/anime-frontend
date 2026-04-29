@@ -10,6 +10,7 @@
 	import { preference } from '$lib/stores/preference.svelte';
 	import { saved as savedStore } from '$lib/stores/saved.svelte';
 	import { pageTitle } from '$lib/stores/page.svelte';
+	import { displayUserName, userInitial } from '$lib/user-display';
 
 	let { children } = $props();
 
@@ -195,8 +196,8 @@
 				>
 					<img
 						src={auth.user?.avatar ||
-							`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(auth.user?.username ?? 'A')}&backgroundColor=7c3aed`}
-						alt={auth.user?.username}
+							`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayUserName(auth.user, 'A'))}&backgroundColor=7c3aed`}
+						alt={displayUserName(auth.user)}
 						class="w-9 h-9 rounded-full object-cover shrink-0"
 					/>
 					<div class="min-w-0 flex-1">
@@ -204,7 +205,7 @@
 							class="flex items-center gap-1.5 text-[13px] font-black truncate"
 							style="color: var(--text-primary);"
 						>
-							<span class="truncate">{auth.user?.username}</span>
+							<span class="truncate">{displayUserName(auth.user)}</span>
 							{#if auth.user?.isVerified}
 								<img
 									src="/badges/verify.png"
@@ -424,12 +425,12 @@
 					{#if auth.isLoggedIn}
 						<img
 							src={auth.user?.avatar ||
-								`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(auth.user?.username ?? 'A')}&backgroundColor=7c3aed`}
-							alt={auth.user?.username}
+								`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(userInitial(auth.user))}&backgroundColor=7c3aed`}
+							alt={displayUserName(auth.user)}
 							class="w-5 h-5 rounded-full object-cover"
 						/>
 						<span class="flex max-w-[96px] items-center gap-1.5 truncate">
-							<span class="truncate">{auth.user?.username}</span>
+							<span class="truncate">{displayUserName(auth.user)}</span>
 							{#if auth.user?.isVerified}
 								<img
 									src="/badges/verify.png"

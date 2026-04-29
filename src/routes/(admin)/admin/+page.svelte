@@ -3,6 +3,7 @@
 	import { Chart } from 'chart.js/auto';
 	import { adminApi } from '$lib/admin/api';
 	import AdminStatsCard from '$lib/components/admin/AdminStatsCard.svelte';
+	import { displayUserName } from '$lib/user-display';
 
 	type Stats = {
 		totalAnime: number;
@@ -14,8 +15,8 @@
 		newUsersThisWeek: number;
 		activeUsersToday: number;
 		topAnime: { title: string; slug: string; thumbnail: string | null; viewCount: number }[];
-		recentComments: { content: string | null; username: string; animeTitle: string; createdAt: string }[];
-		recentUsers: { username: string; email: string; createdAt: string }[];
+		recentComments: { content: string | null; username: string; fullName?: string | null; animeTitle: string; createdAt: string }[];
+		recentUsers: { username: string; fullName?: string | null; email: string; createdAt: string }[];
 		watchHistoryByDay: { date: string; count: number }[];
 	};
 
@@ -115,7 +116,7 @@
 					{#each stats.recentComments as comment}
 						<div class="rounded-lg bg-zinc-800/50 p-3">
 							<p class="line-clamp-2 text-sm text-zinc-200">{comment.content}</p>
-							<p class="mt-1 text-xs text-zinc-500">{comment.username} - {comment.animeTitle}</p>
+							<p class="mt-1 text-xs text-zinc-500">{displayUserName(comment)} - {comment.animeTitle}</p>
 						</div>
 					{/each}
 				</div>
@@ -126,7 +127,7 @@
 					{#each stats.recentUsers as user}
 						<div class="flex items-center justify-between rounded-lg bg-zinc-800/50 p-3">
 							<div>
-								<p class="text-sm font-bold text-zinc-100">{user.username}</p>
+								<p class="text-sm font-bold text-zinc-100">{displayUserName(user)}</p>
 								<p class="text-xs text-zinc-500">{user.email}</p>
 							</div>
 							<p class="text-xs text-zinc-500">{new Date(user.createdAt).toLocaleDateString('id-ID')}</p>

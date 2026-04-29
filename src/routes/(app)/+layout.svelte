@@ -37,8 +37,9 @@
 
 	const mainNav = [
 		{ href: '/', icon: 'home', label: 'Beranda' },
-		{ href: '/browse', icon: 'explore', label: 'Jelajahi' },
 		{ href: '/popular', icon: 'local_fire_department', label: 'Populer' },
+		{ href: '/chat', icon: 'forum', label: 'Chat' },
+		{ href: '/browse', icon: 'explore', label: 'Jelajahi' },
 		{ href: '/genre', icon: 'category', label: 'Genre' },
 		{ href: '/episode-baru', icon: 'fiber_new', label: 'Episode Baru' },
 		{ href: '/profile', icon: 'person', label: 'Profil' }

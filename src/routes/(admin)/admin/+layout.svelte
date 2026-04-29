@@ -58,6 +58,7 @@
 		{ href: '/admin/r2-videos', icon: 'storage', label: 'R2 Videos' },
 		{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
 		{ href: '/admin/notifications', icon: 'campaign', label: 'Notifications' },
+		{ href: '/admin/chat', icon: 'forum', label: 'Chat' },
 		{ href: '/admin/subtitle-studio', icon: 'subtitles', label: 'Subtitle Studio' },
 		{ href: '/admin/users', icon: 'group', label: 'User' },
 		{ href: '/admin/comments', icon: 'forum', label: 'Komentar' },

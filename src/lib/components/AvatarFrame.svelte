@@ -15,7 +15,7 @@
 		class?: string;
 		fromComment?: boolean; // TODO: remove after migrating all comment avatars to this component
 		el?: any; // Optional anchor element for popover positioning (used in comments)
-		onclick?: () => void;
+		onclick?: (event: MouseEvent) => void;
 	};
 
 	let {

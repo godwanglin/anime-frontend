@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { PlayerEpisodeList, PlayerEpisodeItem } from '../stores/types';
 
 	let {
@@ -50,8 +51,20 @@
 		onClose();
 	}
 
-	function handleEpisodeClick() {
+	function shouldUseNativeLink(event: MouseEvent, href?: string) {
+		if (!href || event.defaultPrevented) return true;
+		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+			return true;
+		}
+		const target = (event.currentTarget as HTMLAnchorElement | null)?.target;
+		return !!target && target !== '_self';
+	}
+
+	function handleEpisodeClick(event: MouseEvent, href: string) {
+		if (shouldUseNativeLink(event, href)) return;
+		event.preventDefault();
 		onClose();
+		void goto(href, { replaceState: true });
 	}
 
 	function onKeydown(e: KeyboardEvent) {
@@ -140,7 +153,7 @@
 					href={ep.href}
 					class="vp-ep-drawer-item"
 					class:vp-ep-drawer-item-active={isActive}
-					onclick={handleEpisodeClick}
+					onclick={(event) => handleEpisodeClick(event, ep.href)}
 					data-sveltekit-preload-data="hover"
 				>
 					<span class="vp-ep-drawer-num" class:vp-ep-drawer-num-active={isActive}>

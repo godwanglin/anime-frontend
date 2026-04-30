@@ -16,7 +16,7 @@
 		if (!video || !href || !enabled) return;
 
 		const onEnded = () => {
-			if (href) goto(href);
+			if (href) goto(href, { replaceState: true });
 		};
 
 		video.addEventListener('ended', onEnded);

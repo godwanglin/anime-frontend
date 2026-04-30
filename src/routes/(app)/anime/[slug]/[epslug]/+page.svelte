@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 	import AnimeCard from '$lib/components/AnimeCard.svelte';
@@ -334,6 +335,22 @@
 	function episodeHref(ep: Episode) {
 		const animeSlug = ep.animeSlug ?? episodeListAnimeSlug;
 		return animeSlug && ep.slug ? `/anime/${animeSlug}/${ep.slug}` : '#';
+	}
+
+	function shouldUseNativeLink(event: MouseEvent, href?: string) {
+		if (!href || href === '#' || event.defaultPrevented) return true;
+		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+			return true;
+		}
+		const target = (event.currentTarget as HTMLAnchorElement | null)?.target;
+		return !!target && target !== '_self';
+	}
+
+	function replaceEpisodeNavigation(event: MouseEvent, href?: string, afterNavigate?: () => void) {
+		if (shouldUseNativeLink(event, href)) return;
+		event.preventDefault();
+		afterNavigate?.();
+		void goto(href as string, { replaceState: true });
 	}
 
 	function formatCount(value?: number) {
@@ -714,7 +731,8 @@
 				<div class="flex items-center gap-2 shrink-0 pt-1">
 					{#if previousEpisode && anime?.slug}
 						<a
-							href="/anime/{anime.slug}/{previousEpisode.slug}"
+							href={previousEpisodeHref}
+							onclick={(event) => replaceEpisodeNavigation(event, previousEpisodeHref)}
 							class="h-9 flex items-center gap-1.5 px-3.5 rounded-[var(--radius-xl)] text-[12px] font-bold transition-all active:scale-[0.97]"
 							style="
                                 background: var(--surface);
@@ -729,7 +747,8 @@
 					{/if}
 					{#if nextEpisode && anime?.slug}
 						<a
-							href="/anime/{anime.slug}/{nextEpisode.slug}"
+							href={nextEpisodeHref}
+							onclick={(event) => replaceEpisodeNavigation(event, nextEpisodeHref)}
 							class="h-9 flex items-center gap-1.5 px-3.5 rounded-[var(--radius-xl)] text-[12px] font-bold text-white transition-all active:scale-[0.97]"
 							style="
                                 background: var(--accent);
@@ -953,6 +972,7 @@
 						{@const progress = episodeProgress(ep.id)}
 						<a
 							href={episodeHref(ep)}
+							onclick={(event) => replaceEpisodeNavigation(event, episodeHref(ep))}
 							class="flex items-center gap-3 px-4 py-3 transition-all duration-150"
 							style="
                             background: {isActive ? 'var(--accent-surface)' : 'transparent'};
@@ -1126,7 +1146,8 @@
 			<div class="grid grid-cols-2 gap-2">
 				{#if previousEpisode && anime?.slug}
 					<a
-						href="/anime/{anime.slug}/{previousEpisode.slug}"
+						href={previousEpisodeHref}
+						onclick={(event) => replaceEpisodeNavigation(event, previousEpisodeHref)}
 						class="flex items-center justify-center gap-1.5 h-9 rounded-[var(--radius-xl)] text-[12px] font-bold transition-all active:scale-[0.97]"
 						style="
                             background: var(--surface);
@@ -1143,7 +1164,8 @@
 				{/if}
 				{#if nextEpisode && anime?.slug}
 					<a
-						href="/anime/{anime.slug}/{nextEpisode.slug}"
+						href={nextEpisodeHref}
+						onclick={(event) => replaceEpisodeNavigation(event, nextEpisodeHref)}
 						class="flex items-center justify-center gap-1.5 h-9 rounded-[var(--radius-xl)] text-[12px] font-bold text-white transition-all active:scale-[0.97]"
 						style="
                             background: var(--accent);
@@ -1229,6 +1251,7 @@
 						{@const progress = episodeProgress(ep.id)}
 						<a
 							href={episodeHref(ep)}
+							onclick={(event) => replaceEpisodeNavigation(event, episodeHref(ep))}
 							class="relative flex flex-col items-center justify-center gap-0.5 py-3 rounded-[var(--radius-lg)] border transition-all duration-150 active:scale-[0.94]"
 							style="
                             background: {isActive
@@ -1398,7 +1421,8 @@
 									{@const progress = episodeProgress(ep.id)}
 									<a
 										href={episodeHref(ep)}
-										onclick={() => (episodeSheetOpen = false)}
+										onclick={(event) =>
+											replaceEpisodeNavigation(event, episodeHref(ep), () => (episodeSheetOpen = false))}
 										class="relative flex min-h-12 items-center justify-center rounded-[var(--radius-lg)] border text-[13px] font-black transition-all active:scale-[0.95]"
 										style="
 											background: {isActive

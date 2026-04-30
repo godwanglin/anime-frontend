@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
 
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
@@ -14,6 +15,21 @@
 	} = $props();
 
 	const visible = $derived(vp.showControls || !vp.isPlaying);
+
+	function shouldUseNativeLink(event: MouseEvent, href?: string) {
+		if (!href || event.defaultPrevented) return true;
+		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+			return true;
+		}
+		const target = (event.currentTarget as HTMLAnchorElement | null)?.target;
+		return !!target && target !== '_self';
+	}
+
+	function replaceEpisodeNavigation(event: MouseEvent, href?: string) {
+		if (shouldUseNativeLink(event, href)) return;
+		event.preventDefault();
+		void goto(href as string, { replaceState: true });
+	}
 </script>
 
 {#if prevHref || nextHref}
@@ -28,6 +44,7 @@
 				class="vp-center-btn vp-center-btn-side"
 				aria-label="Episode sebelumnya"
 				data-sveltekit-preload-data="hover"
+				onclick={(event) => replaceEpisodeNavigation(event, prevHref)}
 			>
 				<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
 					<path d="M6 6h2v12H6zM9.5 12l8.5 6V6z" />
@@ -65,6 +82,7 @@
 				class="vp-center-btn vp-center-btn-side"
 				aria-label="Episode selanjutnya"
 				data-sveltekit-preload-data="hover"
+				onclick={(event) => replaceEpisodeNavigation(event, nextHref)}
 			>
 				<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
 					<path d="M6 18l8.5-6L6 6zM16 6h2v12h-2z" />

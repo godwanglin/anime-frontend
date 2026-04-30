@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	let {
 		placeholder = 'Cari...',
 		value = '',
@@ -24,10 +25,7 @@
 </script>
 
 <div class="relative">
-	<span
-		class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-500"
-		>search</span
-	>
+	<AppIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-500" />
 	<input
 		bind:value={query}
 		oninput={handleInput}

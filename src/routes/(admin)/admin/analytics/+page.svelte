@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 	import { Chart } from 'chart.js/auto';
 	import { adminApi } from '$lib/admin/api';
@@ -125,7 +126,7 @@
 				<h3 class="font-black">Notifikasi 7 Hari Terakhir</h3>
 				{#if notifStats.avgRating}
 					<span class="flex items-center gap-1 rounded-full bg-yellow-500/10 px-3 py-1 text-sm font-bold text-yellow-400">
-						<span class="material-symbols-rounded text-base">star</span>
+						<AppIcon name="star" class="text-base" />
 						Avg Rating: {notifStats.avgRating}/10
 					</span>
 				{/if}

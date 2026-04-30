@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import SEO from '$lib/components/SEO.svelte';
@@ -33,31 +34,33 @@
 
 <div class="max-w-6xl mx-auto">
 	<section class="mb-6 overflow-hidden rounded-3xl bg-zinc-950 text-white ring-1 ring-white/10 shadow-2xl shadow-black/25">
-		<div class="relative min-h-[260px] md:min-h-[320px]">
+		<div class="relative min-h-[230px] md:min-h-[320px]">
 			{#if featured}
-				<OptimizedImage
-					src={featured.thumbnail}
-					alt={featured.title}
-					className="absolute inset-0 h-full w-full opacity-45"
-					imageClass="h-full w-full object-cover"
-					loading="eager"
-					fetchpriority="high"
-					sizes="100vw"
-					data-sync-asset-context="episode"
-					data-sync-asset-id={String(featured.id)}
-					data-sync-asset-field="thumbnail"
-				/>
+				<div class="absolute inset-0">
+					<OptimizedImage
+						src={featured.thumbnail}
+						alt={featured.title}
+						className="h-full w-full opacity-45"
+						imageClass="h-full w-full object-cover"
+						loading="eager"
+						fetchpriority="high"
+						sizes="100vw"
+						data-sync-asset-context="episode"
+						data-sync-asset-id={String(featured.id)}
+						data-sync-asset-field="thumbnail"
+					/>
+				</div>
 			{/if}
 			<div class="absolute inset-0 bg-linear-to-r from-black via-black/78 to-black/20"></div>
 			<div class="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent"></div>
 
-			<div class="relative z-10 flex min-h-[260px] flex-col justify-end gap-5 p-5 md:min-h-[320px] md:p-8">
+			<div class="relative z-10 flex min-h-[230px] flex-col justify-end gap-4 p-5 md:min-h-[320px] md:gap-5 md:p-8">
 				<div class="max-w-2xl">
 					<div class="mb-3 flex items-center gap-2">
 						<span
 							class="inline-flex items-center gap-1.5 rounded-full bg-violet-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-violet-100 ring-1 ring-violet-300/25"
 						>
-							<span class="material-symbols-rounded text-[13px]">workspace_premium</span>
+							<AppIcon name="workspace_premium" class="text-[13px]" />
 							Update Premium
 						</span>
 						<span class="hidden rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold text-white/75 ring-1 ring-white/15 sm:inline-flex">
@@ -106,7 +109,7 @@
 						<div
 							class="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-500 text-white shadow-lg shadow-violet-500/35 transition group-hover:scale-105 sm:flex"
 						>
-							<span class="material-symbols-rounded text-[24px]">play_arrow</span>
+							<AppIcon name="play_arrow" class="text-[24px]" />
 						</div>
 					</a>
 				{/if}
@@ -118,7 +121,7 @@
 		<div>
 			<div class="mb-2 flex items-center gap-2">
 				<div class="flex h-8 w-8 items-center justify-center rounded-xl bg-green-500/15">
-					<span class="material-symbols-rounded text-[20px] text-green-500">fiber_new</span>
+					<AppIcon name="fiber_new" class="text-[20px] text-green-500" />
 				</div>
 				<p class="text-[11px] font-black uppercase tracking-widest text-zinc-400">Episode</p>
 			</div>
@@ -167,14 +170,14 @@
 							<span
 								class="flex items-center gap-1 rounded-lg bg-linear-to-br from-violet-500 to-fuchsia-600 px-1.5 py-0.5 text-[9px] font-black text-white shadow-lg shadow-violet-600/35 ring-1 ring-white/20 md:px-2 md:py-1 md:text-[10px]"
 							>
-								<span class="material-symbols-rounded text-[11px] md:text-[12px]">play_arrow</span>
+								<AppIcon name="play_arrow" class="text-[11px] md:text-[12px]" />
 								{item.episode}
 							</span>
 						</div>
 						<span
 							class="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-black/55 px-1.5 py-0.5 text-[9px] font-bold text-white/90 ring-1 ring-white/10 md:right-3 md:top-3 md:px-2 md:py-1 md:text-[10px]"
 						>
-							<span class="material-symbols-rounded text-[10px] md:text-[11px]">schedule</span>
+							<AppIcon name="schedule" class="text-[10px] md:text-[11px]" />
 							{item.time}
 						</span>
 						<div class="absolute bottom-2 left-2 right-2 md:bottom-3 md:left-3 md:right-3">
@@ -195,7 +198,7 @@
 						<div
 							class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-600 group-hover:text-white sm:flex"
 						>
-							<span class="material-symbols-rounded text-[21px]">chevron_right</span>
+							<AppIcon name="chevron_right" class="text-[21px]" />
 						</div>
 					</div>
 				</a>
@@ -203,9 +206,7 @@
 		</div>
 	{:else}
 		<div class="py-16 text-center">
-			<span class="material-symbols-rounded text-[54px] text-zinc-300 dark:text-zinc-700">
-				video_library
-			</span>
+			<AppIcon name="video_library" class="text-[54px] text-zinc-300 dark:text-zinc-700" />
 			<p class="mt-2 font-bold text-zinc-700 dark:text-zinc-300">Belum ada episode baru</p>
 			<a href="/" class="mt-3 inline-flex text-sm font-bold text-violet-500">Kembali ke home</a>
 		</div>

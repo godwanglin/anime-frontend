@@ -1,4 +1,38 @@
 <script lang="ts">
+	import Icon from 'heroicons-for-svelte';
+	import {
+		AcademicCap,
+		Beaker,
+		Calendar,
+		ChevronRight,
+		Chip,
+		Clock,
+		Collection,
+		Cube,
+		CubeTransparent,
+		CursorClick,
+		EmojiHappy,
+		Fire,
+		Flag,
+		GlobeAlt,
+		Heart,
+		LightningBolt,
+		Map,
+		MusicNote,
+		OfficeBuilding,
+		Play,
+		Puzzle,
+		QuestionMarkCircle,
+		Refresh,
+		ShieldCheck,
+		Sparkles,
+		Star,
+		Ticket,
+		TrendingUp,
+		UserGroup,
+		Users,
+		ViewGrid
+	} from 'heroicons-for-svelte/icons/solid';
 	import HeroSlider from '$lib/components/HeroSlider.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
@@ -55,35 +89,35 @@
 	// Top genres by anime count
 	const topGenres = $derived([...genres].sort((a, b) => b.animeCount - a.animeCount).slice(0, 12));
 
-	// Genre → icon mapping
+	// Genre icon mapping
 	const genreIcons: Record<string, string> = {
-		Action: 'bolt',
-		Adventure: 'explore',
-		Fantasy: 'auto_awesome',
-		Romance: 'favorite',
-		Comedy: 'sentiment_very_satisfied',
-		Drama: 'theater_comedy',
-		Mystery: 'help',
-		Horror: 'skull',
-		Historical: 'history_edu',
-		'Martial Arts': 'sports_martial_arts',
-		Mecha: 'precision_manufacturing',
-		Supernatural: 'all_inclusive',
-		Isekai: 'public',
-		Magic: 'auto_fix_high',
-		Demons: 'blur_on',
-		Psychological: 'psychology',
-		Music: 'music_note',
-		Cultivation: 'spa',
-		Mythology: 'castle',
-		Game: 'videogame_asset',
-		Military: 'military_tech',
-		Gourmet: 'restaurant',
-		Harem: 'group',
-		Ecchi: 'favorite_border',
-		Gore: 'local_fire_department',
-		Reincarnation: 'refresh',
-		Friendship: 'handshake'
+		Action: LightningBolt,
+		Adventure: Map,
+		Fantasy: Sparkles,
+		Romance: Heart,
+		Comedy: EmojiHappy,
+		Drama: Ticket,
+		Mystery: QuestionMarkCircle,
+		Horror: CubeTransparent,
+		Historical: AcademicCap,
+		'Martial Arts': ShieldCheck,
+		Mecha: Chip,
+		Supernatural: Sparkles,
+		Isekai: GlobeAlt,
+		Magic: Beaker,
+		Demons: Fire,
+		Psychological: Puzzle,
+		Music: MusicNote,
+		Cultivation: Sparkles,
+		Mythology: Flag,
+		Game: CursorClick,
+		Military: ShieldCheck,
+		Gourmet: Collection,
+		Harem: UserGroup,
+		Ecchi: Heart,
+		Gore: Fire,
+		Reincarnation: Refresh,
+		Friendship: Users
 	};
 
 	// Gradient palette cycled per chip index — each with matching neon glow color
@@ -97,7 +131,7 @@
 	];
 
 	function genreIcon(name: string) {
-		return genreIcons[name] ?? 'category';
+		return genreIcons[name] ?? ViewGrid;
 	}
 </script>
 
@@ -110,7 +144,7 @@
 <section class="mb-7">
 	<div class="flex items-center justify-between mb-3">
 		<h2 class="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-			<span class="material-symbols-rounded text-violet-500 text-[20px]">play_circle</span>
+			<Icon icon={Play} class="text-violet-500 text-[20px]" />
 			Lanjutkan Menonton
 		</h2>
 		<a
@@ -118,7 +152,7 @@
 			class="text-[12px] text-violet-500 hover:text-violet-400 font-medium flex items-center gap-0.5"
 		>
 			Lihat semua
-			<span class="material-symbols-rounded text-[14px]">chevron_right</span>
+			<Icon icon={ChevronRight} class="text-[14px]" />
 		</a>
 	</div>
 
@@ -145,7 +179,7 @@
 					<div
 						class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 transition"
 					>
-						<span class="material-symbols-rounded text-white text-[36px]">play_circle</span>
+						<Icon icon={Play} class="text-white text-[36px]" />
 					</div>
 					<!-- Episode badge -->
 					<span
@@ -176,7 +210,7 @@
 	<div class="flex items-center justify-between mb-4">
 		<div class="flex items-center gap-2.5">
 			<div class="flex items-center justify-center h-7 w-7 rounded-lg bg-violet-500/15">
-				<span class="material-symbols-rounded text-violet-500 text-[18px]">category</span>
+				<Icon icon={ViewGrid} class="text-violet-500 text-[18px]" />
 			</div>
 			<h2 class="text-base font-bold text-zinc-900 dark:text-white">Jelajahi Genre</h2>
 		</div>
@@ -185,10 +219,7 @@
 			class="text-[12px] text-violet-500 hover:text-violet-400 font-medium flex items-center gap-0.5 group"
 		>
 			Semua genre
-			<span
-				class="material-symbols-rounded text-[14px] group-hover:translate-x-0.5 transition-transform"
-				>chevron_right</span
-			>
+			<Icon icon={ChevronRight} class="text-[14px] group-hover:translate-x-0.5 transition-transform" />
 		</a>
 	</div>
 
@@ -207,9 +238,7 @@
 						class="flex items-center justify-center h-8 w-8 rounded-lg bg-linear-to-br {palette.grad}"
 						style="box-shadow: 0 4px 12px rgba({palette.glow}, 0.5), inset 0 1px 0 rgba(255,255,255,0.25);"
 					>
-						<span class="material-symbols-rounded text-white text-[18px]"
-							>{genreIcon(genre.name)}</span
-						>
+						<Icon icon={genreIcon(genre.name)} class="text-white text-[18px]" />
 					</div>
 					<div class="flex flex-col leading-tight">
 						<span class="text-[13px] font-black text-zinc-900 dark:text-white">{genre.name}</span>
@@ -229,9 +258,7 @@
 	<div class="flex items-center justify-between mb-4">
 		<div class="flex items-center gap-2.5">
 			<div class="flex items-center justify-center h-7 w-7 rounded-lg bg-orange-500/15">
-				<span class="material-symbols-rounded text-orange-500 text-[18px]"
-					>local_fire_department</span
-				>
+				<Icon icon={Fire} class="text-orange-500 text-[18px]" />
 			</div>
 			<h2 class="text-base font-bold text-zinc-900 dark:text-white">Top Minggu Ini</h2>
 			<span
@@ -246,10 +273,7 @@
 			class="text-[12px] text-violet-500 hover:text-violet-400 font-medium flex items-center gap-0.5 group"
 		>
 			Lihat semua
-			<span
-				class="material-symbols-rounded text-[14px] group-hover:translate-x-0.5 transition-transform"
-				>chevron_right</span
-			>
+			<Icon icon={ChevronRight} class="text-[14px] group-hover:translate-x-0.5 transition-transform" />
 		</a>
 	</div>
 
@@ -308,7 +332,7 @@
 							<div
 								class="h-11 w-11 rounded-full bg-white/25 border-2 border-white/70 flex items-center justify-center scale-75 group-hover:scale-100 transition-transform"
 							>
-								<span class="material-symbols-rounded text-white text-[24px]">play_arrow</span>
+								<Icon icon={Play} class="text-white text-[24px]" />
 							</div>
 						</div>
 						{#if item.status === 'Ongoing'}
@@ -339,7 +363,7 @@
 	<div class="flex items-center justify-between mb-4">
 		<div class="flex items-center gap-2.5">
 			<div class="flex items-center justify-center h-7 w-7 rounded-lg bg-green-500/15">
-				<span class="material-symbols-rounded text-green-500 text-[18px]">fiber_new</span>
+				<Icon icon={Sparkles} class="text-green-500 text-[18px]" />
 			</div>
 			<h2 class="text-base font-bold text-zinc-900 dark:text-white">Episode Terbaru</h2>
 		</div>
@@ -348,12 +372,28 @@
 			class="text-[12px] text-violet-500 hover:text-violet-400 font-medium flex items-center gap-0.5 group"
 		>
 			Lihat semua
-			<span
-				class="material-symbols-rounded text-[14px] group-hover:translate-x-0.5 transition-transform"
-				>chevron_right</span
-			>
+			<Icon icon={ChevronRight} class="text-[14px] group-hover:translate-x-0.5 transition-transform" />
 		</a>
 	</div>
+
+	<a
+		href="/jadwal-rilis"
+		class="mb-4 flex items-center justify-between rounded-2xl p-3 transition active:scale-[0.99]"
+		style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
+	>
+		<div class="flex min-w-0 items-center gap-3">
+			<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15">
+				<Icon icon={Calendar} class="text-[22px] text-violet-500" />
+			</div>
+			<div class="min-w-0">
+				<p class="text-[12px] font-black text-zinc-900 dark:text-white">Kalender rilis episode</p>
+				<p class="line-clamp-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+					Cek update per hari dan aktifkan notifikasi.
+				</p>
+			</div>
+		</div>
+		<Icon icon={ChevronRight} class="text-[20px] text-zinc-400" />
+	</a>
 
 	<!-- Landscape cards scroll -->
 	<div
@@ -386,7 +426,7 @@
 						<span
 							class="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black text-white bg-linear-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-600/40 ring-1 ring-white/20"
 						>
-							<span class="material-symbols-rounded text-[12px] leading-none">play_arrow</span>
+							<Icon icon={Play} class="text-[12px] leading-none" />
 							{item.episode}
 						</span>
 					</div>
@@ -396,7 +436,7 @@
 						<span
 							class="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-white/90 bg-black/55 ring-1 ring-white/10"
 						>
-							<span class="material-symbols-rounded text-[11px] leading-none">schedule</span>
+							<Icon icon={Clock} class="text-[11px] leading-none" />
 							{item.time}
 						</span>
 					</div>
@@ -408,7 +448,7 @@
 						<div
 							class="h-12 w-12 rounded-full bg-violet-500/90 border-2 border-white/60 flex items-center justify-center scale-75 group-hover:scale-100 transition-transform shadow-xl shadow-violet-500/40"
 						>
-							<span class="material-symbols-rounded text-white text-[28px]">play_arrow</span>
+							<Icon icon={Play} class="text-white text-[28px]" />
 						</div>
 					</div>
 
@@ -429,7 +469,7 @@
 	<div class="flex items-center justify-between mb-4">
 		<div class="flex items-center gap-2.5">
 			<div class="flex items-center justify-center h-7 w-7 rounded-lg bg-amber-500/15">
-				<span class="material-symbols-rounded text-amber-500 text-[18px]">workspace_premium</span>
+				<Icon icon={Star} class="text-amber-500 text-[18px]" />
 			</div>
 			<h2 class="text-base font-bold text-zinc-900 dark:text-white">Paling Populer</h2>
 			<span class="hidden md:inline text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
@@ -441,10 +481,7 @@
 			class="text-[12px] text-violet-500 hover:text-violet-400 font-medium flex items-center gap-0.5 group"
 		>
 			Lihat semua
-			<span
-				class="material-symbols-rounded text-[14px] group-hover:translate-x-0.5 transition-transform"
-				>chevron_right</span
-			>
+			<Icon icon={ChevronRight} class="text-[14px] group-hover:translate-x-0.5 transition-transform" />
 		</a>
 	</div>
 
@@ -483,12 +520,7 @@
 							<span
 								class="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-black text-amber-900 bg-linear-to-br from-amber-300 to-amber-500 shadow-lg shadow-amber-500/40 ring-1 ring-white/30"
 							>
-								<span
-									class="material-symbols-rounded text-[13px] leading-none"
-									style="font-variation-settings: 'FILL' 1;"
-								>
-									star
-								</span>
+								<Icon icon={Star} class="text-[13px] leading-none" />
 								{item.rating.toFixed(1)}
 							</span>
 						</div>
@@ -512,21 +544,19 @@
 							<div class="flex items-center gap-2.5 mt-1.5 text-[10px] font-semibold text-white/80">
 								{#if item.studio}
 									<span class="flex items-center gap-1">
-										<span class="material-symbols-rounded text-[12px] leading-none">apartment</span>
+										<Icon icon={OfficeBuilding} class="text-[12px] leading-none" />
 										<span class="truncate max-w-32">{item.studio}</span>
 									</span>
 								{/if}
 								{#if item.followed}
 									<span class="flex items-center gap-1">
-										<span class="material-symbols-rounded text-[12px] leading-none">favorite</span>
+										<Icon icon={Heart} class="text-[12px] leading-none" />
 										{Intl.NumberFormat('id-ID', { notation: 'compact' }).format(item.followed)}
 									</span>
 								{/if}
 								{#if item.episodeCount}
 									<span class="flex items-center gap-1">
-										<span class="material-symbols-rounded text-[12px] leading-none">
-											play_circle
-										</span>
+										<Icon icon={Play} class="text-[12px] leading-none" />
 										{item.episodeCount} ep
 									</span>
 								{/if}
@@ -540,7 +570,7 @@
 						<div
 							class="h-14 w-14 rounded-full bg-violet-500/90 border-2 border-white/70 flex items-center justify-center scale-75 group-hover:scale-100 transition-transform shadow-2xl shadow-violet-500/50"
 						>
-							<span class="material-symbols-rounded text-white text-[32px]">play_arrow</span>
+							<Icon icon={Play} class="text-white text-[32px]" />
 						</div>
 					</div>
 				</div>
@@ -555,7 +585,7 @@
 	<div class="flex items-center justify-between mb-4">
 		<div class="flex items-center gap-2.5">
 			<div class="flex items-center justify-center h-7 w-7 rounded-lg bg-purple-500/15">
-				<span class="material-symbols-rounded text-purple-500 text-[18px]">new_releases</span>
+				<Icon icon={TrendingUp} class="text-purple-500 text-[18px]" />
 			</div>
 			<h2 class="text-base font-bold text-zinc-900 dark:text-white">Baru Diupdate</h2>
 		</div>
@@ -564,10 +594,7 @@
 			class="text-[12px] text-violet-500 hover:text-violet-400 font-medium flex items-center gap-0.5 group"
 		>
 			Lihat semua
-			<span
-				class="material-symbols-rounded text-[14px] group-hover:translate-x-0.5 transition-transform"
-				>chevron_right</span
-			>
+			<Icon icon={ChevronRight} class="text-[14px] group-hover:translate-x-0.5 transition-transform" />
 		</a>
 	</div>
 
@@ -595,9 +622,7 @@
 		></div>
 		<!-- Sparkle icon -->
 		<div class="absolute top-4 right-4 md:top-6 md:right-6 opacity-30 pointer-events-none">
-			<span class="material-symbols-rounded text-white text-[80px] md:text-[120px]">
-				auto_awesome
-			</span>
+			<Icon icon={Sparkles} class="text-white text-[80px] md:text-[120px]" />
 		</div>
 
 		<div class="relative flex flex-col md:flex-row md:items-center gap-5 md:gap-8">
@@ -621,14 +646,14 @@
 					href="/random"
 					class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-violet-700 font-black text-[13px] shadow-xl shadow-black/20 hover:scale-105 active:scale-95 transition-transform"
 				>
-					<span class="material-symbols-rounded text-[18px]">casino</span>
+					<Icon icon={CursorClick} class="text-[18px]" />
 					Tonton Acak
 				</a>
 				<a
 					href="/browse"
 					class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/10 text-white font-black text-[13px] ring-1 ring-white/25 hover:bg-white/20 active:scale-95 transition"
 				>
-					<span class="material-symbols-rounded text-[18px]">explore</span>
+					<Icon icon={Map} class="text-[18px]" />
 					Jelajahi
 				</a>
 			</div>

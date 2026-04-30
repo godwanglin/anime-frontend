@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
@@ -200,7 +201,7 @@
 				class="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full text-[11px] font-black"
 				style="background: var(--accent-surface); color: var(--accent-text); border: 1px solid oklch(from var(--accent) l c h / 0.2);"
 			>
-				<span class="material-symbols-rounded" style="font-size: 14px;">backpack</span>
+				<AppIcon name="backpack" style="font-size: 14px;" />
 				Inventaris
 			</a>
 		</div>
@@ -217,7 +218,7 @@
 				class="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-full text-[12px] font-black text-white"
 				style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow);"
 			>
-				<span class="material-symbols-rounded" style="font-size:14px;">login</span>
+				<AppIcon name="login" style="font-size:14px;" />
 				Masuk
 			</a>
 		</div>
@@ -234,7 +235,7 @@
 				class="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius-xl)] text-[11px] font-black transition"
 				class:active-decoration-tab={activeTab === tab.type}
 			>
-				<span class="material-symbols-rounded" style="font-size:15px;">{tab.icon}</span>
+				<AppIcon name={tab.icon} style="font-size:15px;" />
 				<span class="truncate">{tab.label}</span>
 			</button>
 		{/each}
@@ -245,12 +246,8 @@
 			class="mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold"
 			style="background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);"
 		>
-			<span
-				class="material-symbols-rounded animate-spin"
-				style="font-size:14px; color: var(--accent-text);"
-			>
-				progress_activity
-			</span>
+			<AppIcon name="progress_activity" class="animate-spin"
+				style="font-size:14px; color: var(--accent-text);" />
 			Mempersiapkan asset efek...
 		</div>
 	{/if}
@@ -328,17 +325,12 @@
 								style="background: linear-gradient(135deg, oklch(from var(--accent) 0.22 0.12 h / 0.7) 0%, oklch(0.1 0.02 280) 100%); border: 1px solid var(--border);"
 								aria-label="Pratinjau efek {item.name}"
 							>
-								<span
-									class="material-symbols-rounded"
-									style="font-size: 38px; color: oklch(1 0 0 / 0.85); filter: drop-shadow(0 2px 6px oklch(0 0 0 / 0.5));"
-								>
-									play_circle
-								</span>
+								<AppIcon name="play_circle" style="font-size: 38px; color: oklch(1 0 0 / 0.85); filter: drop-shadow(0 2px 6px oklch(0 0 0 / 0.5));" />
 								<span
 									class="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black"
 									style="background: oklch(0 0 0 / 0.6); color: oklch(1 0 0 / 0.9);"
 								>
-									<span class="material-symbols-rounded" style="font-size:10px;">visibility</span>
+									<AppIcon name="visibility" style="font-size:10px;" />
 									Pratinjau
 								</span>
 							</button>
@@ -382,9 +374,7 @@
 										? 'none'
 										: '0 4px 12px var(--accent-glow)'};"
 								>
-									<span class="material-symbols-rounded" style="font-size:14px;">
-										{lockedByExp ? 'lock' : 'shopping_bag'}
-									</span>
+									<AppIcon name={lockedByExp ? 'lock' : 'shopping_bag'} style="font-size:14px;" />
 									{lockedByExp ? 'EXP kurang' : 'Tukar EXP'}
 								</button>
 							{:else if equipped}
@@ -395,7 +385,7 @@
 									class="w-full h-9 rounded-full text-[11px] font-black inline-flex items-center justify-center gap-1.5 disabled:opacity-60"
 									style="background: var(--accent-surface); color: var(--accent-text); border: 1px solid oklch(from var(--accent) l c h / 0.3);"
 								>
-									<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span>
+									<AppIcon name="check_circle" style="font-size:14px;" />
 									Terpasang
 								</button>
 							{:else}
@@ -406,7 +396,7 @@
 									class="w-full h-9 rounded-full text-[11px] font-black inline-flex items-center justify-center gap-1.5 disabled:opacity-60"
 									style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow); color: #fff;"
 								>
-									<span class="material-symbols-rounded" style="font-size:14px;">checkroom</span>
+									<AppIcon name="checkroom" style="font-size:14px;" />
 									Pasang
 								</button>
 							{/if}
@@ -417,7 +407,7 @@
 								class="w-full h-9 rounded-full text-[11px] font-black inline-flex items-center justify-center gap-1.5 cursor-not-allowed"
 								style="background: var(--surface-offset); color: var(--text-faint); border: 1px solid var(--border);"
 							>
-								<span class="material-symbols-rounded" style="font-size:14px;">lock</span>
+								<AppIcon name="lock" style="font-size:14px;" />
 								Terkunci
 							</button>
 						{:else if equipped}
@@ -428,7 +418,7 @@
 								class="w-full h-9 rounded-full text-[11px] font-black inline-flex items-center justify-center gap-1.5 disabled:opacity-60"
 								style="background: var(--accent-surface); color: var(--accent-text); border: 1px solid oklch(from var(--accent) l c h / 0.3);"
 							>
-								<span class="material-symbols-rounded" style="font-size:14px;">check_circle</span>
+								<AppIcon name="check_circle" style="font-size:14px;" />
 								Terpasang
 							</button>
 						{:else}
@@ -439,7 +429,7 @@
 								class="w-full h-9 rounded-full text-[11px] font-black inline-flex items-center justify-center gap-1.5 text-white disabled:opacity-60"
 								style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow); color: #fff;"
 							>
-								<span class="material-symbols-rounded" style="font-size:14px;">checkroom</span>
+								<AppIcon name="checkroom" style="font-size:14px;" />
 								Pasang
 							</button>
 						{/if}
@@ -452,7 +442,7 @@
 							class="mt-2 w-full h-8 rounded-full text-[10px] font-black inline-flex items-center justify-center gap-1.5"
 							style="background: transparent; color: var(--text-muted); border: 1px solid var(--border);"
 						>
-							<span class="material-symbols-rounded" style="font-size:13px;">visibility</span>
+							<AppIcon name="visibility" style="font-size:13px;" />
 							Pratinjau di profil
 						</button>
 					{/if}
@@ -462,12 +452,8 @@
 							class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none"
 							style="background: oklch(0 0 0 / 0.55); backdrop-filter: blur(2px);"
 						>
-							<span
-								class="material-symbols-rounded mb-1"
-								style="font-size: 28px; color: rgba(255,255,255,0.85);"
-							>
-								lock
-							</span>
+							<AppIcon name="lock" class="mb-1"
+								style="font-size: 28px; color: rgba(255,255,255,0.85);" />
 							<p class="text-[11px] font-black text-white">Buka di Lv {item.requiredLevel}</p>
 						</div>
 					{/if}

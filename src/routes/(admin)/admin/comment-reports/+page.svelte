@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { adminApi } from '$lib/admin/api';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
 	import { displayUserName } from '$lib/user-display';
@@ -128,7 +129,7 @@
 		</div>
 	{:else if reports.length === 0}
 		<div class="rounded-xl border border-zinc-800 bg-zinc-900 p-12 text-center text-zinc-500">
-			<span class="material-symbols-rounded mb-2 block text-4xl">check_circle</span>
+			<AppIcon name="check_circle" class="mb-2 block text-4xl" />
 			Tidak ada laporan {filter !== 'all' ? `dengan status "${filter}"` : ''}.
 		</div>
 	{:else}

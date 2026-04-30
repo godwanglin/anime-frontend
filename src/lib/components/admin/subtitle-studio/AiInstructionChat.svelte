@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type {
 		AiInstructionMessage,
 		SubtitleAiTextModel,
@@ -220,7 +221,7 @@
 						title="Auto generate subtitle"
 						aria-label="Auto generate subtitle"
 					>
-						<span class="material-symbols-rounded">auto_awesome</span>
+						<AppIcon name="auto_awesome" />
 					</button>
 				</div>
 
@@ -241,9 +242,7 @@
 								? 'Kirim revisi AI'
 								: 'Simpan instruksi AI'}
 					>
-						<span class="material-symbols-rounded" style="font-size:16px;">
-							{canStop ? 'stop' : 'arrow_upward'}
-						</span>
+						<AppIcon name={canStop ? 'stop' : 'arrow_upward'} style="font-size:16px;" />
 					</button>
 				</div>
 			</div>

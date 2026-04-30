@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	type PickerOption = {
 		value: string;
 		label: string;
@@ -167,7 +168,7 @@
 		aria-expanded={open}
 		title={menuTitle || activeOption?.label || 'Pilih model'}
 	>
-		<span class="material-symbols-rounded sb-ai-picker-trigger-icon">{icon}</span>
+		<AppIcon name={icon} class="sb-ai-picker-trigger-icon" />
 
 		<span class="sb-ai-picker-trigger-text">
 			{activeOption?.label || menuTitle || 'Pilih model'}
@@ -177,7 +178,7 @@
 			<span class="sb-ai-picker-trigger-meta">{activeOption.meta}</span>
 		{/if}
 
-		<span class="material-symbols-rounded sb-ai-picker-trigger-chevron">expand_more</span>
+		<AppIcon name="expand_more" class="sb-ai-picker-trigger-chevron" />
 	</button>
 
 	{#if open}
@@ -217,7 +218,7 @@
 							</span>
 
 							{#if value === option.value}
-								<span class="material-symbols-rounded sb-ai-picker-check">check</span>
+								<AppIcon name="check" class="sb-ai-picker-check" />
 							{/if}
 						</button>
 					{/each}

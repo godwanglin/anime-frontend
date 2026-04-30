@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type { Snippet } from 'svelte';
 	import { layout } from './store.svelte';
 
@@ -52,7 +53,7 @@
 >
 	<!-- Panel header — draggable for dock-and-drop -->
 	<header class="sl-panel-header" draggable="true" ondragstart={onDragStart}>
-		<span class="material-symbols-rounded sl-panel-icon">{icon}</span>
+		<AppIcon name={icon} class="sl-panel-icon" />
 		<span class="sl-panel-title">{title}</span>
 
 		<div class="sl-panel-actions">
@@ -62,14 +63,12 @@
 					title="Pindahkan panel ke {canMoveTo === 'left' ? 'kiri' : 'kanan'}"
 					onclick={() => layout.moveTo(id as never, canMoveTo!)}
 				>
-					<span class="material-symbols-rounded" style="font-size:14px;">
-						{canMoveTo === 'left' ? 'left_panel_open' : 'right_panel_open'}
-					</span>
+					<AppIcon name={canMoveTo === 'left' ? 'left_panel_open' : 'right_panel_open'} style="font-size:14px;" />
 				</button>
 			{/if}
 			{#if onClose}
 				<button class="sl-panel-action-btn" title="Tutup panel" onclick={onClose}>
-					<span class="material-symbols-rounded" style="font-size:14px;">close</span>
+					<AppIcon name="close" style="font-size:14px;" />
 				</button>
 			{/if}
 		</div>

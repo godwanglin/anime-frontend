@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
@@ -24,9 +25,7 @@
 		<div>
 			<div class="flex items-center gap-2 mb-2">
 				<div class="h-8 w-8 rounded-xl bg-orange-500/15 flex items-center justify-center">
-					<span class="material-symbols-rounded text-orange-500 text-[20px]"
-						>local_fire_department</span
-					>
+					<AppIcon name="local_fire_department" class="text-orange-500 text-[20px]" />
 				</div>
 				<p class="text-[11px] font-black uppercase tracking-widest text-zinc-400">Ranking</p>
 			</div>
@@ -37,7 +36,7 @@
 			class="hidden sm:flex items-center gap-1 text-[12px] font-bold text-violet-500 hover:text-violet-400"
 		>
 			Browse lengkap
-			<span class="material-symbols-rounded text-[14px]">chevron_right</span>
+			<AppIcon name="chevron_right" class="text-[14px]" />
 		</a>
 	</section>
 

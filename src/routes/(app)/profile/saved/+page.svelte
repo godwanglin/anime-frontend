@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -22,9 +23,7 @@
 			class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
 			style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.2);"
 		>
-			<span class="material-symbols-rounded" style="font-size:28px; color: var(--accent);">
-				bookmark
-			</span>
+			<AppIcon name="bookmark" style="font-size:28px; color: var(--accent);" />
 		</div>
 		<h1 class="text-[18px] font-black mb-1.5" style="color: var(--text-primary);">
 			Login diperlukan
@@ -64,7 +63,7 @@
                         box-shadow: var(--shadow-sm);
                     "
 				>
-					<span class="material-symbols-rounded" style="font-size:13px;">grid_view</span>
+					<AppIcon name="grid_view" style="font-size:13px;" />
 					Grid
 				</div>
 			{/if}
@@ -81,9 +80,7 @@
                         box-shadow: var(--shadow-md);
                     "
 				>
-					<span class="material-symbols-rounded" style="font-size:36px; color: var(--text-faint);">
-						bookmarks
-					</span>
+					<AppIcon name="bookmarks" style="font-size:36px; color: var(--text-faint);" />
 				</div>
 				<p class="text-[15px] font-black mb-1.5" style="color: var(--text-primary);">
 					Belum ada yang tersimpan
@@ -96,7 +93,7 @@
 					class="mt-6 h-11 px-6 flex items-center gap-2 rounded-[var(--radius-xl)] text-[12px] font-black text-white transition-all active:scale-[0.97]"
 					style="background: var(--accent); box-shadow: 0 4px 14px var(--accent-glow);"
 				>
-					<span class="material-symbols-rounded" style="font-size:16px;">explore</span>
+					<AppIcon name="explore" style="font-size:16px;" />
 					Jelajahi anime
 				</a>
 			</div>
@@ -178,9 +175,7 @@
                                     color: white;
                                 "
 							>
-								<span class="material-symbols-rounded" style="font-size:14px;">
-									bookmark_remove
-								</span>
+								<AppIcon name="bookmark_remove" style="font-size:14px;" />
 							</button>
 
 							<!-- Info bar — frosted glass di bawah thumbnail, di dalam link -->
@@ -204,7 +199,7 @@
                                 border-top: 1px solid var(--border);
                             "
 						>
-							<span class="material-symbols-rounded" style="font-size:13px;">bookmark_remove</span>
+							<AppIcon name="bookmark_remove" style="font-size:13px;" />
 							Lepas simpan
 						</button>
 					</div>

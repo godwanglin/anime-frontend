@@ -1,10 +1,12 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 	import AnimeCard from '$lib/components/AnimeCard.svelte';
 	import AutoNextEpisode from '$lib/components/AutoNextEpisode.svelte';
 	import DeferredCommentSection from '$lib/components/DeferredCommentSection.svelte';
 	import LazyVideoPlayer from '$lib/components/LazyVideoPlayer.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import CustomSelect from '$lib/components/ui/CustomSelect.svelte';
 	import WatchProgressTracker from '$lib/components/WatchProgressTracker.svelte';
 	import VideoReactionBar from '$lib/components/VideoReactionBar.svelte';
 	import { formatRelativeID } from '$lib/format-date';
@@ -209,8 +211,54 @@
 	});
 
 	let showAllEpisodes = $state(false);
+	let episodeSheetOpen = $state(false);
 	let episodeOrder = $state<'desc' | 'asc'>('desc');
 	let isDesktop = $state(false);
+	let reportOpen = $state(false);
+	let reportReason = $state('video_unavailable');
+	let reportDescription = $state('');
+	let reportContact = $state('');
+	let reportSubmitting = $state(false);
+	let reportMessage = $state('');
+	let reportError = $state('');
+
+	const reportReasons = [
+		{
+			value: 'video_unavailable',
+			label: 'Video tidak tersedia',
+			description: 'Player kosong, server hilang, atau sumber mati'
+		},
+		{
+			value: 'playback_error',
+			label: 'Video error / tidak play',
+			description: 'Video macet, gagal load, atau muncul error'
+		},
+		{
+			value: 'wrong_episode',
+			label: 'Episode salah',
+			description: 'Konten video tidak sesuai episode ini'
+		},
+		{
+			value: 'audio_problem',
+			label: 'Audio bermasalah',
+			description: 'Audio hilang, tidak sinkron, atau rusak'
+		},
+		{
+			value: 'subtitle_problem',
+			label: 'Subtitle bermasalah',
+			description: 'Subtitle tidak muncul, delay, atau salah bahasa'
+		},
+		{
+			value: 'slow_loading',
+			label: 'Loading lambat',
+			description: 'Buffering berat atau server sangat lambat'
+		},
+		{
+			value: 'other',
+			label: 'Lainnya',
+			description: 'Masalah lain yang belum ada di daftar'
+		}
+	];
 
 	onMount(() => {
 		const mq = window.matchMedia('(min-width: 768px)');
@@ -226,7 +274,9 @@
 				: episodeNumber(left) - episodeNumber(right)
 		)
 	);
-	const visibleEpisodes = $derived(showAllEpisodes ? sortedEpisodes : sortedEpisodes.slice(0, 30));
+	const visibleEpisodes = $derived(
+		isDesktop && showAllEpisodes ? sortedEpisodes : sortedEpisodes.slice(0, 30)
+	);
 
 	$effect(() => {
 		const routeEpisodeSlug = episode?.slug ?? data.params?.epslug;
@@ -241,6 +291,7 @@
 			activeEpisodeSlug = routeEpisodeSlug;
 			activeSeason = currentSeasonNumber;
 			showAllEpisodes = false;
+			episodeSheetOpen = false;
 			return;
 		}
 
@@ -260,6 +311,7 @@
 	function selectSeason(season: number) {
 		activeSeason = season;
 		showAllEpisodes = false;
+		episodeSheetOpen = false;
 	}
 
 	function episodeNumber(ep: Episode) {
@@ -269,6 +321,14 @@
 	function toggleEpisodeOrder() {
 		episodeOrder = episodeOrder === 'desc' ? 'asc' : 'desc';
 		showAllEpisodes = false;
+	}
+
+	function toggleEpisodeOverflow() {
+		if (!isDesktop) {
+			episodeSheetOpen = true;
+			return;
+		}
+		showAllEpisodes = !showAllEpisodes;
 	}
 
 	function episodeHref(ep: Episode) {
@@ -307,7 +367,54 @@
 			animeStatus: anime.status ?? 'Ongoing'
 		});
 	}
-	console.log(episode);
+
+	function openReport() {
+		reportOpen = true;
+		reportMessage = '';
+		reportError = '';
+	}
+
+	function closeReport() {
+		if (reportSubmitting) return;
+		reportOpen = false;
+		reportMessage = '';
+		reportError = '';
+	}
+
+	async function submitEpisodeReport() {
+		if (!episode?.id) return;
+		reportSubmitting = true;
+		reportMessage = '';
+		reportError = '';
+
+		try {
+			const response = await auth.authFetch(`/api/episodes/${episode.id}/report`, {
+				method: 'POST',
+				body: JSON.stringify({
+					reason: reportReason,
+					description: reportDescription,
+					contact: reportContact,
+					pageUrl: location.href,
+					serverLabel: streamSources[0]?.label ?? null
+				})
+			});
+			const payload = await response.json().catch(() => null);
+			if (!response.ok) {
+				throw new Error(payload?.message ?? 'Gagal mengirim laporan');
+			}
+			reportMessage = payload?.message ?? 'Laporan berhasil dikirim';
+			reportDescription = '';
+			reportContact = '';
+			setTimeout(() => {
+				reportOpen = false;
+				reportMessage = '';
+			}, 1300);
+		} catch (error) {
+			reportError = error instanceof Error ? error.message : 'Gagal mengirim laporan';
+		} finally {
+			reportSubmitting = false;
+		}
+	}
 </script>
 
 <SEO
@@ -316,6 +423,92 @@
 	image={anime?.thumbnail ?? cover}
 	type="video.episode"
 />
+
+{#if reportOpen}
+	<div class="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-4 py-5 backdrop-blur-sm md:items-center">
+		<button class="absolute inset-0" aria-label="Tutup laporan" onclick={closeReport}></button>
+		<form
+			onsubmit={(event) => {
+				event.preventDefault();
+				submitEpisodeReport();
+			}}
+			class="relative w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-5 text-zinc-100 shadow-2xl"
+		>
+			<div class="mb-4 flex items-start justify-between gap-4">
+				<div>
+					<p class="text-[10px] font-black uppercase tracking-[0.18em] text-red-400">Report Episode</p>
+					<h2 class="mt-1 text-lg font-black">Laporkan masalah video</h2>
+					<p class="mt-1 text-xs text-zinc-500 line-clamp-2">{anime?.title} - {title}</p>
+				</div>
+				<button
+					type="button"
+					onclick={closeReport}
+					class="rounded-lg p-2 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
+					aria-label="Tutup"
+				>
+					<AppIcon name="close" class="text-[20px]" />
+				</button>
+			</div>
+
+			<div class="mb-3 block">
+				<span class="mb-1.5 block text-xs font-bold text-zinc-400">Masalah</span>
+				<CustomSelect
+					value={reportReason}
+					options={reportReasons}
+					align="left"
+					minWidth={360}
+					fullWidth
+					onChange={(value) => (reportReason = value)}
+				/>
+			</div>
+
+			<label class="mb-3 block">
+				<span class="mb-1.5 block text-xs font-bold text-zinc-400">Detail opsional</span>
+				<textarea
+					bind:value={reportDescription}
+					rows="4"
+					maxlength="800"
+					placeholder="Contoh: video berhenti di menit 03:12, subtitle delay, server blank..."
+					class="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-red-500"
+				></textarea>
+			</label>
+
+			<label class="mb-4 block">
+				<span class="mb-1.5 block text-xs font-bold text-zinc-400">Kontak opsional</span>
+				<input
+					bind:value={reportContact}
+					maxlength="191"
+					placeholder="Email atau username kalau perlu dihubungi"
+					class="h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-red-500"
+				/>
+			</label>
+
+			{#if reportError}
+				<p class="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300">{reportError}</p>
+			{/if}
+			{#if reportMessage}
+				<p class="mb-3 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs font-bold text-green-300">{reportMessage}</p>
+			{/if}
+
+			<div class="flex justify-end gap-2">
+				<button
+					type="button"
+					onclick={closeReport}
+					class="h-10 rounded-xl border border-zinc-800 px-4 text-xs font-black text-zinc-400 hover:bg-zinc-900"
+				>
+					Batal
+				</button>
+				<button
+					type="submit"
+					disabled={reportSubmitting}
+					class="h-10 rounded-xl bg-red-600 px-4 text-xs font-black text-white shadow-lg shadow-red-950/30 hover:bg-red-500 disabled:opacity-60"
+				>
+					{reportSubmitting ? 'Mengirim...' : 'Kirim Laporan'}
+				</button>
+			</div>
+		</form>
+	</div>
+{/if}
 
 <div class="-mx-4 -mt-4 max-w-[calc(100%+2rem)] overflow-x-clip md:mx-0 md:mt-0 md:max-w-none">
 	<!-- ══════════════════════════════════════════
@@ -423,12 +616,7 @@
 						class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-1"
 						style="background: oklch(1 0 0 / 0.05); border: 1px solid oklch(1 0 0 / 0.08);"
 					>
-						<span
-							class="material-symbols-rounded"
-							style="font-size:32px; color: oklch(1 0 0 / 0.25);"
-						>
-							video_off
-						</span>
+						<AppIcon name="video_off" style="font-size:32px; color: oklch(1 0 0 / 0.25);" />
 					</div>
 					<p class="text-[13px] font-bold" style="color: oklch(1 0 0 / 0.4);">
 						Stream tidak tersedia
@@ -477,7 +665,7 @@
 						class="text-[10px] font-black uppercase tracking-[0.18em] mb-2 inline-flex items-center gap-1 transition-colors"
 						style="color: var(--accent);"
 					>
-						<span class="material-symbols-rounded" style="font-size:11px;">arrow_back_ios</span>
+						<AppIcon name="arrow_back_ios" style="font-size:11px;" />
 						{anime?.title ?? ''}
 					</a> -->
 					<h1
@@ -535,7 +723,7 @@
                                 box-shadow: var(--shadow-sm);
                             "
 						>
-							<span class="material-symbols-rounded" style="font-size:15px;">skip_previous</span>
+							<AppIcon name="skip_previous" style="font-size:15px;" />
 							Ep {previousEpisode.number}
 						</a>
 					{/if}
@@ -549,7 +737,7 @@
                             "
 						>
 							Ep {nextEpisode.number}
-							<span class="material-symbols-rounded" style="font-size:15px;">skip_next</span>
+							<AppIcon name="skip_next" style="font-size:15px;" />
 						</a>
 					{/if}
 				</div>
@@ -571,7 +759,7 @@
 
 				<!-- Views -->
 				<div class="flex items-center gap-1.5" style="color: var(--text-muted);">
-					<span class="material-symbols-rounded" style="font-size:14px;">visibility</span>
+					<AppIcon name="visibility" style="font-size:14px;" />
 					<span class="text-[11px] font-semibold">
 						{formatCount(episode?.views)} ditonton
 					</span>
@@ -590,10 +778,23 @@
                         box-shadow: {isSaved ? '0 2px 8px var(--accent-glow)' : 'none'};
                     "
 				>
-					<span class="material-symbols-rounded" style="font-size:14px;">
-						{isSaved ? 'bookmark' : 'bookmark_add'}
-					</span>
+					<AppIcon name={isSaved ? 'bookmark' : 'bookmark_add'} style="font-size:14px;" />
 					{isSaved ? 'Tersimpan' : 'Simpan'}
+				</button>
+
+				<div class="h-4 w-px mx-1" style="background: var(--border-strong);"></div>
+
+				<button
+					onclick={openReport}
+					class="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] text-[11px] font-black transition-all active:scale-[0.97]"
+					style="
+                        background: color-mix(in oklch, #ef4444 10%, var(--surface-offset));
+                        border: 1px solid color-mix(in oklch, #ef4444 24%, var(--border-strong));
+                        color: color-mix(in oklch, #ef4444 78%, var(--text-primary));
+                    "
+				>
+					<AppIcon name="report" style="font-size:14px;" />
+					Report
 				</button>
 
 				{#if anime?.status}
@@ -740,9 +941,7 @@
                         color: var(--text-muted);
                     "
 					>
-						<span class="material-symbols-rounded" style="font-size:13px;">
-							{episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
-						</span>
+						<AppIcon name={episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'} style="font-size:13px;" />
 						{episodeOrder === 'desc' ? 'Terbaru' : 'Terlama'}
 					</button>
 				</div>
@@ -798,12 +997,8 @@
 
 							<!-- Watched check -->
 							{#if progress >= 90}
-								<span
-									class="material-symbols-rounded shrink-0"
-									style="font-size:16px; color: var(--accent);"
-								>
-									check_circle
-								</span>
+								<AppIcon name="check_circle" class="shrink-0"
+									style="font-size:16px; color: var(--accent);" />
 							{/if}
 
 							<!-- Sub badge -->
@@ -842,7 +1037,7 @@
 				class="text-[9px] font-black uppercase tracking-[0.18em] mb-2 inline-flex items-center gap-1 transition-colors"
 				style="color: var(--accent);"
 			>
-				<span class="material-symbols-rounded" style="font-size:10px;">arrow_back_ios</span>
+				<AppIcon name="arrow_back_ios" style="font-size:10px;" />
 				{anime?.title ?? ''}
 			</a>
 
@@ -881,7 +1076,7 @@
 					</span>
 				{/if}
 				<div class="flex items-center gap-1" style="color: var(--text-faint);">
-					<span class="material-symbols-rounded" style="font-size:12px;">visibility</span>
+					<AppIcon name="visibility" style="font-size:12px;" />
 					<span class="text-[10px] font-semibold">{formatCount(episode?.views)}</span>
 				</div>
 				{#if episodeRelativeDate}
@@ -909,10 +1104,21 @@
 						: 'var(--shadow-sm)'};
                     "
 				>
-					<span class="material-symbols-rounded" style="font-size:15px;">
-						{isSaved ? 'bookmark' : 'bookmark_add'}
-					</span>
+					<AppIcon name={isSaved ? 'bookmark' : 'bookmark_add'} style="font-size:15px;" />
 					{isSaved ? 'Tersimpan' : 'Simpan'}
+				</button>
+				<button
+					onclick={openReport}
+					class="flex items-center gap-1.5 px-3 py-2 rounded-[var(--radius-xl)] text-[11px] font-black transition-all active:scale-[0.97]"
+					style="
+                        background: color-mix(in oklch, #ef4444 10%, var(--surface));
+                        border: 1px solid color-mix(in oklch, #ef4444 24%, var(--border-strong));
+                        color: color-mix(in oklch, #ef4444 78%, var(--text-primary));
+                        box-shadow: var(--shadow-sm);
+                    "
+				>
+					<AppIcon name="report" style="font-size:15px;" />
+					Report
 				</button>
 			</div>
 
@@ -929,7 +1135,7 @@
                             box-shadow: var(--shadow-sm);
                         "
 					>
-						<span class="material-symbols-rounded" style="font-size:16px;">skip_previous</span>
+						<AppIcon name="skip_previous" style="font-size:16px;" />
 						Ep {previousEpisode.number}
 					</a>
 				{:else}
@@ -945,7 +1151,7 @@
                         "
 					>
 						Ep {nextEpisode.number}
-						<span class="material-symbols-rounded" style="font-size:16px;">skip_next</span>
+						<AppIcon name="skip_next" style="font-size:16px;" />
 					</a>
 				{/if}
 			</div>
@@ -1012,9 +1218,7 @@
                         box-shadow: var(--shadow-sm);
                     "
 					>
-						<span class="material-symbols-rounded" style="font-size:13px;">
-							{episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
-						</span>
+						<AppIcon name={episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'} style="font-size:13px;" />
 						{episodeOrder === 'desc' ? 'Terbaru' : 'Terlama'}
 					</button>
 				</div>
@@ -1066,12 +1270,8 @@
 
 							<!-- Check icon jika selesai -->
 							{#if progress >= 90 && !isActive}
-								<span
-									class="material-symbols-rounded absolute top-0.5 right-0.5"
-									style="font-size:12px; color: green;"
-								>
-									check_circle
-								</span>
+								<AppIcon name="check_circle" class="absolute top-0.5 right-0.5"
+									style="font-size:12px; color: green;" />
 							{/if}
 
 							<!-- Progress bar -->
@@ -1097,7 +1297,7 @@
 
 				{#if episodes.length > 30}
 					<button
-						onclick={() => (showAllEpisodes = !showAllEpisodes)}
+						onclick={toggleEpisodeOverflow}
 						class="mt-3 w-full py-3 rounded-[var(--radius-xl)] text-[11px] font-bold flex items-center justify-center gap-1.5 border transition-all active:scale-[0.99]"
 						style="
                         background: var(--surface);
@@ -1106,13 +1306,130 @@
                         box-shadow: var(--shadow-sm);
                     "
 					>
-						<span class="material-symbols-rounded" style="font-size:16px;">
-							{showAllEpisodes ? 'expand_less' : 'expand_more'}
-						</span>
-						{showAllEpisodes ? 'Sembunyikan' : `Lihat semua ${episodes.length} episode`}
+						<AppIcon name={isDesktop && showAllEpisodes ? 'expand_less' : 'expand_more'} style="font-size:16px;" />
+						{isDesktop && showAllEpisodes ? 'Sembunyikan' : `Lihat semua ${episodes.length} episode`}
 					</button>
 				{/if}
 			</div>
+
+			{#if episodeSheetOpen}
+				<div class="fixed inset-0 z-[80] md:hidden" role="dialog" aria-modal="true">
+					<button
+						type="button"
+						class="absolute inset-0 w-full h-full bg-black/60 backdrop-blur-[2px]"
+						aria-label="Tutup daftar episode"
+						onclick={() => (episodeSheetOpen = false)}
+					></button>
+					<div
+						class="absolute inset-x-0 bottom-0 max-h-[82dvh] rounded-t-[24px] overflow-hidden"
+						style="background: var(--surface); border: 1px solid var(--border); box-shadow: 0 -18px 60px oklch(0 0 0 / 0.45);"
+					>
+						<div class="px-4 pt-3 pb-3" style="border-bottom: 1px solid var(--border);">
+							<div
+								class="mx-auto mb-3 h-1 w-10 rounded-full"
+								style="background: var(--border-strong);"
+							></div>
+							<div class="flex items-center justify-between gap-3">
+								<div class="min-w-0">
+									<p
+										class="text-[9px] font-black uppercase tracking-[0.2em]"
+										style="color: var(--text-faint);"
+									>
+										Semua Episode
+									</p>
+									<p
+										class="text-[13px] font-black line-clamp-1"
+										style="color: var(--text-primary);"
+									>
+										{anime?.title}
+									</p>
+								</div>
+								<div class="flex items-center gap-2">
+									<button
+										type="button"
+										onclick={toggleEpisodeOrder}
+										class="h-8 shrink-0 flex items-center gap-1.5 px-3 rounded-[var(--radius-lg)] text-[10px] font-bold transition-all active:scale-[0.97]"
+										style="background: var(--surface-offset); border: 1px solid var(--border-strong); color: var(--text-muted);"
+									>
+										<AppIcon name={episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'} style="font-size:13px;" />
+										{episodeOrder === 'desc' ? 'Terbaru' : 'Terlama'}
+									</button>
+									<button
+										type="button"
+										aria-label="Tutup"
+										onclick={() => (episodeSheetOpen = false)}
+										class="h-8 w-8 rounded-full flex items-center justify-center transition-all active:scale-95"
+										style="background: var(--surface-offset); border: 1px solid var(--border-strong); color: var(--text-muted);"
+									>
+										<AppIcon name="close" style="font-size:18px;" />
+									</button>
+								</div>
+							</div>
+						</div>
+
+						{#if seasons.length > 1}
+							<div class="px-4 pt-3">
+								<div class="flex max-w-full gap-2 overflow-x-auto pb-2 scrollbar-hide">
+									{#each seasons as season (season.season)}
+										{@const isActiveSeason = season.season === activeSeasonData?.season}
+										<button
+											type="button"
+											aria-pressed={isActiveSeason}
+											onclick={() => selectSeason(season.season)}
+											class="shrink-0 h-8 px-3 rounded-[var(--radius-lg)] text-[11px] transition-all active:scale-[0.97]"
+											style="
+												background: {isActiveSeason ? 'var(--accent)' : 'var(--surface-offset)'};
+												border: 1px solid {isActiveSeason ? 'transparent' : 'var(--border-strong)'};
+												color: {isActiveSeason ? '#fff' : 'var(--text-muted)'};
+												font-weight: {isActiveSeason ? 900 : 700};
+											"
+										>
+											Season {season.season}
+										</button>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
+						<div class="max-h-[62dvh] overflow-y-auto overscroll-contain p-4 pt-3">
+							<div class="grid grid-cols-5 gap-1.5">
+								{#each sortedEpisodes as ep}
+									{@const isActive = ep.slug === episode?.slug || ep.slug === data.params?.epslug}
+									{@const progress = episodeProgress(ep.id)}
+									<a
+										href={episodeHref(ep)}
+										onclick={() => (episodeSheetOpen = false)}
+										class="relative flex min-h-12 items-center justify-center rounded-[var(--radius-lg)] border text-[13px] font-black transition-all active:scale-[0.95]"
+										style="
+											background: {isActive
+												? 'var(--accent)'
+												: progress > 0
+													? 'var(--accent-surface)'
+													: 'var(--surface-offset)'};
+											border-color: {isActive
+												? 'transparent'
+												: progress > 0
+													? 'oklch(from var(--accent) l c h / 0.25)'
+													: 'var(--border-strong)'};
+											color: {isActive
+												? '#fff'
+												: progress > 0
+													? 'var(--accent-text)'
+													: 'var(--text-primary)'};
+										"
+									>
+										{episodeNumber(ep)}
+										{#if progress >= 90 && !isActive}
+											<AppIcon name="check_circle" class="absolute right-1 top-1"
+												style="font-size:10px; color: var(--accent);" />
+										{/if}
+									</a>
+								{/each}
+							</div>
+						</div>
+					</div>
+				</div>
+			{/if}
 
 			<!-- Divider -->
 			<div class="mx-4 h-px" style="background: var(--border);"></div>

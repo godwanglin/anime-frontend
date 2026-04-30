@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { getCultivationBadge, getLevelProgress } from '$lib/exp';
@@ -67,7 +68,7 @@
 					class="relative inline-flex max-w-[160px] shrink-0 items-center gap-1.5 overflow-hidden rounded-full px-3 py-1.5 text-[10px] font-black text-white"
 					style="background: {badge.color}; box-shadow: 0 10px 30px oklch(0 0 0 / 0.28);"
 				>
-					<span class="material-symbols-rounded" style="font-size:13px;">workspace_premium</span>
+					<AppIcon name="workspace_premium" style="font-size:13px;" />
 					<span class="truncate">{badge.name}</span>
 					<span class="badge-shine" aria-hidden="true"></span>
 				</span>
@@ -99,9 +100,7 @@
 						class="mb-3 flex h-10 w-10 items-center justify-center rounded-[var(--radius-lg)]"
 						style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.16);"
 					>
-						<span class="material-symbols-rounded" style="font-size:20px; color: var(--accent);">
-							{item.icon}
-						</span>
+						<AppIcon name={item.icon} style="font-size:20px; color: var(--accent);" />
 					</div>
 					<p class="text-[13px] font-black" style="color: var(--text-primary);">{item.title}</p>
 					<p class="mt-1 text-[11px] leading-relaxed" style="color: var(--text-muted);">{item.desc}</p>

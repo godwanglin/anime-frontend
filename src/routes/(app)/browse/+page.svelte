@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
@@ -68,7 +69,7 @@
 			<div class="hidden md:block">
 				<div class="flex items-center gap-2 mb-2">
 					<div class="h-8 w-8 rounded-xl bg-violet-500/15 flex items-center justify-center">
-						<span class="material-symbols-rounded text-violet-500 text-[20px]">explore</span>
+						<AppIcon name="explore" class="text-violet-500 text-[20px]" />
 					</div>
 					<p class="text-[11px] font-black uppercase tracking-widest text-zinc-400">Katalog</p>
 				</div>
@@ -79,10 +80,7 @@
 
 			<form action="/browse" method="GET" class="flex gap-2 w-full md:w-auto">
 				<div class="relative flex-1 md:w-72">
-					<span
-						class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-400"
-						>search</span
-					>
+					<AppIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-400" />
 					<input
 						name="q"
 						value={filters.q}
@@ -202,7 +200,7 @@
 					href={browseUrl({ page: Math.max(1, meta.page - 1) })}
 					class="h-10 w-10 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 hover:border-violet-400 hover:text-violet-500"
 				>
-					<span class="material-symbols-rounded text-[18px]">chevron_left</span>
+					<AppIcon name="chevron_left" class="text-[18px]" />
 				</a>
 				<span
 					class="px-4 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-bold"
@@ -213,15 +211,13 @@
 					href={browseUrl({ page: Math.min(meta.totalPages, meta.page + 1) })}
 					class="h-10 w-10 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 hover:border-violet-400 hover:text-violet-500"
 				>
-					<span class="material-symbols-rounded text-[18px]">chevron_right</span>
+					<AppIcon name="chevron_right" class="text-[18px]" />
 				</a>
 			</div>
 		{/if}
 	{:else}
 		<div class="py-16 text-center">
-			<span class="material-symbols-rounded text-[52px] text-zinc-300 dark:text-zinc-700"
-				>search_off</span
-			>
+			<AppIcon name="search_off" class="text-[52px] text-zinc-300 dark:text-zinc-700" />
 			<p class="mt-2 font-bold text-zinc-700 dark:text-zinc-300">Tidak ada anime ditemukan</p>
 			<a href="/browse" class="mt-3 inline-flex text-sm font-bold text-violet-500">Reset filter</a>
 		</div>

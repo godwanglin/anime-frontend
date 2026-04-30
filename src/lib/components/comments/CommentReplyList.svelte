@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { comments } from '$lib/stores/comments.svelte';
 	import CommentItem from './CommentItem.svelte';
 
@@ -48,15 +49,10 @@
 		style="color: var(--accent);"
 	>
 		{#if loading}
-			<span
-				class="material-symbols-rounded"
-				style="font-size:13px; animation: spin 1s linear infinite;"
-			>
-				progress_activity
-			</span>
+			<AppIcon name="progress_activity" style="font-size:13px; animation: spin 1s linear infinite;" />
 			Memuat...
 		{:else}
-			<span class="material-symbols-rounded" style="font-size:13px;">subdirectory_arrow_right</span>
+			<AppIcon name="subdirectory_arrow_right" style="font-size:13px;" />
 			Lihat {replyCount} balasan
 		{/if}
 	</button>

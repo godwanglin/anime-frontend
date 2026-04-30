@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -75,7 +76,7 @@
 				class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
 				style="background: var(--accent); color: #fff;"
 			>
-				<span class="material-symbols-rounded" style="font-size:16px;">person</span>
+				<AppIcon name="person" style="font-size:16px;" />
 			</span>
 			<p class="text-[12px] flex-1" style="color: var(--text-muted);">
 				<button
@@ -122,12 +123,7 @@
 						class="w-14 h-14 rounded-2xl flex items-center justify-center"
 						style="background: var(--surface-offset); border: 1px solid var(--border);"
 					>
-						<span
-							class="material-symbols-rounded"
-							style="font-size:28px; color: var(--text-faint);"
-						>
-							chat_bubble_outline
-						</span>
+						<AppIcon name="chat_bubble_outline" style="font-size:28px; color: var(--text-faint);" />
 					</div>
 					<p class="text-[13px] font-bold" style="color: var(--text-muted);">Belum ada komentar</p>
 					<p class="text-[11px]" style="color: var(--text-faint);">
@@ -145,7 +141,7 @@
 			class="comment-section-foot mt-4 mx-4 md:mx-0 w-[calc(100%-2rem)] md:w-full py-3 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 border transition-all active:scale-[0.99]"
 			style="background: var(--surface); border-color: var(--border-strong); color: var(--text-muted); box-shadow: var(--shadow-sm);"
 		>
-			<span class="material-symbols-rounded" style="font-size:16px;">expand_more</span>
+			<AppIcon name="expand_more" style="font-size:16px;" />
 			Muat lebih banyak
 		</button>
 	{/if}

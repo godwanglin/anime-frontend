@@ -1,9 +1,13 @@
+<script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
+</script>
+
 <svelte:head>
 	<title>Sedang Offline</title>
 </svelte:head>
 
 <div class="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0f0f11] p-6 text-center text-zinc-100">
-	<span class="material-symbols-rounded text-6xl text-zinc-600">wifi_off</span>
+	<AppIcon name="wifi_off" class="text-6xl text-zinc-600" />
 	<h1 class="text-2xl font-black">Kamu sedang offline</h1>
 	<p class="max-w-sm text-zinc-400">Periksa koneksi internetmu, lalu coba lagi.</p>
 	<button

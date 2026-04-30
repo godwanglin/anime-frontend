@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -182,7 +183,7 @@
 					style="color: var(--text-faint);"
 					aria-label="Tutup"
 				>
-					<span class="material-symbols-rounded" style="font-size:20px;">close</span>
+					<AppIcon name="close" style="font-size:20px;" />
 				</button>
 			</div>
 
@@ -218,12 +219,8 @@
 							{auth.user?.email}
 						</p>
 					</div>
-					<span
-						class="material-symbols-rounded shrink-0"
-						style="font-size:16px; color: var(--accent);"
-					>
-						chevron_right
-					</span>
+					<AppIcon name="chevron_right" class="shrink-0"
+						style="font-size:16px; color: var(--accent);" />
 				</a>
 			{:else}
 				<a
@@ -232,7 +229,7 @@
 					class="mx-4 mt-4 h-11 flex items-center justify-center gap-2 rounded-[var(--radius-xl)] text-[13px] font-black text-white transition-all"
 					style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow);"
 				>
-					<span class="material-symbols-rounded" style="font-size:16px;">login</span>
+					<AppIcon name="login" style="font-size:16px;" />
 					Masuk
 				</a>
 			{/if}
@@ -256,7 +253,7 @@
 							: 'transparent'};
                         "
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">{item.icon}</span>
+						<AppIcon name={item.icon} style="font-size:20px;" />
 						{item.label}
 					</a>
 				{/each}
@@ -284,7 +281,7 @@
 							: 'transparent'};
                         "
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">{item.icon}</span>
+						<AppIcon name={item.icon} style="font-size:20px;" />
 						{item.label}
 					</a>
 				{/each}
@@ -297,9 +294,7 @@
 					class="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-xl)] text-[13px] font-bold transition-all"
 					style="background: var(--surface-offset); color: var(--text-muted);"
 				>
-					<span class="material-symbols-rounded" style="font-size:20px;">
-						{isDark ? 'light_mode' : 'dark_mode'}
-					</span>
+					<AppIcon name={isDark ? 'light_mode' : 'dark_mode'} style="font-size:20px;" />
 					{isDark ? 'Mode Terang' : 'Mode Gelap'}
 				</button>
 			</div>
@@ -343,12 +338,8 @@
                         box-shadow: var(--shadow-sm);
                     "
 				>
-					<span
-						class="material-symbols-rounded absolute left-3 pointer-events-none"
-						style="font-size:17px; color: var(--text-faint);"
-					>
-						search
-					</span>
+					<AppIcon name="search" class="absolute left-3 pointer-events-none"
+						style="font-size:17px; color: var(--text-faint);" />
 					<input
 						bind:this={searchInputEl}
 						bind:value={searchQuery}
@@ -384,7 +375,7 @@
 						class="relative flex h-9 w-9 items-center justify-center rounded-full transition-all active:scale-90"
 						style="color: var(--text-muted);"
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">add_photo_alternate</span>
+						<AppIcon name="add_photo_alternate" style="font-size:20px;" />
 					</button>
 				{/if}
 				<button
@@ -393,7 +384,7 @@
 					class="relative flex h-9 w-9 items-center justify-center rounded-full transition-all active:scale-90"
 					style="color: var(--text-muted);"
 				>
-					<span class="material-symbols-rounded" style="font-size:20px;">notifications</span>
+					<AppIcon name="notifications" style="font-size:20px;" />
 					{#if notifications.unreadCount > 0}
 						<span
 							class="absolute -right-1 -top-1 min-w-[18px] rounded-full px-1 py-0.5 text-center text-[9px] font-black text-white"
@@ -411,9 +402,7 @@
 					class="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90"
 					style="color: var(--text-muted);"
 				>
-					<span class="material-symbols-rounded" style="font-size:20px;">
-						{isDark ? 'light_mode' : 'dark_mode'}
-					</span>
+					<AppIcon name={isDark ? 'light_mode' : 'dark_mode'} style="font-size:20px;" />
 				</button>
 
 				<!-- Auth pill -->
@@ -440,7 +429,7 @@
 							{/if}
 						</span>
 					{:else}
-						<span class="material-symbols-rounded" style="font-size:15px;">login</span>
+						<AppIcon name="login" style="font-size:15px;" />
 						Masuk
 					{/if}
 				</a>
@@ -468,7 +457,7 @@
 							aria-label="Upload gambar"
 							title="Upload gambar"
 						>
-							<span class="material-symbols-rounded" style="font-size:20px;">add_photo_alternate</span>
+							<AppIcon name="add_photo_alternate" style="font-size:20px;" />
 						</button>
 					{/if}
 					<button
@@ -477,7 +466,7 @@
 						style="color: var(--text-muted);"
 						aria-label="Buka notifikasi"
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">notifications</span>
+						<AppIcon name="notifications" style="font-size:20px;" />
 						{#if notifications.unreadCount > 0}
 							<span
 								class="absolute -right-1 -top-1 min-w-[18px] rounded-full px-1 py-0.5 text-center text-[9px] font-black text-white"
@@ -493,9 +482,7 @@
 						style="color: var(--text-muted);"
 						aria-label="Toggle tema"
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">
-							{isDark ? 'light_mode' : 'dark_mode'}
-						</span>
+						<AppIcon name={isDark ? 'light_mode' : 'dark_mode'} style="font-size:20px;" />
 					</button>
 					<button
 						onclick={() => (sidebarOpen = true)}
@@ -503,7 +490,7 @@
 						style="color: var(--text-muted);"
 						aria-label="Buka menu"
 					>
-						<span class="material-symbols-rounded" style="font-size:22px;">menu</span>
+						<AppIcon name="menu" style="font-size:22px;" />
 					</button>
 				</div>
 			</div>
@@ -518,12 +505,8 @@
                         color: var(--text-faint);
                     "
 				>
-					<span
-						class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-						style="font-size:17px; color: var(--text-faint);"
-					>
-						search
-					</span>
+					<AppIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+						style="font-size:17px; color: var(--text-faint);" />
 					Cari anime...
 				</button>
 			</div>
@@ -542,7 +525,7 @@
                     "
 					aria-label="Kembali"
 				>
-					<span class="material-symbols-rounded" style="font-size:20px;">arrow_back</span>
+					<AppIcon name="arrow_back" style="font-size:20px;" />
 				</button>
 
 				<!-- Page title -->
@@ -568,7 +551,7 @@
 						aria-label="Upload gambar"
 						title="Upload gambar"
 					>
-						<span class="material-symbols-rounded" style="font-size:19px;">add_photo_alternate</span>
+						<AppIcon name="add_photo_alternate" style="font-size:19px;" />
 					</button>
 				{/if}
 
@@ -583,7 +566,7 @@
                     "
 					aria-label="Buka notifikasi"
 				>
-					<span class="material-symbols-rounded" style="font-size:19px;">notifications</span>
+					<AppIcon name="notifications" style="font-size:19px;" />
 					{#if notifications.unreadCount > 0}
 						<span
 							class="absolute -right-1 -top-1 min-w-[18px] rounded-full px-1 py-0.5 text-center text-[9px] font-black text-white"
@@ -606,9 +589,7 @@
                     "
 					aria-label="Toggle tema"
 				>
-					<span class="material-symbols-rounded" style="font-size:19px;">
-						{isDark ? 'light_mode' : 'dark_mode'}
-					</span>
+					<AppIcon name={isDark ? 'light_mode' : 'dark_mode'} style="font-size:19px;" />
 				</button>
 			</div>
 		{/if}
@@ -645,14 +626,10 @@
                             Active indicator dot + icon color shift.
                             Icon gets accent color when active.
                         -->
-						<span
-							class="material-symbols-rounded transition-colors"
+						<AppIcon name={item.icon} class="transition-colors"
 							style="font-size:20px; color: {isActive(item.href)
 								? 'var(--accent)'
-								: 'var(--text-faint)'};"
-						>
-							{item.icon}
-						</span>
+								: 'var(--text-faint)'};" />
 						{item.label}
 						{#if isActive(item.href)}
 							<span
@@ -686,14 +663,9 @@
 							: 'transparent'};
                         "
 					>
-						<span
-							class="material-symbols-rounded"
-							style="font-size:20px; color: {isActive(item.href)
+						<AppIcon name={item.icon} style="font-size:20px; color: {isActive(item.href)
 								? 'var(--accent)'
-								: 'var(--text-faint)'};"
-						>
-							{item.icon}
-						</span>
+								: 'var(--text-faint)'};" />
 						{item.label}
 						{#if isActive(item.href)}
 							<span class="ml-auto w-1.5 h-1.5 rounded-full" style="background: var(--accent);"
@@ -710,7 +682,7 @@
 					class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-xl)] text-[12px] font-bold transition-all"
 					style="color: var(--text-faint);"
 				>
-					<span class="material-symbols-rounded" style="font-size:18px;">tune</span>
+					<AppIcon name="tune" style="font-size:18px;" />
 					Preferensi
 				</a>
 			</div>

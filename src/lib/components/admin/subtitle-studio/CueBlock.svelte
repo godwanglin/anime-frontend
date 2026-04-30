@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { tick } from 'svelte';
 	import type { SubtitleCue } from '$lib/admin/subtitle-studio';
 
@@ -128,7 +129,7 @@
 			<span class="cb-ai-glow"></span>
 			<span class="cb-ai-noise"></span>
 			<span class="cb-ai-pill">
-				<span class="material-symbols-rounded cb-ai-pill-icon">auto_awesome</span>
+				<AppIcon name="auto_awesome" class="cb-ai-pill-icon" />
 				AI generating
 			</span>
 		</div>
@@ -149,7 +150,7 @@
 
 		<!-- Header row -->
 		<div class="cb-edit-header">
-			<span class="material-symbols-rounded cb-icon-edit">edit</span>
+			<AppIcon name="edit" class="cb-icon-edit" />
 			<span class="cb-edit-times">{startLabel} → {endLabel}</span>
 			<span class="cb-edit-dur">{durLabel}</span>
 			<button
@@ -162,7 +163,7 @@
 				}}
 				onpointerdown={(e) => e.stopPropagation()}
 			>
-				<span class="material-symbols-rounded" style="font-size:13px;">close</span>
+				<AppIcon name="close" style="font-size:13px;" />
 			</button>
 		</div>
 
@@ -234,7 +235,7 @@
 			}}
 			onpointerdown={(e) => e.stopPropagation()}
 		>
-			<span class="material-symbols-rounded" style="font-size:12px;">delete</span>
+			<AppIcon name="delete" style="font-size:12px;" />
 		</button>
 
 		<!-- Resize handle — right -->
@@ -380,7 +381,7 @@
 		color: #f5f3ff;
 	}
 
-	.cb-ai-pill-icon {
+	:global(.cb-ai-pill-icon) {
 		font-size: 0.72rem;
 		animation: cb-ai-spin 1.2s linear infinite;
 	}
@@ -526,7 +527,7 @@
 		border-bottom: 1px solid oklch(1 0 0 / 0.07);
 		flex-shrink: 0;
 	}
-	.cb-icon-edit {
+	:global(.cb-icon-edit) {
 		font-size: 12px;
 		color: oklch(0.72 0.18 278);
 	}

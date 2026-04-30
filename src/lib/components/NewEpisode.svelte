@@ -1,5 +1,6 @@
 <!-- src/lib/components/AnimeListItem.svelte -->
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	type AnimeListItemProps = {
 		title: string;
 		thumbnail: string;
@@ -40,7 +41,7 @@
 		<div
 			class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 transition"
 		>
-			<span class="material-symbols-rounded text-white text-[20px]">play_circle</span>
+			<AppIcon name="play_circle" class="text-white text-[20px]" />
 		</div>
 	</div>
 

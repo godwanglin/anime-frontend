@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import OptimizedImage from './OptimizedImage.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -245,7 +246,7 @@
 								<div
 									class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-400/15 border border-yellow-400/30"
 								>
-									<span class="material-symbols-rounded text-yellow-400 text-[13px]">star</span>
+									<AppIcon name="star" class="text-yellow-400 text-[13px]" />
 									<span class="text-yellow-400 text-[12px] font-black">{hero.rating}</span>
 								</div>
 							{/if}
@@ -307,7 +308,7 @@
 								href={hero.href ?? `/anime/${hero.slug}`}
 								class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-zinc-900 text-sm font-black transition hover:bg-white/90 shadow-xl shadow-black/30 active:scale-95"
 							>
-								<span class="material-symbols-rounded text-[18px]">play_arrow</span>
+								<AppIcon name="play_arrow" class="text-[18px]" />
 								Tonton Sekarang
 							</a>
 							<button
@@ -315,14 +316,12 @@
 								class="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition active:scale-95"
 								aria-label={saved.checkSaved(hero.id) ? 'Tersimpan' : 'Simpan'}
 							>
-								<span class="material-symbols-rounded text-[18px]"
-									>{saved.checkSaved(hero.id) ? 'bookmark' : 'bookmark_add'}</span
-								>
+								<AppIcon name={saved.checkSaved(hero.id) ? 'bookmark' : 'bookmark_add'} class="text-[18px]" />
 							</button>
 							<button
 								class="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition active:scale-95"
 							>
-								<span class="material-symbols-rounded text-[18px]">info</span>
+								<AppIcon name="info" class="text-[18px]" />
 							</button>
 						</div>
 					</div>
@@ -338,14 +337,14 @@
 		class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition"
 		aria-label="Previous"
 	>
-		<span class="material-symbols-rounded text-[22px]">chevron_left</span>
+		<AppIcon name="chevron_left" class="text-[22px]" />
 	</button>
 	<button
 		onclick={next}
 		class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition"
 		aria-label="Next"
 	>
-		<span class="material-symbols-rounded text-[22px]">chevron_right</span>
+		<AppIcon name="chevron_right" class="text-[22px]" />
 	</button>
 
 	<!-- Dot indicators -->
@@ -386,7 +385,7 @@
 					onclick={() => (showDescModal = false)}
 					class="h-7 w-7 flex items-center justify-center rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition"
 				>
-					<span class="material-symbols-rounded text-[16px]">close</span>
+					<AppIcon name="close" class="text-[16px]" />
 				</div>
 			</div>
 

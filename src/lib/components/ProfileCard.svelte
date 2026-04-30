@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { fade } from 'svelte/transition';
 	import { cubicOut, quintOut } from 'svelte/easing';
 	import { auth, type PublicUser } from '$lib/stores/auth.svelte';
@@ -470,7 +471,7 @@
 			class="relative inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-black text-white"
 			style="background: {profileBadge.color}; box-shadow: 0 8px 24px oklch(0 0 0 / 0.22);"
 		>
-			<span class="material-symbols-rounded" style="font-size:12px;">workspace_premium</span>
+			<AppIcon name="workspace_premium" style="font-size:12px;" />
 			<span class="truncate">{profileBadge.name}</span>
 			<span class="badge-shine" aria-hidden="true"></span>
 		</span>
@@ -596,12 +597,8 @@
 				class="flex flex-col items-center py-3 px-2 rounded-[var(--radius-xl)] backdrop-blur-md"
 				style="background: oklch(1 0 0 / 0.07); border: 1px solid oklch(1 0 0 / 0.1);"
 			>
-				<span
-					class="material-symbols-rounded mb-1"
-					style="font-size:18px; color: oklch(from var(--accent) 0.8 0.12 h);"
-				>
-					{stat.icon}
-				</span>
+				<AppIcon name={stat.icon} class="mb-1"
+					style="font-size:18px; color: oklch(from var(--accent) 0.8 0.12 h);" />
 				<p class="text-[20px] font-black text-white leading-none tabular-nums">
 					{formatNumber(stat.value)}
 				</p>

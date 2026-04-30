@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type {
 		AiInstructionMessage,
 		SubtitleAiTranscribeModel,
@@ -163,7 +164,7 @@
 		onpointerup={stopDrag}
 		onpointercancel={stopDrag}
 	>
-		<span class="material-symbols-rounded">drag_indicator</span>
+		<AppIcon name="drag_indicator" />
 		<strong>Instruksi AI</strong>
 		<div
 			class="sb-ai-floating-bar-controls"
@@ -198,7 +199,7 @@
 				onclick={closeFloating}
 				aria-label="Kembalikan chat"
 			>
-				<span class="material-symbols-rounded">close</span>
+				<AppIcon name="close" />
 			</button>
 		</div>
 	</div>

@@ -1,5 +1,7 @@
 <!-- src/lib/components/AnimeCard.svelte -->
 <script lang="ts">
+	import Icon from 'heroicons-for-svelte';
+	import { Play, Star } from 'heroicons-for-svelte/icons/solid';
 	import OptimizedImage from './OptimizedImage.svelte';
 
 	type AnimeCardProps = {
@@ -60,12 +62,12 @@
 
 		<!-- Hover overlay -->
 		<div
-			class="anime-card-hover absolute inset-0 hidden flex-col items-center justify-center gap-2 bg-black/35 opacity-0 transition-opacity duration-200 md:flex md:group-hover:opacity-100"
+			class="anime-card-hover absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/35 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
 		>
 			<div
-				class="h-12 w-12 rounded-full bg-white/20 border-2 border-white/60 flex items-center justify-center scale-90 md:group-hover:scale-100 transition-transform duration-200"
+				class="h-10 w-10 md:h-12 md:w-12 rounded-full bg-white/20 border-2 border-white/60 flex items-center justify-center scale-90 group-hover:scale-100 transition-transform duration-200"
 			>
-				<span class="material-symbols-rounded text-white text-[28px]">play_arrow</span>
+				<Icon icon={Play} class="text-white text-[24px] md:text-[28px]" />
 			</div>
 			{#if genres.length > 0}
 				<div class="flex flex-wrap justify-center gap-1 px-2">
@@ -143,7 +145,7 @@
 			<div
 				class="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5"
 			>
-				<span class="material-symbols-rounded text-yellow-400 text-[11px]">star</span>
+				<Icon icon={Star} class="text-yellow-400 text-[11px]" />
 				<span class="text-[10px] font-bold text-white">{rating}</span>
 			</div>
 		{/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	let {
 		language = $bindable('id'),
 		label = $bindable('Indonesia'),
@@ -72,7 +73,7 @@
 			? 'border-violet-400 bg-violet-500/10'
 			: 'border-zinc-700 bg-zinc-950/50 hover:border-zinc-500'}"
 	>
-		<span class="material-symbols-rounded mb-2 text-3xl text-violet-300">upload_file</span>
+		<AppIcon name="upload_file" class="mb-2 text-3xl text-violet-300" />
 		<span class="text-sm font-bold"
 			>{file?.name ?? 'Drop file .srt / .vtt atau klik untuk pilih'}</span
 		>

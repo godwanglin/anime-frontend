@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
@@ -138,7 +139,7 @@
 			class="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full text-[11px] font-black"
 			style="background: var(--surface); color: var(--text-primary); border: 1px solid var(--border-strong);"
 		>
-			<span class="material-symbols-rounded" style="font-size:14px;">storefront</span>
+			<AppIcon name="storefront" style="font-size:14px;" />
 			Toko
 		</a>
 	</header>
@@ -154,7 +155,7 @@
 				class="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius-xl)] text-[11px] font-black transition"
 				class:active-decoration-tab={activeTab === tab.type}
 			>
-				<span class="material-symbols-rounded" style="font-size:15px;">{tab.icon}</span>
+				<AppIcon name={tab.icon} style="font-size:15px;" />
 				{tab.label}
 			</button>
 		{/each}
@@ -165,12 +166,8 @@
 			class="mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold"
 			style="background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);"
 		>
-			<span
-				class="material-symbols-rounded animate-spin"
-				style="font-size:14px; color: var(--accent-text);"
-			>
-				progress_activity
-			</span>
+			<AppIcon name="progress_activity" class="animate-spin"
+				style="font-size:14px; color: var(--accent-text);" />
 			Mempersiapkan asset efek...
 		</div>
 	{/if}
@@ -199,7 +196,7 @@
 					class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-black disabled:opacity-60"
 					style="background: var(--surface); color: var(--text-primary); border: 1px solid var(--border-strong);"
 				>
-					<span class="material-symbols-rounded" style="font-size:14px;">close</span>
+					<AppIcon name="close" style="font-size:14px;" />
 					Lepas semua
 				</button>
 			</div>
@@ -213,9 +210,9 @@
 						style="background: var(--surface); color: var(--text-primary); border: 1px solid var(--border);"
 						title="Lepas {effect.name}"
 					>
-						<span class="material-symbols-rounded" style="font-size:12px;">auto_awesome</span>
+						<AppIcon name="auto_awesome" style="font-size:12px;" />
 						<span class="truncate">{effect.name}</span>
-						<span class="material-symbols-rounded" style="font-size:12px;">close</span>
+						<AppIcon name="close" style="font-size:12px;" />
 					</button>
 				{/each}
 			</div>
@@ -263,7 +260,7 @@
 				class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-black disabled:opacity-60"
 				style="background: var(--surface); color: var(--text-primary); border: 1px solid var(--border-strong);"
 			>
-				<span class="material-symbols-rounded" style="font-size:14px;">close</span>
+				<AppIcon name="close" style="font-size:14px;" />
 				Lepas
 			</button>
 		</div>
@@ -283,12 +280,8 @@
 			class="rounded-[var(--radius-2xl)] p-6 text-center"
 			style="background: var(--surface); border: 1px dashed var(--border-strong);"
 		>
-			<span
-				class="material-symbols-rounded inline-block mb-2"
-				style="font-size: 32px; color: var(--text-faint);"
-			>
-				inventory_2
-			</span>
+			<AppIcon name="inventory_2" class="inline-block mb-2"
+				style="font-size: 32px; color: var(--text-faint);" />
 			<p class="text-[13px] font-bold mb-1" style="color: var(--text-primary);">
 				Belum ada {activeTab === 'frame'
 					? 'frame'
@@ -368,12 +361,7 @@
 								style="background: linear-gradient(135deg, oklch(from var(--accent) 0.22 0.12 h / 0.7) 0%, oklch(0.1 0.02 280) 100%); border: 1px solid var(--border);"
 								aria-label="Pratinjau efek {item.name}"
 							>
-								<span
-									class="material-symbols-rounded"
-									style="font-size: 38px; color: oklch(1 0 0 / 0.85); filter: drop-shadow(0 2px 6px oklch(0 0 0 / 0.5));"
-								>
-									play_circle
-								</span>
+								<AppIcon name="play_circle" style="font-size: 38px; color: oklch(1 0 0 / 0.85); filter: drop-shadow(0 2px 6px oklch(0 0 0 / 0.5));" />
 							</button>
 						{/if}
 					</div>
@@ -402,9 +390,7 @@
 								box-shadow: {equipped || maxEffectReached ? 'none' : '0 4px 12px var(--accent-glow)'};
 							"
 						>
-							<span class="material-symbols-rounded" style="font-size:14px;">
-								{equipped ? 'check_circle' : maxEffectReached ? 'block' : 'checkroom'}
-							</span>
+							<AppIcon name={equipped ? 'check_circle' : maxEffectReached ? 'block' : 'checkroom'} style="font-size:14px;" />
 							{equipped ? 'Lepas' : maxEffectReached ? 'Max 3 aktif' : 'Pasang'}
 						</button>
 					</div>
@@ -415,7 +401,7 @@
 							class="mt-2 w-full h-8 rounded-full text-[10px] font-black inline-flex items-center justify-center gap-1.5"
 							style="background: transparent; color: var(--text-muted); border: 1px solid var(--border);"
 						>
-							<span class="material-symbols-rounded" style="font-size:13px;">visibility</span>
+							<AppIcon name="visibility" style="font-size:13px;" />
 							Pratinjau
 						</button>
 					{/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 	import { adminApi } from '$lib/admin/api';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
@@ -134,7 +135,7 @@
 						? 'border-violet-500 text-violet-300'
 						: 'border-transparent text-zinc-500'}"
 				>
-					<span class="material-symbols-rounded text-[18px]">{group.icon}</span>{group.label}
+					<AppIcon name={group.icon} class="text-[18px]" />{group.label}
 					{#if dirty.has(group.id)}<span class="h-2 w-2 rounded-full bg-yellow-400"></span>{/if}
 				</button>
 			{/each}

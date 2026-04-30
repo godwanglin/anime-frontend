@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { page as pageState } from '$app/state';
 	import { adminApi, toQuery } from '$lib/admin/api';
@@ -91,7 +92,7 @@
 			href="/admin/anime/new"
 			class="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
 		>
-			<span class="material-symbols-rounded text-[18px]">add</span>
+			<AppIcon name="add" class="text-[18px]" />
 			Tambah Anime
 		</a>
 	</div>
@@ -173,12 +174,12 @@
 					<a
 						href="/admin/anime/{row.id}"
 						class="rounded-lg border border-zinc-700 p-2 text-zinc-300 hover:bg-zinc-800"
-						><span class="material-symbols-rounded text-[18px]">edit</span></a
+						><AppIcon name="edit" class="text-[18px]" /></a
 					>
 					<button
 						onclick={() => askDelete([row.id])}
 						class="rounded-lg border border-red-900/60 p-2 text-red-400 hover:bg-red-950"
-						><span class="material-symbols-rounded text-[18px]">delete</span></button
+						><AppIcon name="delete" class="text-[18px]" /></button
 					>
 				</div>
 			</td>

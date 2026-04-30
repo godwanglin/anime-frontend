@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	let {
 		open = false,
 		title = '',
@@ -24,7 +25,7 @@
 					onclick={onClose}
 					class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
 				>
-					<span class="material-symbols-rounded">close</span>
+					<AppIcon name="close" />
 				</button>
 			</div>
 			{@render children?.()}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import AnimeCard from '$lib/components/AnimeCard.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
@@ -29,7 +30,7 @@
 					<div
 						class="h-10 w-10 rounded-2xl bg-white/15 flex items-center justify-center mb-3 border border-white/10"
 					>
-						<span class="material-symbols-rounded text-[23px]">shuffle</span>
+						<AppIcon name="shuffle" class="text-[23px]" />
 					</div>
 					<p class="text-[11px] font-black uppercase tracking-widest text-white/55 mb-2">
 						Discovery
@@ -43,7 +44,7 @@
 					href="/random?limit={data.limit}"
 					class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-white text-zinc-900 text-sm font-black hover:bg-violet-100 transition active:scale-95"
 				>
-					<span class="material-symbols-rounded text-[18px]">autorenew</span>
+					<AppIcon name="autorenew" class="text-[18px]" />
 					Acak lagi
 				</a>
 			</div>

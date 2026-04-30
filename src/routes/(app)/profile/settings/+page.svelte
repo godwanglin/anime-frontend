@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -81,9 +82,7 @@
 			class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
 			style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.2);"
 		>
-			<span class="material-symbols-rounded" style="font-size:28px; color: var(--accent);">
-				manage_accounts
-			</span>
+			<AppIcon name="manage_accounts" style="font-size:28px; color: var(--accent);" />
 		</div>
 		<h1 class="text-[18px] font-black mb-1.5" style="color: var(--text-primary);">
 			Login diperlukan
@@ -124,12 +123,8 @@
 					: 'color-mix(in oklch, #ef4444 25%, transparent)'};
                 "
 			>
-				<span
-					class="material-symbols-rounded shrink-0"
-					style="font-size:18px; color: {message ? '#22c55e' : '#ef4444'};"
-				>
-					{message ? 'check_circle' : 'error'}
-				</span>
+				<AppIcon name={message ? 'check_circle' : 'error'} class="shrink-0"
+					style="font-size:18px; color: {message ? '#22c55e' : '#ef4444'};" />
 				<p
 					class="text-[13px] font-bold"
 					style="color: {message
@@ -146,7 +141,7 @@
 					class="ml-auto shrink-0 transition-colors"
 					style="color: var(--text-faint);"
 				>
-					<span class="material-symbols-rounded" style="font-size:16px;">close</span>
+					<AppIcon name="close" style="font-size:16px;" />
 				</button>
 			</div>
 		{/if}
@@ -217,12 +212,8 @@
 						</span>
 					</label>
 					<div class="relative">
-						<span
-							class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-							style="font-size:16px; color: var(--text-faint);"
-						>
-							badge
-						</span>
+						<AppIcon name="badge" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+							style="font-size:16px; color: var(--text-faint);" />
 						<input
 							id="profile-username"
 							bind:value={username}
@@ -251,12 +242,8 @@
 						Username
 					</label>
 					<div class="relative">
-						<span
-							class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-							style="font-size:16px; color: var(--text-faint);"
-						>
-							alternate_email
-						</span>
+						<AppIcon name="alternate_email" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+							style="font-size:16px; color: var(--text-faint);" />
 						<input
 							id="profile-handle"
 							value={auth.user?.username ?? ''}
@@ -286,12 +273,8 @@
 						</span>
 					</label>
 					<div class="relative">
-						<span
-							class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-							style="font-size:16px; color: var(--text-faint);"
-						>
-							link
-						</span>
+						<AppIcon name="link" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+							style="font-size:16px; color: var(--text-faint);" />
 						<input
 							id="profile-avatar"
 							bind:value={avatar}
@@ -316,12 +299,10 @@
 					style="background: var(--accent); box-shadow: 0 4px 12px var(--accent-glow);"
 				>
 					{#if savingProfile}
-						<span class="material-symbols-rounded animate-spin" style="font-size:16px;">
-							progress_activity
-						</span>
+						<AppIcon name="progress_activity" class="animate-spin" style="font-size:16px;" />
 						Menyimpan...
 					{:else}
-						<span class="material-symbols-rounded" style="font-size:16px;">save</span>
+						<AppIcon name="save" style="font-size:16px;" />
 						Simpan Nama & Profil
 					{/if}
 				</button>
@@ -353,12 +334,8 @@
 							{field.label}
 						</label>
 						<div class="relative">
-							<span
-								class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-								style="font-size:16px; color: var(--text-faint);"
-							>
-								lock
-							</span>
+							<AppIcon name="lock" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+								style="font-size:16px; color: var(--text-faint);" />
 							<input
 								id={field.id}
 								type={field.bindKey === 'current'
@@ -407,8 +384,7 @@
 								style="color: var(--text-faint);"
 								tabindex="-1"
 							>
-								<span class="material-symbols-rounded" style="font-size:16px;">
-									{field.bindKey === 'current'
+								<AppIcon name={field.bindKey === 'current'
 										? showCurrent
 											? 'visibility_off'
 											: 'visibility'
@@ -418,8 +394,7 @@
 												: 'visibility'
 											: showConfirm
 												? 'visibility_off'
-												: 'visibility'}
-								</span>
+												: 'visibility'} style="font-size:16px;" />
 							</button>
 						</div>
 						<!-- Confirm mismatch hint -->
@@ -484,12 +459,10 @@
                     "
 				>
 					{#if savingPassword}
-						<span class="material-symbols-rounded animate-spin" style="font-size:16px;">
-							progress_activity
-						</span>
+						<AppIcon name="progress_activity" class="animate-spin" style="font-size:16px;" />
 						Menyimpan...
 					{:else}
-						<span class="material-symbols-rounded" style="font-size:16px;">shield</span>
+						<AppIcon name="shield" style="font-size:16px;" />
 						Ganti Password
 					{/if}
 				</button>
@@ -504,7 +477,7 @@
 			transform: rotate(360deg);
 		}
 	}
-	.animate-spin {
+	:global(.animate-spin) {
 		animation: spin 1s linear infinite;
 	}
 

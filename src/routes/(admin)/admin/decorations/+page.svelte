@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { page as pageState } from '$app/state';
 	import { adminApi, toQuery } from '$lib/admin/api';
@@ -495,7 +496,7 @@
 			onclick={openCreate}
 			class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
 		>
-			<span class="material-symbols-rounded text-[18px]">add</span>
+			<AppIcon name="add" class="text-[18px]" />
 			Tambah
 		</button>
 	</div>
@@ -844,7 +845,7 @@
 									onclick={() => nudgeFrameNumber('frameOffsetY', -1)}
 									class="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-zinc-700 bg-zinc-800 text-[11px] font-bold text-zinc-300 hover:bg-zinc-700"
 								>
-									<span class="material-symbols-rounded text-[14px]">keyboard_arrow_up</span>
+									<AppIcon name="keyboard_arrow_up" class="text-[14px]" />
 									Naik
 								</button>
 								<button
@@ -852,7 +853,7 @@
 									onclick={() => nudgeFrameNumber('frameOffsetY', 1)}
 									class="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-zinc-700 bg-zinc-800 text-[11px] font-bold text-zinc-300 hover:bg-zinc-700"
 								>
-									<span class="material-symbols-rounded text-[14px]">keyboard_arrow_down</span>
+									<AppIcon name="keyboard_arrow_down" class="text-[14px]" />
 									Turun
 								</button>
 							</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { tick } from 'svelte';
 
 	type TimelineMenuItem = {
@@ -69,7 +70,7 @@
 				<span class="tl-menu-loading-noise"></span>
 				<span class="tl-menu-main tl-menu-main-loading">
 					<span class="tl-menu-loading-badge">AI</span>
-					<span class="material-symbols-rounded tl-menu-icon tl-menu-icon-spin">auto_awesome</span>
+					<AppIcon name="auto_awesome" class="tl-menu-icon tl-menu-icon-spin" />
 					<span class="tl-menu-loading-copy">
 						<strong>{item.label}</strong>
 						<small>{loadingText}</small>
@@ -83,7 +84,7 @@
 			{:else}
 				<span class="tl-menu-main">
 					{#if item.icon}
-						<span class="material-symbols-rounded tl-menu-icon">{item.icon}</span>
+						<AppIcon name={item.icon} class="tl-menu-icon" />
 					{/if}
 					<span>{item.label}</span>
 				</span>
@@ -172,13 +173,13 @@
 		gap: 0.72rem;
 	}
 
-	.tl-menu-icon {
+	:global(.tl-menu-icon) {
 		font-size: 1rem;
 		position: relative;
 		z-index: 2;
 	}
 
-	.tl-menu-icon-spin {
+	:global(.tl-menu-icon-spin) {
 		animation: tl-menu-spin 1.2s linear infinite;
 	}
 

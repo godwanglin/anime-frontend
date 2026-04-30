@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { page as pageState } from '$app/state';
 	import { onMount } from 'svelte';
@@ -428,7 +429,7 @@
 						href="/admin/episodes/{row.id}/upload"
 						class="inline-flex items-center gap-1 rounded-lg border border-violet-500/60 px-2 py-1 text-violet-200 hover:bg-violet-500/10"
 					>
-						<span class="material-symbols-rounded text-[16px]">cloud_upload</span>
+						<AppIcon name="cloud_upload" class="text-[16px]" />
 						Upload
 					</a>
 					<a href="/admin/episodes/{row.id}" class="rounded-lg border border-zinc-700 px-2 py-1"

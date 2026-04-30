@@ -292,6 +292,14 @@ async function react(commentId: number, type: ReactionType) {
 	}
 }
 
+async function reportComment(commentId: number, payload: { reason: string; description?: string }) {
+	const json = await request<null>(`/api/comments/${commentId}/report`, {
+		method: 'POST',
+		body: JSON.stringify(payload)
+	});
+	return json.message ?? 'Laporan berhasil dikirim';
+}
+
 export const comments = {
 	get items() {
 		return items;
@@ -316,6 +324,7 @@ export const comments = {
 	postComment,
 	editComment,
 	deleteComment,
+	reportComment,
 	react,
 	startCooldownTimer
 };

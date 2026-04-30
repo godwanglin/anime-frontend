@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 
 	import './vp.css';
@@ -1231,12 +1232,12 @@
 
 					<!-- Skip backward 10s — replay_10 style -->
 					<button class="vp-btn" onclick={skipBackward} aria-label="Rewind 10 seconds">
-						<span class="material-symbols-rounded"> replay_10 </span>
+						<AppIcon name="replay_10" />
 					</button>
 
 					<!-- Skip forward 10s — forward_10 style -->
 					<button class="vp-btn" onclick={skipForward} aria-label="Skip forward 10 seconds">
-						<span class="material-symbols-rounded"> forward_10 </span>
+						<AppIcon name="forward_10" />
 					</button>
 
 					<!-- Volume -->

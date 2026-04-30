@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import './css/tl.css';
 	import type { SubtitleCue } from '$lib/admin/subtitle-studio';
@@ -1176,9 +1177,7 @@
 				aria-label={isPlaying ? 'Pause' : 'Play'}
 				title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
 			>
-				<span class="material-symbols-rounded" style="font-size:18px;">
-					{isPlaying ? 'pause' : 'play_arrow'}
-				</span>
+				<AppIcon name={isPlaying ? 'pause' : 'play_arrow'} style="font-size:18px;" />
 			</button>
 
 			<button
@@ -1188,7 +1187,7 @@
 				aria-label="Mundur 5 detik"
 				title="Mundur 5 detik"
 			>
-				<span class="material-symbols-rounded" style="font-size:17px;">replay_5</span>
+				<AppIcon name="replay_5" style="font-size:17px;" />
 			</button>
 
 			<button
@@ -1198,7 +1197,7 @@
 				aria-label="Maju 5 detik"
 				title="Maju 5 detik"
 			>
-				<span class="material-symbols-rounded" style="font-size:17px;">forward_5</span>
+				<AppIcon name="forward_5" style="font-size:17px;" />
 			</button>
 		</div>
 
@@ -1218,7 +1217,7 @@
 			title="Follow playhead"
 			aria-pressed={followPlayhead}
 		>
-			<span class="material-symbols-rounded" style="font-size:15px;">my_location</span>
+			<AppIcon name="my_location" style="font-size:15px;" />
 			Follow
 		</button>
 
@@ -1231,17 +1230,17 @@
 			title="Select range mode (S)"
 			aria-pressed={selectionMode}
 		>
-			<span class="material-symbols-rounded" style="font-size:15px;">select_all</span>
+			<AppIcon name="select_all" style="font-size:15px;" />
 			Range
 		</button>
 
 		{#if selection}
 			<div class="tl-badge shrink-0">
-				<span class="material-symbols-rounded" style="font-size:13px;">timeline</span>
+				<AppIcon name="timeline" style="font-size:13px;" />
 				{formatTimecode(selection.startTime)} - {formatTimecode(selection.endTime)}
 			</div>
 			<div class="tl-badge shrink-0">
-				<span class="material-symbols-rounded" style="font-size:13px;">straighten</span>
+				<AppIcon name="straighten" style="font-size:13px;" />
 				{formatSelectionDuration(selectionDuration)}
 			</div>
 		{/if}
@@ -1256,7 +1255,7 @@
 				aria-label="Zoom out"
 				title="Zoom out (Shift+Scroll)"
 			>
-				<span class="material-symbols-rounded" style="font-size:16px;">zoom_out</span>
+				<AppIcon name="zoom_out" style="font-size:16px;" />
 			</button>
 			<span class="tl-zoom-label">{Math.round(zoom * 100)}%</span>
 			<button
@@ -1266,14 +1265,14 @@
 				aria-label="Zoom in"
 				title="Zoom in (Shift+Scroll)"
 			>
-				<span class="material-symbols-rounded" style="font-size:16px;">zoom_in</span>
+				<AppIcon name="zoom_in" style="font-size:16px;" />
 			</button>
 		</div>
 
 		<div class="tl-divider"></div>
 
 		<div class="tl-badge shrink-0">
-			<span class="material-symbols-rounded" style="font-size:13px;">subtitles</span>
+			<AppIcon name="subtitles" style="font-size:13px;" />
 			{cues.length} cues
 		</div>
 
@@ -1340,7 +1339,7 @@
 						</span>
 						{#if selectionAiBusy && aiProcessingRange && selection.startTime === aiProcessingRange.startTime && selection.endTime === aiProcessingRange.endTime}
 							<span class="tl-selection-loading" aria-hidden="true">
-								<span class="material-symbols-rounded tl-selection-loading-icon">auto_awesome</span>
+								<AppIcon name="auto_awesome" class="tl-selection-loading-icon" />
 								<span>Generating...</span>
 							</span>
 						{/if}
@@ -1415,7 +1414,7 @@
 		aria-label="Resize tinggi timeline"
 		onpointerdown={startHeightResize}
 	>
-		<span class="material-symbols-rounded" style="font-size:14px;">drag_handle</span>
+		<AppIcon name="drag_handle" style="font-size:14px;" />
 	</button>
 </section>
 

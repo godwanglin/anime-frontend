@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import SEO from '$lib/components/SEO.svelte';
@@ -117,7 +118,7 @@
 				"
 				aria-label="Refresh notifikasi"
 			>
-				<span class="material-symbols-rounded text-[20px]">refresh</span>
+				<AppIcon name="refresh" class="text-[20px]" />
 			</button>
 		{/if}
 	</header>
@@ -160,7 +161,7 @@
 							border: 1px solid var(--border-strong);
 						"
 					>
-						<span class="material-symbols-rounded text-[15px]">done_all</span>
+						<AppIcon name="done_all" class="text-[15px]" />
 						Dibaca
 					</button>
 				{/if}
@@ -213,9 +214,7 @@
 						border: 1px solid oklch(from var(--accent) l c h / 0.2);
 					"
 				>
-					<span class="material-symbols-rounded" style="font-size:22px; color: var(--accent);">
-						lock
-					</span>
+					<AppIcon name="lock" style="font-size:22px; color: var(--accent);" />
 				</div>
 				<p class="text-[14px] font-black" style="color: var(--text-primary);">
 					Inbox personal butuh login
@@ -252,7 +251,7 @@
 						border: 1px solid var(--border);
 					"
 				>
-					<span class="material-symbols-rounded">drafts</span>
+					<AppIcon name="drafts" />
 				</div>
 				<p class="text-sm font-black" style="color: var(--text-primary);">Belum ada notifikasi</p>
 				<p class="mt-1 text-xs leading-5" style="color: var(--text-faint);">
@@ -282,9 +281,7 @@
 								: 'color-mix(in oklab, var(--accent) 30%, transparent)'};
 							"
 						>
-							<span class="material-symbols-rounded text-[20px]">
-								{categoryIcon(item.category)}
-							</span>
+							<AppIcon name={categoryIcon(item.category)} class="text-[20px]" />
 						</div>
 						<div class="min-w-0 flex-1">
 							<div class="mb-1 flex items-center justify-between gap-3">
@@ -324,7 +321,7 @@
 									style="color: var(--text-faint);"
 								>
 									Buka detail
-									<span class="material-symbols-rounded text-[13px]">arrow_outward</span>
+									<AppIcon name="arrow_outward" class="text-[13px]" />
 								</span>
 							{/if}
 						</div>

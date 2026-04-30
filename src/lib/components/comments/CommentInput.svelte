@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { comments } from '$lib/stores/comments.svelte';
 	import { userInitial } from '$lib/user-display';
@@ -125,7 +126,7 @@
 								class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-black text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
 								style="background: var(--accent); box-shadow: 0 2px 8px var(--accent-glow);"
 							>
-								<span class="material-symbols-rounded" style="font-size:13px;">send</span>
+								<AppIcon name="send" style="font-size:13px;" />
 								Kirim
 							</button>
 						</div>

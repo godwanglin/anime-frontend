@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
@@ -67,9 +68,7 @@
             box-shadow: {reaction.liked ? '0 2px 8px var(--accent-glow)' : 'none'};
         "
 	>
-		<span class="material-symbols-rounded" style="font-size: {compact ? '15px' : '17px'};">
-			thumb_up
-		</span>
+		<AppIcon name="thumb_up" style="font-size: {compact ? '15px' : '17px'};" />
 		<span>{formatCount(reaction.likeCount)}</span>
 	</button>
 
@@ -92,9 +91,7 @@
             border: 1px solid {reaction.disliked ? 'var(--border-strong)' : 'transparent'};
         "
 	>
-		<span class="material-symbols-rounded" style="font-size: {compact ? '15px' : '17px'};">
-			thumb_down
-		</span>
+		<AppIcon name="thumb_down" style="font-size: {compact ? '15px' : '17px'};" />
 		<span>{formatCount(reaction.dislikeCount)}</span>
 	</button>
 </div>

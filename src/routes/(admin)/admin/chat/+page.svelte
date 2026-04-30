@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { page as pageState } from '$app/state';
 	import { onMount } from 'svelte';
@@ -196,7 +197,7 @@
 			href="/chat"
 			class="inline-flex items-center gap-2 rounded-lg border border-zinc-800 px-3 py-2 text-xs font-black text-zinc-300 hover:border-violet-500/50 hover:text-violet-300"
 		>
-			<span class="material-symbols-rounded text-[17px]">open_in_new</span>
+			<AppIcon name="open_in_new" class="text-[17px]" />
 			Buka Chat
 		</a>
 	</div>
@@ -255,7 +256,7 @@
 				onclick={saveSlowmode}
 				class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-violet-500/20 hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
 			>
-				<span class="material-symbols-rounded text-[18px]">save</span>
+				<AppIcon name="save" class="text-[18px]" />
 				{savingSlowmode ? 'Menyimpan...' : 'Simpan Slowmode'}
 			</button>
 		</div>
@@ -272,7 +273,7 @@
 					onclick={loadMessages}
 					class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-zinc-700 px-4 text-xs font-black text-zinc-300 hover:bg-zinc-800"
 				>
-					<span class="material-symbols-rounded text-[17px]">refresh</span>
+					<AppIcon name="refresh" class="text-[17px]" />
 					Refresh
 				</button>
 				<button
@@ -281,7 +282,7 @@
 					onclick={() => (clearConfirmOpen = true)}
 					class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-900/70 px-4 text-xs font-black text-red-300 hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-40"
 				>
-					<span class="material-symbols-rounded text-[17px]">delete_sweep</span>
+					<AppIcon name="delete_sweep" class="text-[17px]" />
 					Clear Semua
 				</button>
 			</div>
@@ -308,7 +309,7 @@
 					</div>
 				{:else if messages.length === 0}
 					<div class="px-6 py-16 text-center">
-						<span class="material-symbols-rounded text-4xl text-zinc-700">forum</span>
+						<AppIcon name="forum" class="text-4xl text-zinc-700" />
 						<p class="mt-3 text-sm font-black text-zinc-300">Tidak ada chat</p>
 						<p class="mt-1 text-xs text-zinc-500">Coba keyword lain atau refresh data.</p>
 					</div>
@@ -381,9 +382,7 @@
 													href={context.url}
 													class="inline-flex max-w-full items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1.5 text-[11px] font-black text-violet-200 hover:border-violet-400"
 												>
-													<span class="material-symbols-rounded text-[14px]">
-														{context.type === 'episode' ? 'smart_display' : 'movie'}
-													</span>
+													<AppIcon name={context.type === 'episode' ? 'smart_display' : 'movie'} class="text-[14px]" />
 													<span class="truncate">{contextLabel(context)}</span>
 												</a>
 											{/each}
@@ -397,7 +396,7 @@
 													href={link.preview?.url ?? link.path}
 													class="inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-[11px] font-black text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
 												>
-													<span class="material-symbols-rounded text-[14px]">link</span>
+													<AppIcon name="link" class="text-[14px]" />
 													<span class="truncate">{link.preview?.title ?? link.rawText}</span>
 												</a>
 											{/each}
@@ -412,7 +411,7 @@
 										onclick={() => askDelete(message)}
 										class="inline-flex items-center gap-1.5 rounded-lg border border-red-900/70 px-3 py-2 text-xs font-black text-red-300 hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-40"
 									>
-										<span class="material-symbols-rounded text-[16px]">delete</span>
+										<AppIcon name="delete" class="text-[16px]" />
 										{message.deletedAt ? 'Sudah dihapus' : 'Hapus'}
 									</button>
 								</div>

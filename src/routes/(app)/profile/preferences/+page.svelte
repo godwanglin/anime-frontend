@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import CustomSelect from '$lib/components/ui/CustomSelect.svelte';
 	import SEO from '$lib/components/SEO.svelte';
@@ -129,9 +130,7 @@
 			class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
 			style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.2);"
 		>
-			<span class="material-symbols-rounded" style="font-size:28px; color: var(--accent);">
-				lock
-			</span>
+			<AppIcon name="lock" style="font-size:28px; color: var(--accent);" />
 		</div>
 		<h1 class="text-[18px] font-black mb-1.5" style="color: var(--text-primary);">
 			Login diperlukan
@@ -183,12 +182,7 @@
 						class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
 						style="background: var(--surface-offset);"
 					>
-						<span
-							class="material-symbols-rounded"
-							style="font-size:16px; color: var(--text-muted);"
-						>
-							contrast
-						</span>
+						<AppIcon name="contrast" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div>
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">Tema</p>
@@ -215,7 +209,7 @@
 								: 'none'};
                 "
 						>
-							<span class="material-symbols-rounded" style="font-size:13px;">{tab.icon}</span>
+							<AppIcon name={tab.icon} style="font-size:13px;" />
 							{tab.label}
 						</button>
 					{/each}
@@ -229,12 +223,7 @@
 						class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
 						style="background: var(--surface-offset);"
 					>
-						<span
-							class="material-symbols-rounded"
-							style="font-size:16px; color: var(--text-muted);"
-						>
-							hd
-						</span>
+						<AppIcon name="hd" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div>
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">Kualitas video</p>
@@ -272,12 +261,7 @@
 						class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
 						style="background: var(--surface-offset);"
 					>
-						<span
-							class="material-symbols-rounded"
-							style="font-size:16px; color: var(--text-muted);"
-						>
-							volume_up
-						</span>
+						<AppIcon name="volume_up" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div class="flex-1 min-w-0">
 						<div class="flex items-center justify-between mb-1">
@@ -347,12 +331,7 @@
 							class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
 							style="background: var(--surface-offset);"
 						>
-							<span
-								class="material-symbols-rounded"
-								style="font-size:16px; color: var(--text-muted);"
-							>
-								{item.icon}
-							</span>
+							<AppIcon name={item.icon} style="font-size:16px; color: var(--text-muted);" />
 						</div>
 						<div>
 							<p class="text-[13px] font-bold" style="color: var(--text-primary);">{item.label}</p>
@@ -424,7 +403,7 @@
 			<div class="flex items-center justify-between gap-4 px-4 py-4" style="border-bottom: 1px solid var(--border);">
 				<div class="flex min-w-0 items-center gap-3">
 					<div class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0" style="background: var(--surface-offset);">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--text-muted);">font_download</span>
+						<AppIcon name="font_download" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div class="min-w-0">
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">Font</p>
@@ -443,7 +422,7 @@
 			<div class="flex items-center justify-between gap-4 px-4 py-4" style="border-bottom: 1px solid var(--border);">
 				<div class="flex min-w-0 items-center gap-3">
 					<div class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0" style="background: var(--surface-offset);">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--text-muted);">format_size</span>
+						<AppIcon name="format_size" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div class="min-w-0">
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">Ukuran teks</p>
@@ -462,7 +441,7 @@
 			<div class="flex items-center justify-between gap-4 px-4 py-4" style="border-bottom: 1px solid var(--border);">
 				<div class="flex items-center gap-3">
 					<div class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0" style="background: var(--surface-offset);">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--text-muted);">palette</span>
+						<AppIcon name="palette" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div>
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">Warna teks</p>
@@ -480,7 +459,7 @@
 					{/each}
 					<label class="relative w-7 h-7 rounded-full overflow-hidden cursor-pointer flex items-center justify-center" style="border: 2px solid var(--border-strong); background: var(--surface-offset);">
 						<input type="color" value={preference.pref.subtitleColor} oninput={(e) => preference.updatePreference({ subtitleColor: e.currentTarget.value })} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-						<span class="material-symbols-rounded" style="font-size:14px; color: var(--text-muted); pointer-events:none;">colorize</span>
+						<AppIcon name="colorize" style="font-size:14px; color: var(--text-muted); pointer-events:none;" />
 					</label>
 				</div>
 			</div>
@@ -488,7 +467,7 @@
 			<div class="flex items-center justify-between gap-4 px-4 py-4" style="border-bottom: 1px solid var(--border);">
 				<div class="flex min-w-0 items-center gap-3">
 					<div class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0" style="background: var(--surface-offset);">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--text-muted);">layers</span>
+						<AppIcon name="layers" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div class="min-w-0">
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">Background</p>
@@ -506,7 +485,7 @@
 			<div class="flex items-center justify-between gap-4 px-4 py-4" style="border-bottom: 1px solid var(--border);">
 				<div class="flex min-w-0 items-center gap-3">
 					<div class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0" style="background: var(--surface-offset);">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--text-muted);">blur_on</span>
+						<AppIcon name="blur_on" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div class="min-w-0">
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">Bayangan teks</p>
@@ -525,7 +504,7 @@
 			<div class="flex items-center justify-between gap-4 px-4 py-4" style="border-bottom: 1px solid var(--border);">
 				<div class="flex min-w-0 items-center gap-3">
 					<div class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0" style="background: var(--surface-offset);">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--text-muted);">vertical_align_bottom</span>
+						<AppIcon name="vertical_align_bottom" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div class="min-w-0">
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">Posisi</p>
@@ -544,7 +523,7 @@
 			<div class="px-4 py-4">
 				<div class="flex items-center gap-3 mb-3">
 					<div class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0" style="background: var(--surface-offset);">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--text-muted);">opacity</span>
+						<AppIcon name="opacity" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div class="flex-1">
 						<div class="flex items-center justify-between">
@@ -582,12 +561,7 @@
 						class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
 						style="background: var(--surface-offset);"
 					>
-						<span
-							class="material-symbols-rounded"
-							style="font-size:16px; color: var(--text-muted);"
-						>
-							notifications_active
-						</span>
+						<AppIcon name="notifications_active" style="font-size:16px; color: var(--text-muted);" />
 					</div>
 					<div class="min-w-0 flex-1">
 						<p class="text-[13px] font-bold" style="color: var(--text-primary);">
@@ -625,12 +599,7 @@
 								class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
 								style="background: var(--surface-offset);"
 							>
-								<span
-									class="material-symbols-rounded"
-									style="font-size:16px; color: var(--text-muted);"
-								>
-									{item.icon}
-								</span>
+								<AppIcon name={item.icon} style="font-size:16px; color: var(--text-muted);" />
 							</div>
 							<div>
 								<div class="flex items-center gap-2">

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { onMount, onDestroy } from 'svelte';
@@ -885,7 +886,7 @@
 			onclick={() => goto('/admin/episodes')}
 			class="inline-flex w-fit items-center gap-2 text-sm font-bold text-violet-400 hover:text-violet-300"
 		>
-			<span class="material-symbols-rounded text-[18px]">arrow_back</span>
+			<AppIcon name="arrow_back" class="text-[18px]" />
 			Kembali ke Episode
 		</button>
 		{#if episode}
@@ -893,7 +894,7 @@
 				href="/admin/episodes/{episode.id}"
 				class="inline-flex w-fit items-center gap-2 rounded-lg border border-zinc-700 px-3 py-2 text-sm font-bold text-zinc-300 hover:bg-zinc-800"
 			>
-				<span class="material-symbols-rounded text-[18px]">edit</span>
+				<AppIcon name="edit" class="text-[18px]" />
 				Edit Episode
 			</a>
 		{/if}
@@ -903,7 +904,7 @@
 		<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 			<div>
 				<div class="mb-2 flex flex-wrap items-center gap-2">
-					<span class="material-symbols-rounded text-violet-300">cloud_upload</span>
+					<AppIcon name="cloud_upload" class="text-violet-300" />
 					<span
 						class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-emerald-300"
 					>
@@ -954,7 +955,7 @@
 				? 'bg-violet-600 text-white'
 				: 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'}"
 		>
-			<span class="material-symbols-rounded text-[18px]">link</span>
+			<AppIcon name="link" class="text-[18px]" />
 			Upload URL
 		</button>
 		<button
@@ -965,7 +966,7 @@
 				? 'bg-violet-600 text-white'
 				: 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'}"
 		>
-			<span class="material-symbols-rounded text-[18px]">videocam</span>
+			<AppIcon name="videocam" class="text-[18px]" />
 			Upload Video
 		</button>
 	</div>
@@ -991,7 +992,7 @@
 						class="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
 					>
 						<div class="flex items-start gap-2">
-							<span class="material-symbols-rounded mt-0.5 text-amber-300 text-[18px]">history</span>
+							<AppIcon name="history" class="mt-0.5 text-amber-300 text-[18px]" />
 							<div class="flex-1 space-y-1">
 								<p class="font-black text-amber-100">
 									Session aktif dipulihkan
@@ -1044,7 +1045,7 @@
 						? 'border-violet-400 bg-violet-500/10 text-violet-100'
 						: 'border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-violet-500/70 hover:bg-violet-500/5'}"
 				>
-					<span class="material-symbols-rounded mb-3 text-5xl text-violet-300">upload_file</span>
+					<AppIcon name="upload_file" class="mb-3 text-5xl text-violet-300" />
 					{#if fileMeta}
 						<span class="max-w-full truncate text-base font-black">{fileMeta.name}</span>
 						<span class="mt-1 text-sm font-semibold text-zinc-500">
@@ -1129,7 +1130,7 @@
 								<span
 									class="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-300"
 								>
-									<span class="material-symbols-rounded text-[14px]">check_circle</span>
+									<AppIcon name="check_circle" class="text-[14px]" />
 									{res}p
 								</span>
 							{/each}
@@ -1189,7 +1190,7 @@
 							disabled={!selectedFile || sessionExpired}
 							class="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
 						>
-							<span class="material-symbols-rounded text-[18px]">cloud_upload</span>
+							<AppIcon name="cloud_upload" class="text-[18px]" />
 							Mulai Upload
 						</button>
 					{/if}
@@ -1238,7 +1239,7 @@
 								class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-30"
 								aria-label="Hapus source"
 							>
-								<span class="material-symbols-rounded text-[18px]">delete</span>
+								<AppIcon name="delete" class="text-[18px]" />
 							</button>
 						</div>
 					{/each}
@@ -1248,7 +1249,7 @@
 						disabled={isUrlBusy || urlSources.length >= RESOLUTION_OPTIONS.length}
 						class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-400 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
 					>
-						<span class="material-symbols-rounded text-[18px]">add</span>
+						<AppIcon name="add" class="text-[18px]" />
 						Tambah source
 					</button>
 				</div>
@@ -1328,7 +1329,7 @@
 						<button
 							class="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
 						>
-							<span class="material-symbols-rounded text-[18px]">link</span>
+							<AppIcon name="link" class="text-[18px]" />
 							Mulai / Resume Upload URL
 						</button>
 					{/if}

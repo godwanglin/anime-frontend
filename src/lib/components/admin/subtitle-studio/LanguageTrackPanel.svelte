@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import {
 		subtitleVttUrl,
 		type AiInstructionMessage,
@@ -103,7 +104,7 @@
 				class="sb-pill sb-pill-export"
 				title="Export VTT"
 			>
-				<span class="material-symbols-rounded" style="font-size:12px;">download</span>
+				<AppIcon name="download" style="font-size:12px;" />
 				VTT
 			</a>
 			{#if cues.length > 0}
@@ -113,7 +114,7 @@
 					class="sb-pill sb-pill-danger"
 					title={`Hapus semua ${cues.length} cue di track ${activeTrack.label}`}
 				>
-					<span class="material-symbols-rounded" style="font-size:12px;">delete_sweep</span>
+					<AppIcon name="delete_sweep" style="font-size:12px;" />
 					Hapus Semua ({cues.length})
 				</button>
 			{/if}
@@ -129,7 +130,7 @@
 			style="flex: 1; min-width: 80px;"
 		/>
 		<button onclick={onAddTrack} class="sb-btn-primary sb-btn-sm">
-			<span class="material-symbols-rounded" style="font-size:13px;">add</span>
+			<AppIcon name="add" style="font-size:13px;" />
 			Buat / update
 		</button>
 	</div>
@@ -140,9 +141,7 @@
 			class="sb-btn-secondary sb-btn-sm"
 			onclick={() => (aiChatDetached = !aiChatDetached)}
 		>
-			<span class="material-symbols-rounded" style="font-size:13px;">
-				{aiChatDetached ? 'keyboard_tab_rtl' : 'open_in_new'}
-			</span>
+			<AppIcon name={aiChatDetached ? 'keyboard_tab_rtl' : 'open_in_new'} style="font-size:13px;" />
 			{aiChatDetached ? 'Masukkan chat' : 'Pop out chat'}
 		</button>
 	</div>
@@ -207,9 +206,9 @@
 			}}
 			aria-expanded={open}
 		>
-			<span class="material-symbols-rounded sb-section-icon">subtitles</span>
+			<AppIcon name="subtitles" class="sb-section-icon" />
 			<span class="sb-section-label">Language Track</span>
-			<span class="material-symbols-rounded sb-chevron">expand_more</span>
+			<AppIcon name="expand_more" class="sb-chevron" />
 		</button>
 
 		{#if open}

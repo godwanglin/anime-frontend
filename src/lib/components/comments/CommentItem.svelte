@@ -1,6 +1,8 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
+	import CustomSelect from '$lib/components/ui/CustomSelect.svelte';
 	import { displayUserName } from '$lib/user-display';
 	import type { EquippedEffect, EquippedFrame, EquippedNameTag } from '$lib/decorations';
 	import { getCultivationBadge, type ExpBadge, type LevelProgress } from '$lib/exp';
@@ -52,6 +54,21 @@
 	let editing = $state(false);
 	let editContent = $state(comment.content ?? '');
 	let error = $state('');
+	let reportOpen = $state(false);
+	let reportReason = $state('spam');
+	let reportDescription = $state('');
+	let reportSubmitting = $state(false);
+	let reportMessage = $state('');
+	let reportError = $state('');
+
+	const reportReasons = [
+		{ value: 'spam', label: 'Spam', description: 'Promosi, link mencurigakan, atau komentar berulang' },
+		{ value: 'harassment', label: 'Pelecehan', description: 'Menyerang atau mengganggu user lain' },
+		{ value: 'hate_speech', label: 'Ujaran kebencian', description: 'Menghina kelompok atau identitas tertentu' },
+		{ value: 'misinformation', label: 'Misinformasi', description: 'Informasi palsu atau menyesatkan' },
+		{ value: 'inappropriate', label: 'Tidak pantas', description: 'Konten kasar, vulgar, atau tidak sesuai' },
+		{ value: 'other', label: 'Lainnya', description: 'Alasan lain yang perlu admin cek' }
+	];
 
 	const isOwner = $derived(auth.user?.id === comment.user?.id);
 	const avatarLetter = $derived((comment.user?.username?.[0] ?? '?').toUpperCase());
@@ -87,6 +104,45 @@
 		editing = false;
 	}
 
+	function openReport() {
+		if (!auth.isLoggedIn) {
+			location.href = `/login?redirect=${encodeURIComponent(location.pathname)}`;
+			return;
+		}
+		reportOpen = true;
+		reportMessage = '';
+		reportError = '';
+	}
+
+	function closeReport() {
+		if (reportSubmitting) return;
+		reportOpen = false;
+		reportMessage = '';
+		reportError = '';
+	}
+
+	async function submitReport() {
+		reportSubmitting = true;
+		reportMessage = '';
+		reportError = '';
+		try {
+			const message = await comments.reportComment(comment.id, {
+				reason: reportReason,
+				description: reportDescription
+			});
+			reportMessage = message;
+			reportDescription = '';
+			setTimeout(() => {
+				reportOpen = false;
+				reportMessage = '';
+			}, 1200);
+		} catch (err) {
+			reportError = err instanceof Error ? err.message : 'Gagal mengirim laporan';
+		} finally {
+			reportSubmitting = false;
+		}
+	}
+
 	let currentClickedUser: typeof comment.user | null = $state(comment.user ?? null);
 	let showUserCard = $state(false);
 	let popoverAnchor = $state<HTMLButtonElement | null>(null);
@@ -105,6 +161,84 @@
 	}}
 	anchorEl={popoverAnchor}
 />
+
+{#if reportOpen}
+	<div class="fixed inset-0 z-[95] flex items-end justify-center bg-black/70 px-4 py-5 backdrop-blur-sm md:items-center">
+		<button class="absolute inset-0" aria-label="Tutup laporan komentar" onclick={closeReport}></button>
+		<form
+			onsubmit={(event) => {
+				event.preventDefault();
+				submitReport();
+			}}
+			class="relative w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-5 text-zinc-100 shadow-2xl"
+		>
+			<div class="mb-4 flex items-start justify-between gap-4">
+				<div>
+					<p class="text-[10px] font-black uppercase tracking-[0.18em] text-red-400">Report Komentar</p>
+					<h2 class="mt-1 text-lg font-black">Laporkan komentar</h2>
+					<p class="mt-1 line-clamp-2 text-xs text-zinc-500">
+						Komentar dari {displayUserName(comment.user, 'Anonim')}
+					</p>
+				</div>
+				<button
+					type="button"
+					onclick={closeReport}
+					class="rounded-lg p-2 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
+					aria-label="Tutup"
+				>
+					<AppIcon name="close" class="text-[20px]" />
+				</button>
+			</div>
+
+			<div class="mb-3 block">
+				<span class="mb-1.5 block text-xs font-bold text-zinc-400">Alasan</span>
+				<CustomSelect
+					value={reportReason}
+					options={reportReasons}
+					align="left"
+					minWidth={360}
+					fullWidth
+					onChange={(value) => (reportReason = value)}
+				/>
+			</div>
+
+			<label class="mb-4 block">
+				<span class="mb-1.5 block text-xs font-bold text-zinc-400">Detail opsional</span>
+				<textarea
+					bind:value={reportDescription}
+					rows="4"
+					maxlength="500"
+					placeholder="Tambahkan konteks supaya admin lebih cepat cek..."
+					class="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-red-500"
+				></textarea>
+			</label>
+
+			{#if reportError}
+				<p class="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300">{reportError}</p>
+			{/if}
+			{#if reportMessage}
+				<p class="mb-3 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs font-bold text-green-300">{reportMessage}</p>
+			{/if}
+
+			<div class="flex justify-end gap-2">
+				<button
+					type="button"
+					onclick={closeReport}
+					class="h-10 rounded-xl border border-zinc-800 px-4 text-xs font-black text-zinc-400 hover:bg-zinc-900"
+				>
+					Batal
+				</button>
+				<button
+					type="submit"
+					disabled={reportSubmitting}
+					class="h-10 rounded-xl bg-red-600 px-4 text-xs font-black text-white shadow-lg shadow-red-950/30 hover:bg-red-500 disabled:opacity-60"
+				>
+					{reportSubmitting ? 'Mengirim...' : 'Kirim Laporan'}
+				</button>
+			</div>
+		</form>
+	</div>
+{/if}
 
 <div
 	class="group flex gap-3 py-3.5 transition-colors"
@@ -157,7 +291,7 @@
 				class="relative inline-flex max-w-full items-center gap-1 overflow-hidden rounded-full px-2 py-0.5 text-[9px] font-black text-white"
 				style="background: {userBadge.color}; box-shadow: 0 5px 14px color-mix(in oklch, var(--accent) 24%, transparent);"
 			>
-				<span class="material-symbols-rounded" style="font-size:10px;">workspace_premium</span>
+				<AppIcon name="workspace_premium" style="font-size:10px;" />
 				<span class="shrink-0">Lv {userLevel}</span>
 				<span class="truncate">{userBadge.name}</span>
 				<span class="badge-shine" aria-hidden="true"></span>
@@ -232,7 +366,7 @@
 						: 'transparent'};
                     "
 				>
-					<span class="material-symbols-rounded" style="font-size:13px;">thumb_up</span>
+					<AppIcon name="thumb_up" style="font-size:13px;" />
 					{comment.likeCount}
 				</button>
 
@@ -251,7 +385,7 @@
 						: 'transparent'};
                     "
 				>
-					<span class="material-symbols-rounded" style="font-size:13px;">thumb_down</span>
+					<AppIcon name="thumb_down" style="font-size:13px;" />
 					{comment.dislikeCount}
 				</button>
 
@@ -266,7 +400,7 @@
                             color: {replying ? 'var(--accent-text)' : 'var(--text-faint)'};
                         "
 					>
-						<span class="material-symbols-rounded" style="font-size:13px;">reply</span>
+						<AppIcon name="reply" style="font-size:13px;" />
 						Balas
 					</button>
 				{/if}
@@ -282,7 +416,7 @@
 						class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all active:scale-95"
 						style="color: var(--text-faint);"
 					>
-						<span class="material-symbols-rounded" style="font-size:12px;">edit</span>
+						<AppIcon name="edit" style="font-size:12px;" />
 						Edit
 					</button>
 					<button
@@ -290,8 +424,19 @@
 						class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all active:scale-95"
 						style="color: color-mix(in oklch, #ef4444 65%, var(--text-faint));"
 					>
-						<span class="material-symbols-rounded" style="font-size:12px;">delete</span>
+						<AppIcon name="delete" style="font-size:12px;" />
 						Hapus
+					</button>
+				{:else}
+					<span class="w-0.5 h-0.5 rounded-full mx-0.5" style="background: var(--border-strong);"
+					></span>
+					<button
+						onclick={openReport}
+						class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all active:scale-95"
+						style="color: color-mix(in oklch, #ef4444 62%, var(--text-faint));"
+					>
+						<AppIcon name="flag" style="font-size:12px;" />
+						Report
 					</button>
 				{/if}
 			</div>

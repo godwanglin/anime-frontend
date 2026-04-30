@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { imageUploader } from '$lib/stores/image-uploader.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 
@@ -295,7 +296,7 @@
 						aria-label="Refresh asset"
 						title="Refresh"
 					>
-						<span class="material-symbols-rounded text-[19px]">refresh</span>
+						<AppIcon name="refresh" class="text-[19px]" />
 					</button>
 					<button
 						type="button"
@@ -304,7 +305,7 @@
 						aria-label="Tutup uploader"
 						title="Tutup"
 					>
-						<span class="material-symbols-rounded text-[19px]">close</span>
+						<AppIcon name="close" class="text-[19px]" />
 					</button>
 				</div>
 			</header>
@@ -320,7 +321,7 @@
 								? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20'
 								: 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
 						>
-							<span class="material-symbols-rounded text-[17px]">upload_file</span>
+							<AppIcon name="upload_file" class="text-[17px]" />
 							File
 						</button>
 						<button
@@ -331,7 +332,7 @@
 								? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20'
 								: 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
 						>
-							<span class="material-symbols-rounded text-[17px]">link</span>
+							<AppIcon name="link" class="text-[17px]" />
 							URL
 						</button>
 					</div>
@@ -343,9 +344,7 @@
 							class="flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/60 p-5 text-center transition hover:border-violet-500/70 hover:bg-violet-500/10"
 						>
 							<input type="file" accept="image/*" class="hidden" onchange={onFileChange} />
-							<span class="material-symbols-rounded mb-3 text-4xl text-violet-300">
-								add_photo_alternate
-							</span>
+							<AppIcon name="add_photo_alternate" class="mb-3 text-4xl text-violet-300" />
 							<p class="text-sm font-black text-zinc-100">
 								{selectedFile ? selectedFile.name : 'Pilih gambar'}
 							</p>
@@ -360,7 +359,7 @@
 							disabled={!canUploadFile}
 							class="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-sm font-black text-white shadow-lg shadow-violet-500/20 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
 						>
-							<span class="material-symbols-rounded text-[18px]">cloud_upload</span>
+							<AppIcon name="cloud_upload" class="text-[18px]" />
 							{uploading ? 'Uploading...' : 'Upload File'}
 						</button>
 					{:else}
@@ -395,7 +394,7 @@
 							disabled={!canUploadUrl}
 							class="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-sm font-black text-white shadow-lg shadow-violet-500/20 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
 						>
-							<span class="material-symbols-rounded text-[18px]">download</span>
+							<AppIcon name="download" class="text-[18px]" />
 							{uploading ? 'Downloading...' : 'Upload URL'}
 						</button>
 					{/if}
@@ -433,7 +432,7 @@
 						</div>
 					{:else if assets.length === 0}
 						<div class="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/40 px-6 text-center">
-							<span class="material-symbols-rounded mb-3 text-4xl text-zinc-600">image</span>
+							<AppIcon name="image" class="mb-3 text-4xl text-zinc-600" />
 							<p class="text-sm font-black text-zinc-300">Belum ada asset</p>
 							<p class="mt-1 text-xs font-semibold text-zinc-600">Upload pertama akan masuk ke prefix {prefix}</p>
 						</div>
@@ -474,9 +473,7 @@
 												onclick={() => copyUrl(asset)}
 												class="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-zinc-700 text-xs font-black text-zinc-300 transition hover:border-violet-500/70 hover:text-violet-200"
 											>
-												<span class="material-symbols-rounded text-[16px]">
-													{copiedKey === asset.key ? 'check' : 'content_copy'}
-												</span>
+												<AppIcon name={copiedKey === asset.key ? 'check' : 'content_copy'} class="text-[16px]" />
 												{copiedKey === asset.key ? 'Copied' : 'Copy'}
 											</button>
 											<button
@@ -485,7 +482,7 @@
 												disabled={deletingKey === asset.key}
 												class="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 text-xs font-black text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
 											>
-												<span class="material-symbols-rounded text-[16px]">delete</span>
+												<AppIcon name="delete" class="text-[16px]" />
 												Delete
 											</button>
 										</div>

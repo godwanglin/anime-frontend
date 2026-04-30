@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { page } from '$app/stores';
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
@@ -360,9 +361,7 @@
 			class="mb-5 flex h-20 w-20 items-center justify-center rounded-[var(--radius-2xl)]"
 			style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.2); box-shadow: var(--shadow-md);"
 		>
-			<span class="material-symbols-rounded" style="font-size:36px; color: var(--accent);">
-				person_off
-			</span>
+			<AppIcon name="person_off" style="font-size:36px; color: var(--accent);" />
 		</div>
 		<h1 class="mb-2 text-[20px] font-black" style="color: var(--text-primary);">
 			Profil tidak ditemukan
@@ -472,9 +471,7 @@
 									class="relative inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-black text-white"
 									style="background: {userBadge.color}; box-shadow: 0 8px 24px oklch(0 0 0 / 0.22);"
 								>
-									<span class="material-symbols-rounded" style="font-size:12px;">
-										workspace_premium
-									</span>
+									<AppIcon name="workspace_premium" style="font-size:12px;" />
 									<span class="truncate">{userBadge.name}</span>
 									<span class="badge-shine" aria-hidden="true"></span>
 								</span>
@@ -517,12 +514,8 @@
 							class="flex flex-col items-center rounded-[var(--radius-xl)] px-2 py-3 backdrop-blur-md"
 							style="background: oklch(1 0 0 / 0.07); border: 1px solid oklch(1 0 0 / 0.1);"
 						>
-							<span
-								class="material-symbols-rounded mb-1"
-								style="font-size:18px; color: oklch(from var(--accent) 0.8 0.12 h);"
-							>
-								{stat.icon}
-							</span>
+							<AppIcon name={stat.icon} class="mb-1"
+								style="font-size:18px; color: oklch(from var(--accent) 0.8 0.12 h);" />
 							<p class="text-[20px] font-black leading-none text-white tabular-nums">
 								{formatNumber(stat.value)}
 							</p>
@@ -549,9 +542,7 @@
 						class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-3 transition-all active:scale-95"
 						style="color: {activeTab === tab.key ? 'var(--text-primary)' : 'var(--text-faint)'};"
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">
-							{tab.icon}
-						</span>
+						<AppIcon name={tab.icon} style="font-size:20px;" />
 						<span class="text-[10px] font-black uppercase tracking-wider">{tab.label}</span>
 						{#if activeTab === tab.key}
 							<span
@@ -592,12 +583,7 @@
 							class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl"
 							style="background: var(--surface); border: 1px solid var(--border);"
 						>
-							<span
-								class="material-symbols-rounded"
-								style="font-size:24px; color: var(--text-faint);"
-							>
-								history
-							</span>
+							<AppIcon name="history" style="font-size:24px; color: var(--text-faint);" />
 						</div>
 						<p class="text-[13px] font-bold" style="color: var(--text-muted);">
 							Belum ada riwayat tontonan
@@ -698,12 +684,7 @@
 							class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl"
 							style="background: var(--surface); border: 1px solid var(--border);"
 						>
-							<span
-								class="material-symbols-rounded"
-								style="font-size:24px; color: var(--text-faint);"
-							>
-								chat_bubble
-							</span>
+							<AppIcon name="chat_bubble" style="font-size:24px; color: var(--text-faint);" />
 						</div>
 						<p class="text-[13px] font-bold" style="color: var(--text-muted);">
 							Belum ada komentar
@@ -767,11 +748,11 @@
 									style="color: var(--text-faint);"
 								>
 									<span class="flex items-center gap-1">
-										<span class="material-symbols-rounded" style="font-size:13px;">favorite</span>
+										<AppIcon name="favorite" style="font-size:13px;" />
 										{item.likeCount}
 									</span>
 									<span class="flex items-center gap-1">
-										<span class="material-symbols-rounded" style="font-size:13px;">reply</span>
+										<AppIcon name="reply" style="font-size:13px;" />
 										{item.replyCount}
 									</span>
 									<span class="ml-auto">
@@ -805,12 +786,7 @@
 							class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl"
 							style="background: var(--surface); border: 1px solid var(--border);"
 						>
-							<span
-								class="material-symbols-rounded"
-								style="font-size:24px; color: var(--text-faint);"
-							>
-								bookmarks
-							</span>
+							<AppIcon name="bookmarks" style="font-size:24px; color: var(--text-faint);" />
 						</div>
 						<p class="text-[13px] font-bold" style="color: var(--text-muted);">
 							Belum ada anime tersimpan

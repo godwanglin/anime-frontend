@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { page } from '$app/stores';
 	import { onDestroy } from 'svelte';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -76,12 +77,8 @@
 						style="color: {isActive(item.href) ? 'var(--accent)' : 'var(--text-faint)'};"
 						aria-current={isActive(item.href) ? 'page' : undefined}
 					>
-						<span
-							class="bottom-nav-icon material-symbols-rounded flex items-center justify-center transition"
-							style="font-size: 22px;"
-						>
-							{item.icon}
-						</span>
+						<AppIcon name={item.icon} class="bottom-nav-icon flex items-center justify-center transition"
+							style="font-size: 22px;" />
 						<span class="bottom-nav-label max-w-full truncate">{item.label}</span>
 					</a>
 				{/if}
@@ -132,7 +129,7 @@
 		line-height: 1;
 	}
 
-	.bottom-nav-icon {
+	:global(.bottom-nav-icon) {
 		line-height: 1;
 		font-variation-settings:
 			'FILL' 0,

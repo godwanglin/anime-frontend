@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -50,9 +51,7 @@
 			class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
 			style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.2);"
 		>
-			<span class="material-symbols-rounded" style="font-size:28px; color: var(--accent);">
-				history
-			</span>
+			<AppIcon name="history" style="font-size:28px; color: var(--accent);" />
 		</div>
 		<h1 class="text-[18px] font-black mb-1.5" style="color: var(--text-primary);">
 			Login diperlukan
@@ -120,7 +119,7 @@
                             box-shadow: var(--shadow-sm);
                         "
 					>
-						<span class="material-symbols-rounded" style="font-size:13px;">delete_sweep</span>
+						<AppIcon name="delete_sweep" style="font-size:13px;" />
 						Hapus semua
 					</button>
 				{/if}
@@ -138,9 +137,7 @@
                         box-shadow: var(--shadow-md);
                     "
 				>
-					<span class="material-symbols-rounded" style="font-size:36px; color: var(--text-faint);">
-						history
-					</span>
+					<AppIcon name="history" style="font-size:36px; color: var(--text-faint);" />
 				</div>
 				<p class="text-[15px] font-black mb-1.5" style="color: var(--text-primary);">
 					Belum ada riwayat
@@ -153,7 +150,7 @@
 					class="mt-6 h-11 px-6 flex items-center gap-2 rounded-[var(--radius-xl)] text-[12px] font-black text-white transition-all active:scale-[0.97]"
 					style="background: var(--accent); box-shadow: 0 4px 14px var(--accent-glow);"
 				>
-					<span class="material-symbols-rounded" style="font-size:16px;">explore</span>
+					<AppIcon name="explore" style="font-size:16px;" />
 					Jelajahi anime
 				</a>
 			</div>
@@ -233,9 +230,7 @@
 												class="w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-sm"
 												style="background: oklch(1 0 0 / 0.2); border: 1.5px solid oklch(1 0 0 / 0.3);"
 											>
-												<span class="material-symbols-rounded text-white" style="font-size:20px;">
-													play_arrow
-												</span>
+												<AppIcon name="play_arrow" class="text-white" style="font-size:20px;" />
 											</div>
 										</div>
 
@@ -309,7 +304,7 @@
 										class="self-start mt-0.5 w-7 h-7 flex items-center justify-center rounded-full shrink-0 transition-all active:scale-90 opacity-40 group-hover:opacity-100"
 										style="color: var(--text-faint);"
 									>
-										<span class="material-symbols-rounded" style="font-size:16px;"> close </span>
+										<AppIcon name="close" style="font-size:16px;" />
 									</button>
 								</div>
 							{/each}

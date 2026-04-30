@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import './css/sb.css';
 	import type {
 		AiInstructionMessage,
@@ -183,7 +184,7 @@
 				onclick={() => toggleTab('track')}
 				title="Language Track"
 			>
-				<span class="material-symbols-rounded">subtitles</span>
+				<AppIcon name="subtitles" />
 				Track
 			</button>
 			<button
@@ -191,7 +192,7 @@
 				onclick={() => toggleTab('source')}
 				title="Subtitle Source"
 			>
-				<span class="material-symbols-rounded">fingerprint</span>
+				<AppIcon name="fingerprint" />
 				Source
 			</button>
 			<button
@@ -199,7 +200,7 @@
 				onclick={() => toggleTab('import')}
 				title="Import"
 			>
-				<span class="material-symbols-rounded">upload_file</span>
+				<AppIcon name="upload_file" />
 				Import
 				{#if importFile}<span class="sb-tab-dot"></span>{/if}
 			</button>
@@ -208,7 +209,7 @@
 				onclick={() => toggleTab('cue')}
 				title="Cue Editor"
 			>
-				<span class="material-symbols-rounded">edit_note</span>
+				<AppIcon name="edit_note" />
 				Cue
 				{#if activeCue}<span class="sb-tab-dot"></span>{/if}
 			</button>
@@ -270,9 +271,7 @@
 			{:else if activeTab === 'import'}
 				<div class="sb-import-row">
 					<label class="sb-dropzone">
-						<span class="material-symbols-rounded" style="font-size:16px; color: var(--sb-accent);">
-							{importFile ? 'task' : 'upload_file'}
-						</span>
+						<AppIcon name={importFile ? 'task' : 'upload_file'} style="font-size:16px; color: var(--sb-accent);" />
 						<span class="sb-dropzone-label">{importFile?.name ?? 'Pilih SRT/VTT'}</span>
 						<input
 							type="file"
@@ -327,7 +326,7 @@
 							rows="2"
 						></textarea>
 						<div class="sb-cue-origin">
-							<span class="material-symbols-rounded">info</span>
+							<AppIcon name="info" />
 							<span>Sumber: {activeCueSourceLabel}</span>
 						</div>
 					</div>
@@ -351,7 +350,7 @@
 				onclick={() => ctxMoveTo('left')}
 				disabled={currentZone === 'left'}
 			>
-				<span class="material-symbols-rounded">left_panel_open</span>
+				<AppIcon name="left_panel_open" />
 				Pindah ke panel kiri
 			</button>
 			<button
@@ -359,7 +358,7 @@
 				onclick={() => ctxMoveTo('right')}
 				disabled={currentZone === 'right'}
 			>
-				<span class="material-symbols-rounded">right_panel_open</span>
+				<AppIcon name="right_panel_open" />
 				Pindah ke panel kanan
 			</button>
 		</div>
@@ -427,9 +426,9 @@
 				}}
 				aria-expanded={openSource}
 			>
-				<span class="material-symbols-rounded sb-section-icon">fingerprint</span>
+				<AppIcon name="fingerprint" class="sb-section-icon" />
 				<span class="sb-section-label">Subtitle Source</span>
-				<span class="material-symbols-rounded sb-chevron">expand_more</span>
+				<AppIcon name="expand_more" class="sb-chevron" />
 			</button>
 
 			{#if openSource}
@@ -467,21 +466,19 @@
 				}}
 				aria-expanded={openImport}
 			>
-				<span class="material-symbols-rounded sb-section-icon">upload_file</span>
+				<AppIcon name="upload_file" class="sb-section-icon" />
 				<span class="sb-section-label">Import</span>
 				{#if importFile}
 					<span class="sb-import-badge">{importFile.name}</span>
 				{/if}
-				<span class="material-symbols-rounded sb-chevron">expand_more</span>
+				<AppIcon name="expand_more" class="sb-chevron" />
 			</button>
 
 			{#if openImport}
 				<div class="sb-panel" onclick={(e) => e.stopPropagation()}>
 					<div class="sb-import-row">
 						<label class="sb-dropzone">
-							<span class="material-symbols-rounded" style="font-size:16px; color: var(--sb-accent);">
-								{importFile ? 'task' : 'upload_file'}
-							</span>
+							<AppIcon name={importFile ? 'task' : 'upload_file'} style="font-size:16px; color: var(--sb-accent);" />
 							<span class="sb-dropzone-label">
 								{importFile?.name ?? 'Pilih SRT/VTT'}
 							</span>
@@ -512,7 +509,7 @@
 				}}
 				aria-expanded={openCue}
 			>
-				<span class="material-symbols-rounded sb-section-icon">edit_note</span>
+				<AppIcon name="edit_note" class="sb-section-icon" />
 				<span class="sb-section-label">Cue Editor</span>
 				{#if activeCue}
 					<span class="sb-cue-preview">
@@ -521,7 +518,7 @@
 				{:else}
 					<span class="sb-empty-note" style="margin:0">—</span>
 				{/if}
-				<span class="material-symbols-rounded sb-chevron">expand_more</span>
+				<AppIcon name="expand_more" class="sb-chevron" />
 			</button>
 
 			{#if openCue}
@@ -567,7 +564,7 @@
 								rows="2"
 							></textarea>
 							<div class="sb-cue-origin">
-								<span class="material-symbols-rounded">info</span>
+								<AppIcon name="info" />
 								<span>Sumber cue: {activeCueSourceLabel}</span>
 							</div>
 						</div>

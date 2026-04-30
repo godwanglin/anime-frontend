@@ -9,6 +9,7 @@
 </script>
 
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount, tick } from 'svelte';
 
 	type Props = {
@@ -18,6 +19,7 @@
 		disabled?: boolean;
 		align?: 'left' | 'right';
 		minWidth?: number;
+		fullWidth?: boolean;
 		onChange: (value: string) => void;
 	};
 
@@ -28,6 +30,7 @@
 		disabled = false,
 		align = 'right',
 		minWidth = 180,
+		fullWidth = false,
 		onChange
 	}: Props = $props();
 
@@ -45,19 +48,36 @@
 	function positionMenu() {
 		if (!triggerEl || !open) return;
 
+		const viewportPadding = 12;
+		const triggerGap = 8;
+		const minHeight = 132;
+		const preferredMaxHeight = 280;
 		const rect = triggerEl.getBoundingClientRect();
 		const width = Math.max(rect.width, minWidth);
 		const left =
 			align === 'right'
-				? Math.min(window.innerWidth - width - 12, Math.max(12, rect.right - width))
-				: Math.min(window.innerWidth - width - 12, Math.max(12, rect.left));
-		const spaceBelow = window.innerHeight - rect.bottom - 12;
-		const spaceAbove = rect.top - 12;
-		const maxHeight = Math.max(132, Math.min(280, Math.max(spaceBelow, spaceAbove)));
-		const top =
-			spaceBelow >= 132 || spaceBelow >= spaceAbove
-				? rect.bottom + 8
-				: Math.max(12, rect.top - maxHeight - 8);
+				? Math.min(
+						window.innerWidth - width - viewportPadding,
+						Math.max(viewportPadding, rect.right - width)
+					)
+				: Math.min(
+						window.innerWidth - width - viewportPadding,
+						Math.max(viewportPadding, rect.left)
+					);
+		const viewportBottom = window.innerHeight - viewportPadding;
+		const spaceBelow = viewportBottom - rect.bottom - triggerGap;
+		const spaceAbove = rect.top - viewportPadding - triggerGap;
+		const openAbove = spaceBelow < minHeight && spaceAbove > spaceBelow;
+		const availableSpace = openAbove ? spaceAbove : Math.max(spaceBelow, minHeight);
+		const maxHeight = Math.max(
+			Math.min(minHeight, window.innerHeight - viewportPadding * 2),
+			Math.min(preferredMaxHeight, availableSpace)
+		);
+		const preferredTop = openAbove ? rect.top - maxHeight - triggerGap : rect.bottom + triggerGap;
+		const top = Math.min(
+			Math.max(viewportPadding, preferredTop),
+			Math.max(viewportPadding, viewportBottom - maxHeight)
+		);
 
 		menuStyle = `left:${left}px; top:${top}px; width:${width}px; max-height:${maxHeight}px;`;
 	}
@@ -131,6 +151,7 @@
 	bind:this={triggerEl}
 	type="button"
 	class="cs-trigger"
+	class:full-width={fullWidth}
 	aria-haspopup="listbox"
 	aria-expanded={open}
 	{disabled}
@@ -142,11 +163,11 @@
 			<span class="cs-swatch" style="background: {selected.swatch};"></span>
 		{/if}
 		{#if selected?.icon}
-			<span class="material-symbols-rounded cs-icon">{selected.icon}</span>
+			<AppIcon name={selected.icon} class="cs-icon" />
 		{/if}
 		<span class="cs-label">{selected?.label ?? placeholder}</span>
 	</span>
-	<span class="material-symbols-rounded cs-chevron {open ? 'open' : ''}">expand_more</span>
+	<AppIcon name="expand_more" class="cs-chevron {open ? 'open' : ''}" />
 </button>
 
 {#if open}
@@ -167,7 +188,7 @@
 						<span class="cs-option-swatch" style="background: {option.swatch};"></span>
 					{/if}
 					{#if option.icon}
-						<span class="material-symbols-rounded cs-option-icon">{option.icon}</span>
+						<AppIcon name={option.icon} class="cs-option-icon" />
 					{/if}
 					<span class="cs-option-copy">
 						<span class="cs-option-label">{option.label}</span>
@@ -176,7 +197,7 @@
 						{/if}
 					</span>
 					{#if option.value === value}
-						<span class="material-symbols-rounded cs-check">check</span>
+						<AppIcon name="check" class="cs-check" />
 					{/if}
 				</button>
 			{/each}
@@ -205,6 +226,11 @@
 			border-color 0.15s ease,
 			box-shadow 0.15s ease,
 			transform 0.15s ease;
+	}
+
+	.cs-trigger.full-width {
+		width: 100%;
+		max-width: none;
 	}
 
 	.cs-trigger:hover,
@@ -238,18 +264,18 @@
 		font-weight: 800;
 	}
 
-	.cs-icon,
-	.cs-chevron {
+	:global(.cs-icon),
+	:global(.cs-chevron) {
 		flex-shrink: 0;
 		font-size: 16px;
 		color: var(--text-faint);
 	}
 
-	.cs-chevron {
+	:global(.cs-chevron) {
 		transition: transform 0.16s ease;
 	}
 
-	.cs-chevron.open {
+	:global(.cs-chevron.open) {
 		transform: rotate(180deg);
 	}
 
@@ -307,13 +333,13 @@
 		color: var(--accent-text);
 	}
 
-	.cs-option-icon,
-	.cs-check {
+	:global(.cs-option-icon),
+	:global(.cs-check) {
 		flex-shrink: 0;
 		font-size: 16px;
 	}
 
-	.cs-check {
+	:global(.cs-check) {
 		margin-left: auto;
 		color: var(--accent);
 	}

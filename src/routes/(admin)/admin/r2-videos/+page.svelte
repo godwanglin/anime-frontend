@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 	import { adminApi } from '$lib/admin/api';
 	import AdminModal from '$lib/components/admin/AdminModal.svelte';
@@ -134,7 +135,7 @@
 			disabled={isLoading}
 			class="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
 		>
-			<span class="material-symbols-rounded text-[18px]">refresh</span>
+			<AppIcon name="refresh" class="text-[18px]" />
 			Refresh
 		</button>
 	</div>
@@ -218,7 +219,7 @@
 										rel="noopener"
 										class="mt-2 inline-flex items-center gap-1 text-xs font-bold text-violet-300 hover:text-violet-200"
 									>
-										<span class="material-symbols-rounded text-[15px]">open_in_new</span>
+										<AppIcon name="open_in_new" class="text-[15px]" />
 										Master
 									</a>
 								</td>
@@ -250,7 +251,7 @@
 										onclick={() => (deleteTarget = item)}
 										class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-black text-red-300 hover:bg-red-500/20"
 									>
-										<span class="material-symbols-rounded text-[16px]">delete</span>
+										<AppIcon name="delete" class="text-[16px]" />
 										Delete
 									</button>
 								</td>

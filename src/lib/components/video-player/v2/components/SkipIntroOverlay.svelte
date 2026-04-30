@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
 
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
@@ -8,7 +9,7 @@
 
 {#if vp.skipIntroVisible}
 	<button type="button" class="vp-skip-intro-btn" onclick={vp.skipIntro}>
-		<span class="material-symbols-rounded">skip_next</span>
+		<AppIcon name="skip_next" />
 		Skip Intro
 	</button>
 {/if}

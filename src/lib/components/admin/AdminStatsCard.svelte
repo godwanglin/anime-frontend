@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	let {
 		label,
 		value,
@@ -15,9 +16,7 @@
 <div class="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
 	<div class="mb-4 flex items-center justify-between gap-3">
 		<p class="text-xs font-bold uppercase tracking-widest text-zinc-500">{label}</p>
-		<span class="material-symbols-rounded rounded-lg bg-violet-500/15 p-2 text-violet-400"
-			>{icon}</span
-		>
+		<AppIcon name={icon} class="rounded-lg bg-violet-500/15 p-2 text-violet-400" />
 	</div>
 	<p class="text-2xl font-black text-zinc-100">{value}</p>
 	{#if sub}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
@@ -30,7 +31,7 @@
 	<section class="mb-6">
 		<div class="flex items-center gap-3 mb-2">
 			<div class="h-9 w-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-				<span class="material-symbols-rounded text-emerald-500 text-[21px]">category</span>
+				<AppIcon name="category" class="text-emerald-500 text-[21px]" />
 			</div>
 			<div>
 				<p class="text-[11px] font-black uppercase tracking-widest text-zinc-400">Direktori</p>
@@ -60,10 +61,7 @@
 								{genre.animeCount} anime
 							</p>
 						</div>
-						<span
-							class="material-symbols-rounded text-[18px] text-zinc-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition"
-							>chevron_right</span
-						>
+						<AppIcon name="chevron_right" class="text-[18px] text-zinc-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition" />
 					</div>
 				</a>
 			{/each}
@@ -75,9 +73,7 @@
 			<div class="flex items-center justify-between mb-4">
 				<div class="flex items-center gap-2.5">
 					<div class="h-7 w-7 rounded-lg bg-orange-500/15 flex items-center justify-center">
-						<span class="material-symbols-rounded text-orange-500 text-[18px]"
-							>local_fire_department</span
-						>
+						<AppIcon name="local_fire_department" class="text-orange-500 text-[18px]" />
 					</div>
 					<h2 class="text-base font-bold text-zinc-900 dark:text-white">Populer Sekarang</h2>
 				</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -66,6 +67,7 @@
 		{ href: '/admin/users', icon: 'group', label: 'User' },
 		{ href: '/admin/comments', icon: 'forum', label: 'Komentar' },
 		{ href: '/admin/comment-reports', icon: 'flag', label: 'Laporan' },
+		{ href: '/admin/episode-reports', icon: 'report', label: 'Episode Reports' },
 		{ href: '/admin/decorations', icon: 'auto_awesome', label: 'Decorations' },
 		{ href: '/admin/site-config', icon: 'settings', label: 'Site Config' }
 	];
@@ -179,7 +181,7 @@
 							? 'border-violet-500 bg-violet-600/20 text-violet-300'
 							: 'border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
 					>
-						<span class="material-symbols-rounded text-[20px]">{item.icon}</span>
+						<AppIcon name={item.icon} class="text-[20px]" />
 						{item.label}
 					</a>
 				{/each}
@@ -224,7 +226,7 @@
 					onclick={() => (sidebarOpen = true)}
 					aria-label="Menu"
 				>
-					<span class="material-symbols-rounded">menu</span>
+					<AppIcon name="menu" />
 				</button>
 				<div>
 					<p class="text-xs font-bold uppercase tracking-widest text-zinc-500">Admin / {title}</p>
@@ -238,14 +240,14 @@
 					title="Upload gambar"
 					onclick={() => imageUploader.open()}
 				>
-					<span class="material-symbols-rounded">add_photo_alternate</span>
+					<AppIcon name="add_photo_alternate" />
 				</button>
 				<button
 					class="relative rounded-lg p-2 text-zinc-400 hover:bg-zinc-800"
 					aria-label="Notifikasi"
 					onclick={toggleNotificationPanel}
 				>
-					<span class="material-symbols-rounded">notifications</span>
+					<AppIcon name="notifications" />
 					{#if notifications.unreadCount > 0}
 						<span
 							class="absolute -right-1 -top-1 min-w-5 rounded-full bg-violet-600 px-1.5 py-0.5 text-center text-[10px] font-black text-white shadow-lg shadow-violet-500/30"
@@ -285,7 +287,7 @@
 								aria-label="Refresh notifikasi"
 								onclick={() => notifications.fetchNotifications().catch(() => null)}
 							>
-								<span class="material-symbols-rounded text-[19px]">refresh</span>
+								<AppIcon name="refresh" class="text-[19px]" />
 							</button>
 							<button
 								type="button"
@@ -293,7 +295,7 @@
 								aria-label="Tutup notifikasi"
 								onclick={() => (notificationPanelOpen = false)}
 							>
-								<span class="material-symbols-rounded text-[19px]">close</span>
+								<AppIcon name="close" class="text-[19px]" />
 							</button>
 						</div>
 					</div>
@@ -327,7 +329,7 @@
 							onclick={() => notifications.markAllAsRead()}
 							class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-[11px] font-black text-zinc-300 hover:border-violet-500/50 hover:text-violet-300"
 						>
-							<span class="material-symbols-rounded text-[15px]">done_all</span>
+							<AppIcon name="done_all" class="text-[15px]" />
 							Tandai semua dibaca
 						</button>
 					{/if}
@@ -343,7 +345,7 @@
 							<div
 								class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-zinc-500 ring-1 ring-zinc-800"
 							>
-								<span class="material-symbols-rounded">drafts</span>
+								<AppIcon name="drafts" />
 							</div>
 							<p class="text-sm font-black text-zinc-300">Belum ada notifikasi</p>
 							<p class="mt-1 text-xs leading-5 text-zinc-500">
@@ -365,9 +367,7 @@
 											? 'border-zinc-800 bg-zinc-900 text-zinc-500'
 											: 'border-violet-500/30 bg-violet-500/15 text-violet-300'}"
 									>
-										<span class="material-symbols-rounded text-[20px]">
-											{notificationCategoryIcon(item.category)}
-										</span>
+										<AppIcon name={notificationCategoryIcon(item.category)} class="text-[20px]" />
 									</div>
 									<div class="min-w-0 flex-1">
 										<div class="mb-1 flex items-center justify-between gap-3">
@@ -398,7 +398,7 @@
 												class="mt-2 inline-flex items-center gap-1 text-[11px] font-black text-zinc-500 transition group-hover:text-violet-300"
 											>
 												Buka detail
-												<span class="material-symbols-rounded text-[13px]">arrow_outward</span>
+												<AppIcon name="arrow_outward" class="text-[13px]" />
 											</span>
 										{/if}
 									</div>

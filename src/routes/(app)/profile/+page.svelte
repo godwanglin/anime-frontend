@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
@@ -48,9 +49,7 @@
 			class="w-20 h-20 rounded-[var(--radius-2xl)] flex items-center justify-center mb-5"
 			style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.2); box-shadow: var(--shadow-md);"
 		>
-			<span class="material-symbols-rounded" style="font-size:36px; color: var(--accent);">
-				person
-			</span>
+			<AppIcon name="person" style="font-size:36px; color: var(--accent);" />
 		</div>
 		<h1 class="text-[20px] font-black mb-2" style="color: var(--text-primary);">Masuk ke akunmu</h1>
 		<p class="text-[13px] mb-7 max-w-[260px] leading-relaxed" style="color: var(--text-muted);">
@@ -187,7 +186,7 @@
                             color: oklch(1 0 0 / 0.7);
                         "
 					>
-						<span class="material-symbols-rounded" style="font-size:12px;">edit</span>
+						<AppIcon name="edit" style="font-size:12px;" />
 						Edit
 					</a>
 				</div>
@@ -204,9 +203,7 @@
 									class="relative inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-black text-white"
 									style="background: {userBadge.color}; box-shadow: 0 8px 24px oklch(0 0 0 / 0.22);"
 								>
-									<span class="material-symbols-rounded" style="font-size:12px;"
-										>workspace_premium</span
-									>
+									<AppIcon name="workspace_premium" style="font-size:12px;" />
 									<span class="truncate">{userBadge.name}</span>
 									<span class="badge-shine" aria-hidden="true"></span>
 								</span>
@@ -257,12 +254,8 @@
                                 border: 1px solid oklch(1 0 0 / 0.1);
                             "
 						>
-							<span
-								class="material-symbols-rounded mb-1"
-								style="font-size:18px; color: oklch(from var(--accent) 0.8 0.12 h);"
-							>
-								{stat.icon}
-							</span>
+							<AppIcon name={stat.icon} class="mb-1"
+								style="font-size:18px; color: oklch(from var(--accent) 0.8 0.12 h);" />
 							<p class="text-[20px] font-black text-white leading-none tabular-nums">
 								{stat.value}
 							</p>
@@ -341,9 +334,7 @@
 									class="w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm"
 									style="background: oklch(1 0 0 / 0.2); border: 1px solid oklch(1 0 0 / 0.3);"
 								>
-									<span class="material-symbols-rounded text-white" style="font-size:18px;">
-										play_arrow
-									</span>
+									<AppIcon name="play_arrow" class="text-white" style="font-size:18px;" />
 								</div>
 							</div>
 						</a>
@@ -379,9 +370,7 @@
 							class="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
 							style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.15);"
 						>
-							<span class="material-symbols-rounded" style="font-size:18px; color: var(--accent);">
-								{item.icon}
-							</span>
+							<AppIcon name={item.icon} style="font-size:18px; color: var(--accent);" />
 						</div>
 
 						<div class="flex-1 min-w-0">
@@ -407,12 +396,8 @@
 							</span>
 						{/if}
 
-						<span
-							class="material-symbols-rounded shrink-0"
-							style="font-size:18px; color: var(--text-faint);"
-						>
-							chevron_right
-						</span>
+						<AppIcon name="chevron_right" class="shrink-0"
+							style="font-size:18px; color: var(--text-faint);" />
 					</a>
 				{/each}
 			</div>
@@ -435,7 +420,7 @@
                     box-shadow: var(--shadow-sm);
                 "
 			>
-				<span class="material-symbols-rounded" style="font-size:18px;">logout</span>
+				<AppIcon name="logout" style="font-size:18px;" />
 				Keluar dari akun
 			</button>
 		</div>

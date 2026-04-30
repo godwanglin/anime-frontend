@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import config from '$lib/config';
 
@@ -106,11 +107,7 @@
 							</span>
 						</div>
 					</div>
-					<span
-						class="material-symbols-rounded text-[16px] text-zinc-300 dark:text-zinc-600 group-hover:text-violet-400 transition"
-					>
-						chevron_right
-					</span>
+					<AppIcon name="chevron_right" class="text-[16px] text-zinc-300 dark:text-zinc-600 group-hover:text-violet-400 transition" />
 				</a>
 			{/each}
 		</div>
@@ -122,14 +119,14 @@
 				onclick={onClose}
 				class="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-sm font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-zinc-800 transition"
 			>
-				<span class="material-symbols-rounded text-[16px]">search</span>
+				<AppIcon name="search" class="text-[16px]" />
 				Lihat semua hasil untuk "{query}"
 			</a>
 		</div>
 	{:else}
 		<!-- Empty state -->
 		<div class="flex flex-col items-center justify-center py-8 gap-2 text-zinc-400">
-			<span class="material-symbols-rounded text-[40px]">search_off</span>
+			<AppIcon name="search_off" class="text-[40px]" />
 			<p class="text-sm">
 				Tidak ada hasil untuk "<span class="font-semibold text-zinc-500 dark:text-zinc-300"
 					>{query}</span

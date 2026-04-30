@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
 	import type { PlayerEpisodeList } from '../stores/types';
 	import AudioWaveform from './AudioWaveform.svelte';
@@ -120,11 +121,11 @@
 
 					{#if vp.controlsCfg.showSkip !== false}
 						<button class="vp-btn" onclick={vp.skipBackward} aria-label="Rewind">
-							<span class="material-symbols-rounded"> replay_10 </span>
+							<AppIcon name="replay_10" />
 						</button>
 
 						<button class="vp-btn" onclick={vp.skipForward} aria-label="Skip forward">
-							<span class="material-symbols-rounded"> forward_10 </span>
+							<AppIcon name="forward_10" />
 						</button>
 					{/if}
 

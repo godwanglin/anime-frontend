@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type { StudioSubtitle } from '$lib/subtitle-studio';
 
 	let {
@@ -104,7 +105,7 @@
 		</div>
 	{:else}
 		<div class="px-4 py-12 text-center">
-			<span class="material-symbols-rounded text-4xl text-zinc-600">subtitles_off</span>
+			<AppIcon name="subtitles_off" class="text-4xl text-zinc-600" />
 			<p class="mt-2 font-black">Belum ada subtitle</p>
 			<p class="text-sm text-zinc-500">Upload atau import subtitle untuk server aktif.</p>
 		</div>

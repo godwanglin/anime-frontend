@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { notifications } from '$lib/stores/notifications.svelte';
@@ -45,7 +46,7 @@
 			class="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-zinc-950 text-zinc-100 shadow-[0_18px_48px_-20px_rgba(0,0,0,0.7)] transition hover:scale-[1.02] hover:bg-zinc-900"
 			aria-label="Buka notifikasi"
 		>
-			<span class="material-symbols-rounded text-[26px]">notifications</span>
+			<AppIcon name="notifications" class="text-[26px]" />
 		</button>
 
 		{#if notifications.unreadCount > 0}
@@ -73,7 +74,7 @@
 						class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-100"
 						aria-label="Tutup notifikasi"
 					>
-						<span class="material-symbols-rounded text-[18px]">close</span>
+						<AppIcon name="close" class="text-[18px]" />
 					</button>
 				</div>
 			</div>

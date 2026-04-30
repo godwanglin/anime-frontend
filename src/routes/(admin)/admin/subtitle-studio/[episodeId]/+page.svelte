@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import '$lib/components/admin/subtitle-studio/css/sr.css';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -1063,7 +1064,7 @@
 				class="studio-back-btn"
 				aria-label="Kembali ke daftar studio"
 			>
-				<span class="material-symbols-rounded" style="font-size:16px;">arrow_back</span>
+				<AppIcon name="arrow_back" style="font-size:16px;" />
 				Studio
 			</button>
 
@@ -1091,7 +1092,7 @@
 				</div>
 			{:else if !isLoading}
 				<div class="studio-saved-pill">
-					<span class="material-symbols-rounded" style="font-size:13px;">cloud_done</span>
+					<AppIcon name="cloud_done" style="font-size:13px;" />
 					Tersimpan
 				</div>
 			{/if}
@@ -1106,7 +1107,7 @@
 					<span class="studio-spinner"></span>
 					Menyimpan...
 				{:else}
-					<span class="material-symbols-rounded" style="font-size:15px;">save</span>
+					<AppIcon name="save" style="font-size:15px;" />
 					Simpan
 				{/if}
 			</button>
@@ -1118,7 +1119,7 @@
 					class="studio-icon-btn {layout.visible.left ? 'active' : ''}"
 					title="Toggle panel kiri (Ctrl+B)"
 				>
-					<span class="material-symbols-rounded" style="font-size:18px;">left_panel_open</span>
+					<AppIcon name="left_panel_open" style="font-size:18px;" />
 				</button>
 			{/if}
 			{#if layout.zones.right.length > 0}
@@ -1127,9 +1128,7 @@
 					class="studio-icon-btn {layout.visible.right ? 'active' : ''}"
 					title="Toggle panel kanan (Ctrl+Alt+T)"
 				>
-					<span class="material-symbols-rounded" style="font-size:18px;">
-						{layout.visible.right ? 'right_panel_close' : 'right_panel_open'}
-					</span>
+					<AppIcon name={layout.visible.right ? 'right_panel_close' : 'right_panel_open'} style="font-size:18px;" />
 				</button>
 			{/if}
 		</div>
@@ -1140,7 +1139,7 @@
     ══════════════════════════════════════════ -->
 	{#if !isLoading && !servers.length}
 		<div class="studio-empty">
-			<span class="material-symbols-rounded studio-empty-icon">videocam_off</span>
+			<AppIcon name="videocam_off" class="studio-empty-icon" />
 			<p class="studio-empty-title">Tidak ada server video</p>
 			<p class="studio-empty-desc">Episode ini belum memiliki server video yang terdaftar.</p>
 			<button onclick={() => goto('/admin/subtitle-studio')} class="studio-empty-back">
@@ -1233,7 +1232,7 @@
 								class="sb-import-tab {importMode === item.id ? 'is-active' : ''}"
 								onclick={() => (importMode = item.id)}
 							>
-								<span class="material-symbols-rounded">{item.icon}</span>
+								<AppIcon name={item.icon} />
 								{item.label}
 							</button>
 						{/each}
@@ -1242,9 +1241,7 @@
 					{#if importMode === 'file'}
 						<div class="sb-import-row">
 							<label class="sb-dropzone">
-								<span class="material-symbols-rounded" style="font-size:16px; color: var(--sb-accent);">
-									{importFile ? 'task' : 'upload_file'}
-								</span>
+								<AppIcon name={importFile ? 'task' : 'upload_file'} style="font-size:16px; color: var(--sb-accent);" />
 								<span class="sb-dropzone-label">{importFile?.name ?? 'Pilih SRT/VTT'}</span>
 								<input
 									type="file"
@@ -1332,7 +1329,7 @@
 							rows="2"
 						></textarea>
 						<div class="sb-cue-origin">
-							<span class="material-symbols-rounded">info</span>
+							<AppIcon name="info" />
 							<span>Sumber: {activeCueSourceLabel}</span>
 						</div>
 					</div>
@@ -1362,7 +1359,7 @@
 						</div>
 					{:else}
 						<div class="studio-player-empty">
-							<span class="material-symbols-rounded">videocam_off</span>
+							<AppIcon name="videocam_off" />
 							<p>Server video belum siap</p>
 						</div>
 					{/if}

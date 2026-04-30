@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount, tick } from 'svelte';
 	import { goto } from '$app/navigation';
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
@@ -1284,7 +1285,7 @@
 				</div>
 			{:else if messages.length === 0}
 				<div class="chat-state">
-					<span class="material-symbols-rounded">forum</span>
+					<AppIcon name="forum" />
 					<strong>{chatNotice ? 'Chat belum siap' : 'Belum ada pesan'}</strong>
 					<p>{chatNotice || 'Mulai obrolan komunitas anime hari ini.'}</p>
 				</div>
@@ -1390,7 +1391,7 @@
 															placeholder={false}
 														/>
 													{:else}
-														<span class="material-symbols-rounded">movie</span>
+														<AppIcon name="movie" />
 													{/if}
 												</span>
 												<span class="context-copy">
@@ -1398,7 +1399,7 @@
 													<strong>{context.title}</strong>
 													<small>{contextSubtitle(context)}</small>
 													<span class="context-action">
-														<span class="material-symbols-rounded">open_in_new</span>
+														<AppIcon name="open_in_new" />
 														{contextActionLabel(context.type)}
 													</span>
 												</span>
@@ -1462,7 +1463,7 @@
 															placeholder={false}
 														/>
 													{:else}
-														<span class="material-symbols-rounded">link</span>
+														<AppIcon name="link" />
 													{/if}
 												</span>
 												<span class="context-copy">
@@ -1476,7 +1477,7 @@
 															: 'Link internal weebin.site'}</small
 													>
 													<span class="context-action">
-														<span class="material-symbols-rounded">open_in_new</span>
+														<AppIcon name="open_in_new" />
 														{link.preview ? contextActionLabel(link.preview.type) : 'Buka link'}
 													</span>
 												</span>
@@ -1529,7 +1530,7 @@
 							<span>{replyPreviewText(replyTarget)}</span>
 						</div>
 						<button type="button" aria-label="Batal reply" onclick={() => (replyTarget = null)}>
-							<span class="material-symbols-rounded">close</span>
+							<AppIcon name="close" />
 						</button>
 					</div>
 				{/if}
@@ -1540,7 +1541,7 @@
 							<span>{replyPreviewText(editTarget)}</span>
 						</div>
 						<button type="button" aria-label="Batal edit" onclick={cancelEdit}>
-							<span class="material-symbols-rounded">close</span>
+							<AppIcon name="close" />
 						</button>
 					</div>
 				{/if}
@@ -1560,7 +1561,7 @@
 												placeholder={false}
 											/>
 										{:else}
-											<span class="material-symbols-rounded">movie</span>
+											<AppIcon name="movie" />
 										{/if}
 									</span>
 									<span class="context-copy">
@@ -1575,7 +1576,7 @@
 									aria-label="Hapus context"
 									onclick={() => removeContext(context)}
 								>
-									<span class="material-symbols-rounded">close</span>
+									<AppIcon name="close" />
 								</button>
 							</div>
 						{/each}
@@ -1588,7 +1589,7 @@
 					disabled={Boolean(editTarget)}
 					onclick={openContextSheet}
 				>
-					<span class="material-symbols-rounded">add</span>
+					<AppIcon name="add" />
 				</button>
 				<div class="composer-input">
 					{#if mentionKeyword.length >= 2 && (mentionLoading || mentionSuggestions.length)}
@@ -1657,9 +1658,10 @@
 							: 'Kirim pesan'}
 					disabled={!canSend}
 				>
-					<span class="material-symbols-rounded">
-						{editTarget ? 'check' : showSlowmodeButton ? 'schedule' : 'send'}
-					</span>
+					<AppIcon
+						name={editTarget ? 'check' : showSlowmodeButton ? 'schedule' : 'send'}
+						class="send-button-icon"
+					/>
 					{#if showSlowmodeButton}
 						<span class="slowmode-count">{slowmodeRemaining}</span>
 					{/if}
@@ -1678,7 +1680,7 @@
 		{:else}
 			<div class="chat-composer guest-composer">
 				<div class="guest-copy">
-					<span class="material-symbols-rounded">lock</span>
+					<AppIcon name="lock" />
 					<p>Login untuk ikut kirim pesan</p>
 				</div>
 				<a href="/login?redirect=/chat" class="login-chat-button">Masuk</a>
@@ -1689,7 +1691,7 @@
 
 {#if replyJumpToast}
 	<div class="reply-jump-toast" role="status" aria-live="polite">
-		<span class="material-symbols-rounded">info</span>
+		<AppIcon name="info" />
 		{replyJumpToast}
 	</div>
 {/if}
@@ -1738,7 +1740,7 @@
 			onkeydown={(event) => event.stopPropagation()}
 		>
 			<div class="chat-onboarding-hero">
-				<span class="material-symbols-rounded">forum</span>
+				<AppIcon name="forum" />
 				<div>
 					<p>Selamat datang di Chat</p>
 					<h2>Ngobrol lebih enak dengan fitur komunitas.</h2>
@@ -1748,7 +1750,7 @@
 			<div class="chat-onboarding-grid">
 				{#each chatOnboardingItems as item}
 					<div class="chat-onboarding-item">
-						<span class="material-symbols-rounded">{item.icon}</span>
+						<AppIcon name={item.icon} />
 						<div>
 							<strong>{item.title}</strong>
 							<p>{item.description}</p>
@@ -1759,7 +1761,7 @@
 
 			<button type="button" class="chat-onboarding-action" onclick={dismissChatOnboarding}>
 				Mulai Chat
-				<span class="material-symbols-rounded">arrow_forward</span>
+				<AppIcon name="arrow_forward" />
 			</button>
 		</div>
 	</div>
@@ -1781,7 +1783,7 @@
 			disabled={Boolean(messageMenu.message.deletedAt)}
 			onclick={() => startReply(messageMenu.message)}
 		>
-			<span class="material-symbols-rounded">reply</span>
+			<AppIcon name="reply" />
 			Reply pesan
 		</button>
 		<button
@@ -1790,7 +1792,7 @@
 			disabled={!canDeleteMessage(messageMenu.message)}
 			onclick={() => askDeleteMessage(messageMenu.message)}
 		>
-			<span class="material-symbols-rounded">delete</span>
+			<AppIcon name="delete" />
 			Hapus pesan
 		</button>
 		<button
@@ -1799,7 +1801,7 @@
 			disabled={!canEditMessage(messageMenu.message)}
 			onclick={() => startEdit(messageMenu.message)}
 		>
-			<span class="material-symbols-rounded">edit</span>
+			<AppIcon name="edit" />
 			Edit pesan
 		</button>
 	</div>
@@ -1857,7 +1859,7 @@
 					<p>{contextSourceTitle()}</p>
 				</div>
 				<button type="button" class="sheet-close" aria-label="Tutup" onclick={closeContextSheet}>
-					<span class="material-symbols-rounded">close</span>
+					<AppIcon name="close" />
 				</button>
 			</header>
 
@@ -1870,7 +1872,7 @@
 						aria-selected={contextSource === item.id}
 						onclick={() => (contextSource = item.id as ContextSource)}
 					>
-						<span class="material-symbols-rounded">{item.icon}</span>
+						<AppIcon name={item.icon} />
 						{item.label}
 					</button>
 				{/each}
@@ -1878,7 +1880,7 @@
 
 			{#if contextSource === 'search'}
 				<div class="context-search">
-					<span class="material-symbols-rounded">search</span>
+					<AppIcon name="search" />
 					<input
 						type="search"
 						placeholder="Cari anime atau episode..."
@@ -1905,20 +1907,20 @@
 			<div class="context-results">
 				{#if contextSource === 'search' && !contextQuery.trim()}
 					<div class="sheet-state">
-						<span class="material-symbols-rounded">{contextEmptyCopy().icon}</span>
+						<AppIcon name={contextEmptyCopy().icon} />
 						<strong>{contextEmptyCopy().title}</strong>
 						<p>{contextEmptyCopy().desc}</p>
 					</div>
 				{:else if contextLoading}
 					<div class="sheet-state">
-						<span class="material-symbols-rounded">hourglass_top</span>
+						<AppIcon name="hourglass_top" />
 						<strong>Memuat context...</strong>
 					</div>
 				{:else if contextError}
 					<div class="sheet-state error">{contextError}</div>
 				{:else if contextSourceItems().length === 0}
 					<div class="sheet-state">
-						<span class="material-symbols-rounded">{contextEmptyCopy().icon}</span>
+						<AppIcon name={contextEmptyCopy().icon} />
 						<strong
 							>{contextSource === 'search' ? 'Tidak ada hasil' : contextEmptyCopy().title}</strong
 						>
@@ -1937,7 +1939,7 @@
 										sizes={contextImageSizes('sheet')}
 									/>
 								{:else}
-									<span class="material-symbols-rounded">movie</span>
+									<AppIcon name="movie" />
 								{/if}
 							</span>
 							<span class="context-copy">
@@ -2038,7 +2040,7 @@
 		box-shadow: var(--shadow-sm);
 	}
 
-	.chat-state span {
+	.chat-state :global(span) {
 		display: inline-flex;
 		width: 38px;
 		height: 38px;
@@ -2099,7 +2101,7 @@
 		padding: 4px 2px 16px;
 	}
 
-	.chat-onboarding-hero > span {
+	.chat-onboarding-hero > :global(span) {
 		width: 46px;
 		height: 46px;
 		display: inline-flex;
@@ -2148,7 +2150,7 @@
 		background: oklch(from var(--card-bg) l c h / 0.74);
 	}
 
-	.chat-onboarding-item > span {
+	.chat-onboarding-item > :global(span) {
 		width: 34px;
 		height: 34px;
 		display: inline-flex;
@@ -2193,7 +2195,7 @@
 		cursor: pointer;
 	}
 
-	.chat-onboarding-action span {
+	.chat-onboarding-action :global(span) {
 		font-size: 18px;
 	}
 
@@ -2541,7 +2543,7 @@
 		background: var(--surface-2);
 	}
 
-	.composer-reply button span {
+	.composer-reply button :global(span) {
 		font-size: 17px;
 	}
 
@@ -2582,7 +2584,7 @@
 		font-weight: 850;
 	}
 
-	.reply-jump-toast span {
+	.reply-jump-toast :global(span) {
 		flex: 0 0 auto;
 		font-size: 17px;
 		color: var(--text-muted);
@@ -2757,7 +2759,7 @@
 		opacity: 0.42;
 	}
 
-	.message-context-menu span {
+	.message-context-menu :global(span) {
 		font-size: 18px;
 	}
 
@@ -2908,7 +2910,7 @@
 		font-weight: 950;
 	}
 
-	.context-action span {
+	.context-action :global(span) {
 		font-size: 13px;
 	}
 
@@ -2994,7 +2996,7 @@
 		color: var(--text-muted);
 	}
 
-	.guest-copy span {
+	.guest-copy :global(span) {
 		flex-shrink: 0;
 		font-size: 19px;
 		color: var(--accent);
@@ -3043,7 +3045,7 @@
 		box-shadow: none;
 	}
 
-	.context-button span {
+	.context-button :global(span) {
 		font-size: 23px;
 	}
 
@@ -3181,7 +3183,7 @@
 		opacity: 1;
 	}
 
-	.send-button.slowmode-active .material-symbols-rounded {
+	.send-button.slowmode-active :global(.send-button-icon) {
 		font-size: 21px;
 		transform: translateY(-5px);
 	}
@@ -3256,8 +3258,8 @@
 		border: 1px solid var(--border);
 	}
 
-	.remove-context span,
-	.sheet-close span {
+	.remove-context :global(span),
+	.sheet-close :global(span) {
 		font-size: 18px;
 	}
 
@@ -3378,7 +3380,7 @@
 		color: var(--text-muted);
 	}
 
-	.context-search span {
+	.context-search :global(span) {
 		font-size: 19px;
 	}
 
@@ -3421,7 +3423,7 @@
 		font-weight: 950;
 	}
 
-	.context-source-tabs button span {
+	.context-source-tabs button :global(span) {
 		font-size: 17px;
 	}
 
@@ -3528,7 +3530,7 @@
 		font-weight: 800;
 	}
 
-	.sheet-state span {
+	.sheet-state :global(span) {
 		display: inline-flex;
 		margin-bottom: 8px;
 		color: var(--accent);

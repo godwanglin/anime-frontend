@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type { Snippet } from 'svelte';
 	import type { SectionId } from './types';
 	import { layout } from './store.svelte';
@@ -59,12 +60,10 @@
 		onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
 		oncontextmenu={onContextMenu}
 	>
-		<span class="material-symbols-rounded sp-icon">{icon}</span>
+		<AppIcon name={icon} class="sp-icon" />
 		<span class="sp-title">{title}</span>
-		<span
-			class="material-symbols-rounded sp-chevron"
-			style="transform:rotate({collapsed ? '0deg' : '180deg'})"
-		>expand_more</span>
+		<AppIcon name="expand_more" class="sp-chevron"
+			style="transform:rotate({collapsed ? '0deg' : '180deg'})" />
 	</header>
 
 	{#if !collapsed}
@@ -87,7 +86,7 @@
 			onclick={() => { layout.setZoneDir(currentZone, 'column'); ctxMenu = null; }}
 			role="menuitem"
 		>
-			<span class="material-symbols-rounded">table_rows</span>
+			<AppIcon name="table_rows" />
 			Split atas-bawah
 		</button>
 		<button
@@ -96,7 +95,7 @@
 			onclick={() => { layout.setZoneDir(currentZone, 'row'); ctxMenu = null; }}
 			role="menuitem"
 		>
-			<span class="material-symbols-rounded">vertical_split</span>
+			<AppIcon name="vertical_split" />
 			Split kiri-kanan
 		</button>
 
@@ -109,7 +108,7 @@
 			onclick={() => { layout.reorder(id, 'left', null); ctxMenu = null; }}
 			role="menuitem"
 		>
-			<span class="material-symbols-rounded">left_panel_open</span>
+			<AppIcon name="left_panel_open" />
 			Panel kiri
 		</button>
 		<button
@@ -118,7 +117,7 @@
 			onclick={() => { layout.reorder(id, 'right', null); ctxMenu = null; }}
 			role="menuitem"
 		>
-			<span class="material-symbols-rounded">right_panel_open</span>
+			<AppIcon name="right_panel_open" />
 			Panel kanan
 		</button>
 	</div>

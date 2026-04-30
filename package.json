@@ -32,6 +32,7 @@
 	"dependencies": {
 		"@tailwindcss/postcss": "^4.2.3",
 		"chart.js": "^4.5.1",
+		"heroicons-for-svelte": "^0.0.10",
 		"hls.js": "^1.6.16",
 		"material-symbols": "^0.44.3"
 	}

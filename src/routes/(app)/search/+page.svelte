@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -187,10 +188,7 @@
 	<div class="mb-4 sticky top-14 z-30 max-w-[calc(100%+2rem)] overflow-x-clip bg-zinc-50 dark:bg-zinc-950 py-2 -mx-4 px-4">
 		<div class="flex gap-2">
 			<div class="relative flex-1">
-				<span
-					class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-zinc-400"
-					>search</span
-				>
+				<AppIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-zinc-400" />
 				<input
 					bind:value={searchInput}
 					oninput={onSearchInput}
@@ -210,7 +208,7 @@
 						}}
 						class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition"
 					>
-						<span class="material-symbols-rounded text-[18px]">close</span>
+						<AppIcon name="close" class="text-[18px]" />
 					</button>
 				{/if}
 			</div>
@@ -223,7 +221,7 @@
 					? 'bg-violet-600 border-violet-600 text-white'
 					: 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300'}"
 			>
-				<span class="material-symbols-rounded text-[18px]">tune</span>
+				<AppIcon name="tune" class="text-[18px]" />
 				<span class="hidden sm:inline">Filter</span>
 				{#if selectedGenres.length > 0 || selectedStatus}
 					<span
@@ -304,7 +302,7 @@
 				<span
 					class="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700"
 				>
-					<span class="material-symbols-rounded text-[13px]">search</span>
+					<AppIcon name="search" class="text-[13px]" />
 					{q}
 					<button
 						onclick={() => {
@@ -313,7 +311,7 @@
 							syncUrlAndFetch();
 						}}
 					>
-						<span class="material-symbols-rounded text-[12px] hover:text-violet-500">close</span>
+						<AppIcon name="close" class="text-[12px] hover:text-violet-500" />
 					</button>
 				</span>
 			{/if}
@@ -323,7 +321,7 @@
 				>
 					{genre}
 					<button onclick={() => toggleGenre(genre)}>
-						<span class="material-symbols-rounded text-[12px] hover:text-red-400">close</span>
+						<AppIcon name="close" class="text-[12px] hover:text-red-400" />
 					</button>
 				</span>
 			{/each}
@@ -333,7 +331,7 @@
 				>
 					{selectedStatus === 'ongoing' ? 'Tayang' : 'Tamat'}
 					<button onclick={() => setStatus('')}>
-						<span class="material-symbols-rounded text-[12px] hover:text-red-400">close</span>
+						<AppIcon name="close" class="text-[12px] hover:text-red-400" />
 					</button>
 				</span>
 			{/if}
@@ -396,7 +394,7 @@
 							<div
 								class="h-11 w-11 rounded-full bg-white/20 border-2 border-white/60 flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-300"
 							>
-								<span class="material-symbols-rounded text-white text-[24px]">play_arrow</span>
+								<AppIcon name="play_arrow" class="text-white text-[24px]" />
 							</div>
 						</div>
 
@@ -422,7 +420,7 @@
 							<div
 								class="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm"
 							>
-								<span class="material-symbols-rounded text-yellow-400 text-[11px]">star</span>
+								<AppIcon name="star" class="text-yellow-400 text-[11px]" />
 								<span class="text-white text-[10px] font-bold">{item.rating}</span>
 							</div>
 						{/if}
@@ -465,7 +463,7 @@
 					disabled={currentPage <= 1}
 					class="h-9 w-9 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-violet-400 hover:text-violet-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
 				>
-					<span class="material-symbols-rounded text-[18px]">chevron_left</span>
+					<AppIcon name="chevron_left" class="text-[18px]" />
 				</button>
 
 				{#each Array.from({ length: meta.totalPages }, (_, i) => i + 1) as p}
@@ -489,7 +487,7 @@
 					disabled={currentPage >= meta.totalPages}
 					class="h-9 w-9 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-violet-400 hover:text-violet-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
 				>
-					<span class="material-symbols-rounded text-[18px]">chevron_right</span>
+					<AppIcon name="chevron_right" class="text-[18px]" />
 				</button>
 			</div>
 		{/if}
@@ -499,7 +497,7 @@
 			<div
 				class="h-20 w-20 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-2"
 			>
-				<span class="material-symbols-rounded text-[44px] text-zinc-400">search_off</span>
+				<AppIcon name="search_off" class="text-[44px] text-zinc-400" />
 			</div>
 			<h3 class="font-bold text-zinc-700 dark:text-zinc-300 text-lg">
 				{q ? `Tidak ada hasil untuk "${q}"` : 'Tidak ada anime ditemukan'}

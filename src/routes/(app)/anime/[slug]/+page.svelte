@@ -1,9 +1,13 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
+	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
+	import config from '$lib/config';
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
+	import { displayUserName, userInitial } from '$lib/user-display';
 
 	type Episode = {
 		id: number;
@@ -55,13 +59,68 @@
 		seasons?: Season[];
 	};
 
+	type ApiEnvelope<T> = {
+		status: number;
+		message: string | null;
+		errorCode: string | null;
+		data: T;
+		meta?: {
+			page?: number;
+			limit?: number;
+			total?: number;
+			totalPages?: number;
+			[key: string]: unknown;
+		};
+	};
+
+	type ReviewUser = {
+		id: number;
+		username: string;
+		fullName?: string | null;
+		avatar: string | null;
+	};
+
+	type AnimeReview = {
+		id: number;
+		userId: number;
+		animeId: number;
+		rating: number;
+		body: string | null;
+		createdAt: string;
+		updatedAt: string;
+		user?: ReviewUser;
+	};
+
+	type ReviewSummary = {
+		animeId: number;
+		totalReviews: number;
+		avgRating: number | null;
+		minRating: number | null;
+		maxRating: number | null;
+		distribution: Record<string, number>;
+	};
+
 	const { data }: { data: PageData } = $props();
 	const anime: Anime = data.anime;
+	const ratingOptions = Array.from({ length: 10 }, (_, index) => 10 - index);
 
 	let showAllEpisodes = $state(false);
+	let episodeSheetOpen = $state(false);
 	let episodeOrder = $state<'desc' | 'asc'>('desc');
+	let isDesktop = $state(false);
 	let synopsisExpanded = $state(false);
 	let activeSeason = $state<number | null>(null);
+	let reviews = $state<AnimeReview[]>([]);
+	let reviewSummary = $state<ReviewSummary | null>(null);
+	let myReview = $state<AnimeReview | null>(null);
+	let reviewRating = $state(10);
+	let reviewBody = $state('');
+	let reviewLoading = $state(false);
+	let reviewSaving = $state(false);
+	let reviewError = $state('');
+	let reviewMessage = $state('');
+	let reviewLoadKey = $state('');
+	let reviewTotal = $state(0);
 
 	const seasons = $derived((anime.seasons ?? []).filter((season) => season.episodes?.length));
 	const activeSeasonData = $derived(
@@ -93,18 +152,49 @@
 				: episodeNumber(a) - episodeNumber(b)
 		)
 	);
-	let visibleEpisodes = $derived(showAllEpisodes ? sortedEpisodes : sortedEpisodes.slice(0, 30));
+	let visibleEpisodes = $derived(
+		isDesktop && showAllEpisodes ? sortedEpisodes : sortedEpisodes.slice(0, 30)
+	);
 	let isSaved = $derived(saved.checkSaved(activeAnime.id));
+	let reviewAverage = $derived(reviewSummary?.avgRating ?? null);
+	let reviewDistribution = $derived(
+		ratingOptions.map((rating) => ({
+			rating,
+			count: reviewSummary?.distribution?.[String(rating)] ?? 0,
+			percent: reviewSummary?.totalReviews
+				? ((reviewSummary.distribution?.[String(rating)] ?? 0) / reviewSummary.totalReviews) * 100
+				: 0
+		}))
+	);
 
 	$effect(() => {
 		if (seasons.length === 0) {
 			activeSeason = null;
+			episodeSheetOpen = false;
 			return;
 		}
 
 		if (!activeSeason || !seasons.some((season) => season.season === activeSeason)) {
 			activeSeason = seasons.find((season) => season.isCurrent)?.season ?? seasons[0].season;
 		}
+	});
+
+	onMount(() => {
+		const mq = window.matchMedia('(min-width: 768px)');
+		const update = () => {
+			isDesktop = mq.matches;
+			if (isDesktop) episodeSheetOpen = false;
+		};
+		update();
+		mq.addEventListener('change', update);
+		return () => mq.removeEventListener('change', update);
+	});
+
+	$effect(() => {
+		const key = `${activeAnime.id}:${auth.isLoggedIn ? (auth.user?.id ?? 'user') : 'guest'}`;
+		if (!activeAnime.id || reviewLoadKey === key) return;
+		reviewLoadKey = key;
+		void loadReviews(activeAnime.id);
 	});
 
 	function episodeProgress(id: number) {
@@ -123,6 +213,123 @@
 	function selectSeason(season: number) {
 		activeSeason = season;
 		showAllEpisodes = false;
+		episodeSheetOpen = false;
+	}
+
+	function toggleEpisodeOrder() {
+		episodeOrder = episodeOrder === 'desc' ? 'asc' : 'desc';
+		showAllEpisodes = false;
+	}
+
+	function toggleEpisodeOverflow() {
+		if (!isDesktop) {
+			episodeSheetOpen = true;
+			return;
+		}
+		showAllEpisodes = !showAllEpisodes;
+	}
+
+	async function parseApi<T>(response: Response) {
+		const json = (await response.json().catch(() => null)) as ApiEnvelope<T> | null;
+		if (!response.ok) throw new Error(json?.message ?? 'Request gagal');
+		return json;
+	}
+
+	async function publicApi<T>(path: string) {
+		const response = await fetch(`${config.API_BASE_URL}${path}`);
+		const json = await parseApi<T>(response);
+		return json;
+	}
+
+	async function loadReviews(animeId: number) {
+		reviewLoading = true;
+		reviewError = '';
+		try {
+			const [listJson, summaryJson, meJson] = await Promise.all([
+				publicApi<AnimeReview[]>(`/api/reviews/anime/${animeId}?page=1&limit=8`),
+				publicApi<ReviewSummary>(`/api/reviews/anime/${animeId}/summary`),
+				auth.isLoggedIn
+					? auth
+							.authFetch(`/api/reviews/anime/${animeId}/me`)
+							.then((response) => parseApi<AnimeReview | null>(response))
+					: Promise.resolve(null)
+			]);
+
+			reviews = listJson.data ?? [];
+			reviewTotal = Number(listJson.meta?.total ?? reviews.length);
+			reviewSummary = summaryJson.data;
+			myReview = meJson?.data ?? null;
+
+			if (myReview) {
+				reviewRating = myReview.rating;
+				reviewBody = myReview.body ?? '';
+			} else {
+				reviewRating = 10;
+				reviewBody = '';
+			}
+		} catch (error) {
+			reviewError = error instanceof Error ? error.message : 'Gagal memuat review';
+		} finally {
+			reviewLoading = false;
+		}
+	}
+
+	async function submitReview() {
+		if (!auth.isLoggedIn) {
+			location.href = `/login?redirect=/anime/${activeAnime.slug}`;
+			return;
+		}
+
+		reviewSaving = true;
+		reviewError = '';
+		reviewMessage = '';
+		try {
+			const response = await auth.authFetch(`/api/reviews/anime/${activeAnime.id}`, {
+				method: 'POST',
+				body: JSON.stringify({
+					rating: reviewRating,
+					body: reviewBody
+				})
+			});
+			await parseApi<AnimeReview>(response);
+			reviewMessage = myReview ? 'Review berhasil diperbarui' : 'Review berhasil dikirim';
+			await loadReviews(activeAnime.id);
+		} catch (error) {
+			reviewError = error instanceof Error ? error.message : 'Gagal menyimpan review';
+		} finally {
+			reviewSaving = false;
+		}
+	}
+
+	async function deleteReview() {
+		if (!auth.isLoggedIn || !myReview) return;
+
+		reviewSaving = true;
+		reviewError = '';
+		reviewMessage = '';
+		try {
+			const response = await auth.authFetch(`/api/reviews/anime/${activeAnime.id}`, {
+				method: 'DELETE'
+			});
+			await parseApi<null>(response);
+			myReview = null;
+			reviewRating = 10;
+			reviewBody = '';
+			reviewMessage = 'Review berhasil dihapus';
+			await loadReviews(activeAnime.id);
+		} catch (error) {
+			reviewError = error instanceof Error ? error.message : 'Gagal menghapus review';
+		} finally {
+			reviewSaving = false;
+		}
+	}
+
+	function formatReviewDate(value: string) {
+		return new Intl.DateTimeFormat('id-ID', {
+			day: '2-digit',
+			month: 'short',
+			year: 'numeric'
+		}).format(new Date(value));
 	}
 
 	async function toggleSaved() {
@@ -213,9 +420,7 @@
 					<div
 						class="absolute bottom-4 right-4 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10"
 					>
-						<span class="material-symbols-rounded text-yellow-400" style="font-size:13px;"
-							>star</span
-						>
+						<AppIcon name="star" class="text-yellow-400" style="font-size:13px;" />
 						<span class="text-white font-black text-[12px]">{activeAnime.rating.toFixed(2)}</span>
 					</div>
 				{/if}
@@ -270,16 +475,14 @@
 						{/if}
 						<div class="flex items-center flex-wrap gap-x-2.5 gap-y-1">
 							<div class="flex items-center gap-1">
-								<span class="material-symbols-rounded text-rose-500" style="font-size:12px;"
-									>favorite</span
-								>
+								<AppIcon name="favorite" class="text-rose-500" style="font-size:12px;" />
 								<span class="text-[10px] font-semibold" style="color: var(--text-muted);">
 									{(activeAnime.followed ?? 0).toLocaleString('id-ID')}
 								</span>
 							</div>
 							<div class="h-2.5 w-px" style="background: var(--border-strong);"></div>
 							<div class="flex items-center gap-1" style="color: var(--text-muted);">
-								<span class="material-symbols-rounded" style="font-size:12px;">video_library</span>
+								<AppIcon name="video_library" style="font-size:12px;" />
 								<span class="text-[10px] font-semibold">{activeAnime.episodes.length} Ep</span>
 							</div>
 							{#if activeAnime.season}
@@ -312,7 +515,7 @@
 						class="flex-1 h-9 flex items-center justify-center gap-2 rounded-[var(--radius-xl)] text-[13px] font-black tracking-wide text-white transition-all active:scale-[0.97]"
 						style="background: var(--accent); box-shadow: 0 4px 14px var(--accent-glow);"
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">play_circle</span>
+						<AppIcon name="play_circle" style="font-size:20px;" />
 						{hasSingleEpisode ? 'Tonton Sekarang' : `Tonton Ep ${episodeNumber(latestEp)}`}
 					</a>
 					{#if !hasSingleEpisode}
@@ -321,9 +524,7 @@
 							class="h-9 flex items-center gap-1 px-3.5 rounded-[var(--radius-xl)] text-[12px] font-semibold transition-all active:scale-[0.97]"
 							style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-primary); box-shadow: var(--shadow-sm);"
 						>
-							<span class="material-symbols-rounded" style="font-size:20px;"
-								>keyboard_double_arrow_left</span
-							>
+							<AppIcon name="keyboard_double_arrow_left" style="font-size:20px;" />
 							Ep {episodeNumber(firstEp)}
 						</a>
 					{/if}
@@ -340,15 +541,13 @@
 							: 'var(--shadow-sm)'};
                     "
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">
-							{isSaved ? 'bookmark' : 'bookmark_add'}
-						</span>
+						<AppIcon name={isSaved ? 'bookmark' : 'bookmark_add'} style="font-size:20px;" />
 					</button>
 					<button
 						class="h-9 w-12 shrink-0 flex items-center justify-center rounded-[var(--radius-xl)] transition-all active:scale-[0.97]"
 						style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted); box-shadow: var(--shadow-sm);"
 					>
-						<span class="material-symbols-rounded" style="font-size:20px;">share</span>
+						<AppIcon name="share" style="font-size:20px;" />
 					</button>
 				</div>
 			</div>
@@ -422,9 +621,7 @@
 					<div class="flex items-center gap-4 mb-5">
 						{#if activeAnime.rating}
 							<div class="flex items-center gap-1.5">
-								<span class="material-symbols-rounded text-yellow-400" style="font-size:16px;"
-									>star</span
-								>
+								<AppIcon name="star" class="text-yellow-400" style="font-size:16px;" />
 								<span class="text-white font-black text-[13px]"
 									>{activeAnime.rating.toFixed(2)}</span
 								>
@@ -432,16 +629,14 @@
 							<div class="h-3 w-px bg-white/15"></div>
 						{/if}
 						<div class="flex items-center gap-1.5 text-white/50">
-							<span class="material-symbols-rounded text-rose-400/70" style="font-size:14px;"
-								>favorite</span
-							>
+							<AppIcon name="favorite" class="text-rose-400/70" style="font-size:14px;" />
 							<span class="text-[11px] font-semibold"
 								>{(activeAnime.followed ?? 0).toLocaleString('id-ID')}</span
 							>
 						</div>
 						<div class="h-3 w-px bg-white/15"></div>
 						<div class="flex items-center gap-1.5 text-white/50">
-							<span class="material-symbols-rounded" style="font-size:14px;">video_library</span>
+							<AppIcon name="video_library" style="font-size:14px;" />
 							<span class="text-[11px] font-semibold">{activeAnime.episodes.length} Episode</span>
 						</div>
 					</div>
@@ -461,7 +656,7 @@
 							class="flex items-center gap-2 px-6 py-2.5 rounded-full text-white text-[13px] font-black tracking-wide transition-all active:scale-[0.97]"
 							style="background: var(--accent); box-shadow: 0 4px 20px var(--accent-glow);"
 						>
-							<span class="material-symbols-rounded" style="font-size:18px;">play_arrow</span>
+							<AppIcon name="play_arrow" style="font-size:18px;" />
 							{hasSingleEpisode ? 'Tonton Sekarang' : `Tonton Ep ${episodeNumber(latestEp)}`}
 						</a>
 						{#if !hasSingleEpisode}
@@ -469,7 +664,7 @@
 								href={episodeHref(firstEp)}
 								class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/18 text-white text-[13px] font-semibold border border-white/12 backdrop-blur-sm transition-all active:scale-[0.97]"
 							>
-								<span class="material-symbols-rounded" style="font-size:18px;">skip_previous</span>
+								<AppIcon name="skip_previous" style="font-size:18px;" />
 								Ep {episodeNumber(firstEp)}
 							</a>
 						{/if}
@@ -484,14 +679,12 @@
                                 box-shadow: {isSaved ? '0 4px 14px var(--accent-glow)' : 'none'};
                             "
 						>
-							<span class="material-symbols-rounded" style="font-size:18px;"
-								>{isSaved ? 'bookmark' : 'bookmark_add'}</span
-							>
+							<AppIcon name={isSaved ? 'bookmark' : 'bookmark_add'} style="font-size:18px;" />
 						</button>
 						<button
 							class="h-10 w-10 flex items-center justify-center rounded-full bg-white/10 border border-white/12 text-white hover:bg-white/18 transition-all active:scale-[0.97]"
 						>
-							<span class="material-symbols-rounded" style="font-size:18px;">share</span>
+							<AppIcon name="share" style="font-size:18px;" />
 						</button>
 					</div>
 				</div>
@@ -532,9 +725,7 @@
 				class="mt-2 flex items-center gap-0.5 text-[11px] font-bold transition-colors"
 				style="color: var(--accent);"
 			>
-				<span class="material-symbols-rounded" style="font-size:13px;">
-					{synopsisExpanded ? 'expand_less' : 'expand_more'}
-				</span>
+				<AppIcon name={synopsisExpanded ? 'expand_less' : 'expand_more'} style="font-size:13px;" />
 				{synopsisExpanded ? 'Sembunyikan' : 'Baca selengkapnya'}
 			</button>
 		</div>
@@ -589,13 +780,11 @@
 					</span>
 				</div>
 				<button
-					onclick={() => (episodeOrder = episodeOrder === 'desc' ? 'asc' : 'desc')}
+					onclick={toggleEpisodeOrder}
 					class="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] text-[10px] font-bold transition-all active:scale-[0.97]"
 					style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted); box-shadow: var(--shadow-sm);"
 				>
-					<span class="material-symbols-rounded" style="font-size:13px;">
-						{episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
-					</span>
+					<AppIcon name={episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'} style="font-size:13px;" />
 					{episodeOrder === 'desc' ? 'Terbaru' : 'Terlama'}
 				</button>
 			</div>
@@ -663,12 +852,8 @@
 
 						<!-- Watched check — top right -->
 						{#if isWatched}
-							<span
-								class="material-symbols-rounded absolute top-1 right-1 group-hover:text-white transition-colors"
-								style="font-size:10px; color: var(--accent);"
-							>
-								check_circle
-							</span>
+							<AppIcon name="check_circle" class="absolute top-1 right-1 group-hover:text-white transition-colors"
+								style="font-size:10px; color: var(--accent);" />
 						{/if}
 
 						<!-- Episode number — SATU, tidak duplikat -->
@@ -707,20 +892,329 @@
 
 			{#if activeEpisodes.length > 30}
 				<button
-					onclick={() => (showAllEpisodes = !showAllEpisodes)}
+					onclick={toggleEpisodeOverflow}
 					class="mt-3 w-full py-2.5 rounded-[var(--radius-xl)] text-[11px] font-bold flex items-center justify-center gap-1.5 border transition-all active:scale-[0.99]"
 					style="background: var(--surface); border-color: var(--border-strong); color: var(--text-muted); box-shadow: var(--shadow-sm);"
 				>
-					<span class="material-symbols-rounded" style="font-size:16px;">
-						{showAllEpisodes ? 'expand_less' : 'expand_more'}
-					</span>
-					{showAllEpisodes ? 'Sembunyikan' : `Tampilkan semua ${activeEpisodes.length} episode`}
+					<AppIcon name={isDesktop && showAllEpisodes ? 'expand_less' : 'expand_more'} style="font-size:16px;" />
+					{isDesktop && showAllEpisodes
+						? 'Sembunyikan'
+						: `Tampilkan semua ${activeEpisodes.length} episode`}
 				</button>
 			{/if}
 		</section>
 
+		{#if episodeSheetOpen}
+			<div class="fixed inset-0 z-[80] md:hidden" role="dialog" aria-modal="true">
+				<button
+					type="button"
+					class="absolute inset-0 w-full h-full bg-black/60 backdrop-blur-[2px]"
+					aria-label="Tutup daftar episode"
+					onclick={() => (episodeSheetOpen = false)}
+				></button>
+				<div
+					class="absolute inset-x-0 bottom-0 max-h-[82dvh] rounded-t-[24px] overflow-hidden"
+					style="background: var(--surface); border: 1px solid var(--border); box-shadow: 0 -18px 60px oklch(0 0 0 / 0.45);"
+				>
+					<div class="px-4 pt-3 pb-3" style="border-bottom: 1px solid var(--border);">
+						<div class="mx-auto mb-3 h-1 w-10 rounded-full" style="background: var(--border-strong);"></div>
+						<div class="flex items-center justify-between gap-3">
+							<div class="min-w-0">
+								<p
+									class="text-[9px] font-black uppercase tracking-[0.2em]"
+									style="color: var(--text-faint);"
+								>
+									Semua Episode
+								</p>
+								<p class="text-[13px] font-black line-clamp-1" style="color: var(--text-primary);">
+									{activeAnime.title}
+								</p>
+							</div>
+							<div class="flex items-center gap-2">
+								<button
+									type="button"
+									onclick={toggleEpisodeOrder}
+									class="h-8 shrink-0 flex items-center gap-1.5 px-3 rounded-[var(--radius-lg)] text-[10px] font-bold transition-all active:scale-[0.97]"
+									style="background: var(--surface-offset); border: 1px solid var(--border-strong); color: var(--text-muted);"
+								>
+									<AppIcon name={episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'} style="font-size:13px;" />
+									{episodeOrder === 'desc' ? 'Terbaru' : 'Terlama'}
+								</button>
+								<button
+									type="button"
+									aria-label="Tutup"
+									onclick={() => (episodeSheetOpen = false)}
+									class="h-8 w-8 rounded-full flex items-center justify-center transition-all active:scale-95"
+									style="background: var(--surface-offset); border: 1px solid var(--border-strong); color: var(--text-muted);"
+								>
+									<AppIcon name="close" style="font-size:18px;" />
+								</button>
+							</div>
+						</div>
+					</div>
+
+					{#if seasons.length > 1}
+						<div class="px-4 pt-3">
+							<div class="flex max-w-full gap-2 overflow-x-auto pb-2 scrollbar-hide">
+								{#each seasons as season (season.season)}
+									{@const isActiveSeason = season.season === activeSeasonData?.season}
+									<button
+										type="button"
+										aria-pressed={isActiveSeason}
+										onclick={() => selectSeason(season.season)}
+										class="shrink-0 h-8 px-3 rounded-[var(--radius-lg)] text-[11px] transition-all active:scale-[0.97]"
+										style="
+											background: {isActiveSeason ? 'var(--accent)' : 'var(--surface-offset)'};
+											border: 1px solid {isActiveSeason ? 'transparent' : 'var(--border-strong)'};
+											color: {isActiveSeason ? '#fff' : 'var(--text-muted)'};
+											font-weight: {isActiveSeason ? 900 : 700};
+										"
+									>
+										Season {season.season}
+									</button>
+								{/each}
+							</div>
+						</div>
+					{/if}
+
+					<div class="max-h-[62dvh] overflow-y-auto overscroll-contain p-4 pt-3">
+						<div class="grid grid-cols-5 gap-1.5">
+							{#each sortedEpisodes as ep}
+								{@const progress = episodeProgress(ep.id)}
+								{@const isWatched = progress > 0}
+								<a
+									href={episodeHref(ep)}
+									onclick={() => (episodeSheetOpen = false)}
+									class="relative flex min-h-12 items-center justify-center rounded-[var(--radius-lg)] border text-[13px] font-black transition-all active:scale-[0.95]"
+									style="
+										background: {isWatched ? 'var(--accent-surface)' : 'var(--surface-offset)'};
+										border-color: {isWatched
+											? 'oklch(from var(--accent) l c h / 0.25)'
+											: 'var(--border-strong)'};
+										color: {isWatched ? 'var(--accent-text)' : 'var(--text-primary)'};
+									"
+								>
+									{episodeNumber(ep)}
+									{#if isWatched}
+										<AppIcon name="check_circle" class="absolute right-1 top-1"
+											style="font-size:10px; color: var(--accent);" />
+									{/if}
+								</a>
+							{/each}
+						</div>
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		<div class="h-px mb-6" style="background: var(--border);"></div>
 	{/if}
+
+	<!-- ── USER REVIEWS ─────────────────────────── -->
+	<section class="mb-7">
+		<div class="flex items-center justify-between gap-3 mb-4">
+			<div class="flex items-center gap-2">
+				<p
+					class="text-[9px] font-black uppercase tracking-[0.2em]"
+					style="color: var(--text-faint);"
+				>
+					Review User
+				</p>
+				<span
+					class="px-2 py-0.5 rounded-full text-[9px] font-black"
+					style="background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);"
+				>
+					{reviewTotal.toLocaleString('id-ID')}
+				</span>
+			</div>
+			{#if reviewLoading}
+				<span class="text-[10px] font-bold" style="color: var(--text-faint);">Memuat...</span>
+			{/if}
+		</div>
+
+		<div class="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+			<div
+				class="rounded-[var(--radius-xl)] p-4"
+				style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
+			>
+				<div class="flex items-end gap-2 mb-4">
+					<p class="text-4xl font-black leading-none" style="color: var(--text-primary);">
+						{reviewAverage ? reviewAverage.toFixed(1) : '-'}
+					</p>
+					<div class="pb-1">
+						<p class="text-[10px] font-black uppercase tracking-[0.16em]" style="color: var(--text-faint);">
+							/ 10
+						</p>
+						<p class="text-[11px] font-semibold" style="color: var(--text-muted);">
+							{(reviewSummary?.totalReviews ?? 0).toLocaleString('id-ID')} review
+						</p>
+					</div>
+				</div>
+
+				<div class="space-y-1.5">
+					{#each reviewDistribution as row}
+						<div class="grid grid-cols-[22px_minmax(0,1fr)_28px] items-center gap-2">
+							<span class="text-[10px] font-black" style="color: var(--text-muted);">{row.rating}</span>
+							<div class="h-1.5 rounded-full overflow-hidden" style="background: var(--border);">
+								<div
+									class="h-full rounded-full"
+									style="width: {row.percent}%; background: var(--accent);"
+								></div>
+							</div>
+							<span class="text-right text-[9px] font-bold" style="color: var(--text-faint);">
+								{row.count}
+							</span>
+						</div>
+					{/each}
+				</div>
+			</div>
+
+			<div
+				class="rounded-[var(--radius-xl)] p-4"
+				style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
+			>
+				<div class="flex items-start justify-between gap-3 mb-3">
+					<div>
+						<p class="text-[13px] font-black" style="color: var(--text-primary);">
+							{myReview ? 'Update rating kamu' : 'Kasih rating'}
+						</p>
+						<p class="text-[11px]" style="color: var(--text-faint);">
+							Rating pribadi user, terpisah dari rating bawaan anime.
+						</p>
+					</div>
+					<div
+						class="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-black"
+						style="background: var(--accent-surface); color: var(--accent-text);"
+					>
+						{reviewRating}/10
+					</div>
+				</div>
+
+				{#if auth.isLoggedIn}
+					<div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5 mb-3">
+						{#each ratingOptions as rating}
+							<button
+								type="button"
+								aria-pressed={reviewRating === rating}
+								onclick={() => (reviewRating = rating)}
+								class="h-9 rounded-[var(--radius-lg)] text-[11px] font-black transition-all active:scale-[0.96]"
+								style="
+									background: {reviewRating === rating ? 'var(--accent)' : 'var(--surface-offset)'};
+									border: 1px solid {reviewRating === rating ? 'transparent' : 'var(--border-strong)'};
+									color: {reviewRating === rating ? '#fff' : 'var(--text-muted)'};
+									box-shadow: {reviewRating === rating ? '0 4px 12px var(--accent-glow)' : 'none'};
+								"
+							>
+								{rating}
+							</button>
+						{/each}
+					</div>
+					<textarea
+						bind:value={reviewBody}
+						maxlength="2000"
+						rows="4"
+						placeholder="Tulis review singkat... opsional"
+						class="w-full resize-none rounded-[var(--radius-xl)] px-3 py-2.5 text-[12px] outline-none transition-colors"
+						style="background: var(--surface-offset); border: 1px solid var(--border-strong); color: var(--text-primary);"
+					></textarea>
+					<div class="mt-3 flex flex-wrap items-center gap-2">
+						<button
+							type="button"
+							onclick={submitReview}
+							disabled={reviewSaving}
+							class="h-9 px-4 rounded-full text-[12px] font-black text-white transition-all active:scale-[0.97] disabled:opacity-60"
+							style="background: var(--accent); box-shadow: 0 4px 14px var(--accent-glow);"
+						>
+							{reviewSaving ? 'Mengirim...' : myReview ? 'Update Review' : 'Kirim Review'}
+						</button>
+						{#if myReview}
+							<button
+								type="button"
+								onclick={deleteReview}
+								disabled={reviewSaving}
+								class="h-9 px-4 rounded-full text-[12px] font-bold transition-all active:scale-[0.97] disabled:opacity-60"
+								style="background: var(--surface-offset); border: 1px solid var(--border-strong); color: var(--text-muted);"
+							>
+								Hapus
+							</button>
+						{/if}
+					</div>
+				{:else}
+					<a
+						href="/login?redirect=/anime/{activeAnime.slug}"
+						class="inline-flex h-9 items-center justify-center px-4 rounded-full text-[12px] font-black text-white transition-all active:scale-[0.97]"
+						style="background: var(--accent); box-shadow: 0 4px 14px var(--accent-glow);"
+					>
+						Login untuk review
+					</a>
+				{/if}
+
+				{#if reviewMessage}
+					<p class="mt-3 text-[11px] font-bold" style="color: var(--accent);">{reviewMessage}</p>
+				{/if}
+				{#if reviewError}
+					<p class="mt-3 text-[11px] font-bold text-red-400">{reviewError}</p>
+				{/if}
+			</div>
+		</div>
+
+		<div class="mt-4 grid gap-2.5">
+			{#if reviews.length}
+				{#each reviews as review (review.id)}
+					<article
+						class="rounded-[var(--radius-xl)] p-3.5"
+						style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
+					>
+						<div class="flex items-start gap-3">
+							<div
+								class="h-9 w-9 shrink-0 rounded-full overflow-hidden flex items-center justify-center text-[12px] font-black"
+								style="background: var(--surface-offset); color: var(--text-muted); border: 1px solid var(--border-strong);"
+							>
+								{#if review.user?.avatar}
+									<img
+										src={review.user.avatar}
+										alt={displayUserName(review.user)}
+										class="h-full w-full object-cover"
+									/>
+								{:else}
+									{userInitial(review.user)}
+								{/if}
+							</div>
+							<div class="min-w-0 flex-1">
+								<div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+									<p class="text-[12px] font-black" style="color: var(--text-primary);">
+										{displayUserName(review.user)}
+									</p>
+									<span
+										class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black"
+										style="background: var(--accent-surface); color: var(--accent-text);"
+									>
+										<AppIcon name="star" style="font-size:11px;" />
+										{review.rating}/10
+									</span>
+									<span class="text-[10px]" style="color: var(--text-faint);">
+										{formatReviewDate(review.updatedAt ?? review.createdAt)}
+									</span>
+								</div>
+								<p class="text-[12px] leading-relaxed whitespace-pre-line" style="color: var(--text-muted);">
+									{review.body ?? 'Tanpa ulasan tertulis.'}
+								</p>
+							</div>
+						</div>
+					</article>
+				{/each}
+			{:else if !reviewLoading}
+				<div
+					class="rounded-[var(--radius-xl)] p-4 text-center"
+					style="background: var(--surface); border: 1px solid var(--border); color: var(--text-faint);"
+				>
+					<p class="text-[12px] font-bold">Belum ada review user.</p>
+				</div>
+			{/if}
+		</div>
+	</section>
+
+	<div class="h-px mb-6" style="background: var(--border);"></div>
 
 	<!-- ── TAGS ──────────────────────────────────── -->
 	{#if activeAnime.tags?.length}

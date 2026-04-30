@@ -55,6 +55,14 @@
 		return Number(value ?? 0).toLocaleString('id-ID');
 	}
 
+	function formatJoined(value: string) {
+		const date = new Date(value);
+		return `${date.toLocaleDateString('id-ID')} ${date.toLocaleTimeString('id-ID', {
+			hour: '2-digit',
+			minute: '2-digit'
+		})}`;
+	}
+
 	async function saveUser() {
 		if (!selectedUser) return;
 		selectedUser = (
@@ -102,7 +110,7 @@
 			<td class="px-4 py-3"><span class="rounded-full border border-violet-900/60 bg-violet-950/40 px-2.5 py-1 text-xs font-black text-violet-200">Lv {row.level ?? 1}</span></td>
 			<td class="px-4 py-3 font-semibold text-zinc-300">{formatExp(row.exp)} EXP</td>
 			<td class="px-4 py-3"><AdminStatusBadge status={row.role} /></td>
-			<td class="px-4 py-3">{new Date(row.createdAt).toLocaleDateString('id-ID')}</td>
+			<td class="px-4 py-3">{formatJoined(row.createdAt)}</td>
 			<td class="px-4 py-3"><button onclick={() => openUser(row.id)} class="mr-2 rounded-lg border border-zinc-700 px-2 py-1">Edit</button><button onclick={() => (deleteId = row.id)} class="rounded-lg border border-red-900 px-2 py-1 text-red-400">Hapus</button></td>
 		{/snippet}
 	</AdminTable>

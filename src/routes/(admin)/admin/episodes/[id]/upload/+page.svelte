@@ -20,6 +20,7 @@
 	};
 
 	type UrlSourceInput = { resolution: number; url: string };
+	type UrlSubtitleInput = { language: string; label: string; sourceUrl: string };
 	type UrlSourceProgress = {
 		resolution: number;
 		url: string;
@@ -83,6 +84,7 @@
 	const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 	const STORAGE_KEY = (episodeId: number) => `upload-session:${episodeId}`;
 	const URL_STORAGE_KEY = (episodeId: number) => `upload-url-session:${episodeId}`;
+	const URL_SUBTITLE_STORAGE_KEY = (episodeId: number) => `upload-url-subtitles:${episodeId}`;
 
 	type Tab = 'file' | 'url';
 	let id = $derived(Number(page.params.id));
@@ -108,6 +110,9 @@
 
 	// ── URL-mode state ─────────────────────────────────────────────────────
 	let urlSources = $state<UrlSourceInput[]>([{ resolution: 1080, url: '' }]);
+	let urlSubtitles = $state<UrlSubtitleInput[]>([
+		{ language: 'id', label: 'Bahasa Indonesia', sourceUrl: '' }
+	]);
 	let isUrlBusy = $state(false);
 	let abortUrlRequested = $state(false);
 
@@ -214,6 +219,15 @@
 		}
 	}
 
+	function persistUrlSubtitles(subtitles: UrlSubtitleInput[]) {
+		if (typeof window === 'undefined') return;
+		try {
+			localStorage.setItem(URL_SUBTITLE_STORAGE_KEY(id), JSON.stringify(subtitles));
+		} catch {
+			// ignore
+		}
+	}
+
 	function readPersistedUrlSources(): UrlSourceInput[] | null {
 		if (typeof window === 'undefined') return null;
 		try {
@@ -226,6 +240,25 @@
 					item &&
 					typeof item.url === 'string' &&
 					RESOLUTION_OPTIONS.includes(item.resolution)
+			);
+		} catch {
+			return null;
+		}
+	}
+
+	function readPersistedUrlSubtitles(): UrlSubtitleInput[] | null {
+		if (typeof window === 'undefined') return null;
+		try {
+			const raw = localStorage.getItem(URL_SUBTITLE_STORAGE_KEY(id));
+			if (!raw) return null;
+			const parsed = JSON.parse(raw);
+			if (!Array.isArray(parsed)) return null;
+			return parsed.filter(
+				(item: any) =>
+					item &&
+					typeof item.language === 'string' &&
+					typeof item.label === 'string' &&
+					typeof item.sourceUrl === 'string'
 			);
 		} catch {
 			return null;
@@ -601,6 +634,17 @@
 		if (urlSources.length === 0) urlSources = [{ resolution: 1080, url: '' }];
 	}
 
+	function addUrlSubtitle() {
+		urlSubtitles = [...urlSubtitles, { language: '', label: '', sourceUrl: '' }];
+	}
+
+	function removeUrlSubtitle(index: number) {
+		urlSubtitles = urlSubtitles.filter((_, i) => i !== index);
+		if (urlSubtitles.length === 0) {
+			urlSubtitles = [{ language: 'id', label: 'Bahasa Indonesia', sourceUrl: '' }];
+		}
+	}
+
 	function pickNextResolution(): number {
 		const used = new Set(urlSources.map((s) => s.resolution));
 		for (const r of [1080, 720, 480, 360, 144, 2160]) {
@@ -614,6 +658,7 @@
 		// (skip when a session is already active for this payload — we rely on it).
 		if (!session || status?.mode !== 'url') {
 			persistUrlSources(urlSources);
+			persistUrlSubtitles(urlSubtitles);
 		}
 	});
 
@@ -644,6 +689,26 @@
 				return;
 			}
 		}
+		const subtitles = urlSubtitles
+			.map((s) => ({
+				language: s.language.trim().toLowerCase(),
+				label: s.label.trim(),
+				sourceUrl: s.sourceUrl.trim()
+			}))
+			.filter((s) => s.language || s.label || s.sourceUrl);
+		for (const subtitle of subtitles) {
+			if (!subtitle.language || !subtitle.sourceUrl) {
+				adminToast.error('Subtitle wajib punya kode bahasa dan URL');
+				return;
+			}
+			if (!/^https?:\/\//i.test(subtitle.sourceUrl)) {
+				adminToast.error(`URL subtitle ${subtitle.language} invalid`);
+				return;
+			}
+			if (!subtitle.label) {
+				subtitle.label = subtitle.language.toUpperCase();
+			}
+		}
 
 		isUrlBusy = true;
 		abortUrlRequested = false;
@@ -655,7 +720,8 @@
 				body: JSON.stringify({
 					sesid: `${id}/upload-url`,
 					episodeId: id,
-					sources: cleaned
+					sources: cleaned,
+					subtitles
 				})
 			});
 			const json = await res.json();
@@ -666,6 +732,9 @@
 			openEventStream(sessData.uploadId);
 			persistSession(session, sessData);
 			pushLog(`URL upload masuk queue server: ${sessData.uploadId}`);
+			if (subtitles.length > 0) {
+				pushLog(`${subtitles.length} subtitle dipasang ke master R2`);
+			}
 			adminToast.success('Upload URL masuk queue server');
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : String(error);
@@ -712,6 +781,10 @@
 		const persistedUrlSources = readPersistedUrlSources();
 		if (persistedUrlSources && persistedUrlSources.length > 0) {
 			urlSources = persistedUrlSources;
+		}
+		const persistedUrlSubtitles = readPersistedUrlSubtitles();
+		if (persistedUrlSubtitles && persistedUrlSubtitles.length > 0) {
+			urlSubtitles = persistedUrlSubtitles;
 		}
 		await loadEpisode();
 		await recoverOrCreateSession();
@@ -1098,6 +1171,58 @@
 						<AppIcon name="add" class="text-[18px]" />
 						Tambah source
 					</button>
+				</div>
+
+				<div class="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+					<div class="flex items-center justify-between gap-3">
+						<div>
+							<h4 class="text-sm font-black text-zinc-100">Subtitle URL</h4>
+							<p class="text-xs text-zinc-500">
+								Opsional, disimpan ke server R2 yang sama dengan master playlist.
+							</p>
+						</div>
+						<button
+							type="button"
+							onclick={addUrlSubtitle}
+							disabled={isUrlBusy}
+							class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+							aria-label="Tambah subtitle"
+						>
+							<AppIcon name="add" class="text-[18px]" />
+						</button>
+					</div>
+					{#each urlSubtitles as subtitle, idx (idx)}
+						<div class="grid gap-2 sm:grid-cols-[90px_160px_1fr_44px]">
+							<input
+								placeholder="id"
+								bind:value={subtitle.language}
+								disabled={isUrlBusy}
+								class="h-10 rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-mono disabled:cursor-not-allowed"
+							/>
+							<input
+								placeholder="Bahasa Indonesia"
+								bind:value={subtitle.label}
+								disabled={isUrlBusy}
+								class="h-10 rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm disabled:cursor-not-allowed"
+							/>
+							<input
+								type="url"
+								placeholder="https://.../subtitle.vtt"
+								bind:value={subtitle.sourceUrl}
+								disabled={isUrlBusy}
+								class="h-10 rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-mono disabled:cursor-not-allowed"
+							/>
+							<button
+								type="button"
+								onclick={() => removeUrlSubtitle(idx)}
+								disabled={isUrlBusy || urlSubtitles.length <= 1}
+								class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-30"
+								aria-label="Hapus subtitle"
+							>
+								<AppIcon name="delete" class="text-[18px]" />
+							</button>
+						</div>
+					{/each}
 				</div>
 
 				{#if status && status.mode === 'url' && Array.isArray(status.urlProgress) && status.urlProgress.length > 0}

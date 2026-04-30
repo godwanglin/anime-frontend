@@ -81,7 +81,6 @@
 		2160: '4K (2160p)'
 	};
 	const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
-	const SEGMENT_CONCURRENCY = 6;
 	const STORAGE_KEY = (episodeId: number) => `upload-session:${episodeId}`;
 	const URL_STORAGE_KEY = (episodeId: number) => `upload-url-session:${episodeId}`;
 
@@ -618,137 +617,6 @@
 		}
 	});
 
-	async function fetchPlaylistText(rawUrl: string): Promise<{ text: string; usedProxy: boolean }> {
-		// Try direct browser fetch first (fast path, no double bandwidth).
-		try {
-			const res = await fetch(rawUrl, { mode: 'cors' });
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const text = await res.text();
-			return { text, usedProxy: false };
-		} catch (clientErr) {
-			pushLog(`Direct fetch playlist gagal (${(clientErr as Error).message ?? clientErr}), fallback ke server proxy`);
-			const res = await auth.authFetch('/api/upload/url-fetch-text', {
-				method: 'POST',
-				body: JSON.stringify({ url: rawUrl })
-			});
-			const json = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(json?.message ?? 'Server proxy fetch gagal');
-			return { text: (json?.data?.text as string) ?? '', usedProxy: true };
-		}
-	}
-
-	async function uploadSegmentDirect(
-		uploadId: string,
-		resolution: number,
-		segmentIndex: number,
-		segUrl: string
-	): Promise<'direct' | 'proxy'> {
-		// Try client-side fetch then POST bytes. On CORS failure → server proxy fetches.
-		try {
-			const res = await fetch(segUrl, { mode: 'cors' });
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const buf = await res.arrayBuffer();
-			const form = new FormData();
-			form.append('resolution', String(resolution));
-			form.append('segmentIndex', String(segmentIndex));
-			form.append('segment', new Blob([buf], { type: 'video/mp2t' }), `seg_${segmentIndex}.ts`);
-			const upRes = await auth.authFetch(`/api/upload/${uploadId}/url-segment`, {
-				method: 'POST',
-				body: form
-			});
-			if (!upRes.ok) {
-				const json = await upRes.json().catch(() => ({}));
-				throw new Error(json?.message ?? `Upload segment ${segmentIndex} gagal`);
-			}
-			return 'direct';
-		} catch {
-			const proxyRes = await auth.authFetch(`/api/upload/${uploadId}/url-segment-proxy`, {
-				method: 'POST',
-				body: JSON.stringify({ resolution, segmentIndex, url: segUrl })
-			});
-			if (!proxyRes.ok) {
-				const json = await proxyRes.json().catch(() => ({}));
-				throw new Error(json?.message ?? `Server proxy segment ${segmentIndex} gagal`);
-			}
-			return 'proxy';
-		}
-	}
-
-	async function processSegmentsConcurrent(
-		uploadId: string,
-		resolution: number,
-		pending: Array<{ index: number; url: string }>
-	) {
-		let cursor = 0;
-		let directHits = 0;
-		let proxyHits = 0;
-
-		const workers = Array.from({ length: Math.min(SEGMENT_CONCURRENCY, pending.length) }, async () => {
-			while (true) {
-				if (abortUrlRequested) return;
-				const i = cursor++;
-				if (i >= pending.length) return;
-				const seg = pending[i];
-				let attempt = 0;
-				while (attempt < 3) {
-					try {
-						const which = await uploadSegmentDirect(uploadId, resolution, seg.index, seg.url);
-						if (which === 'direct') directHits++;
-						else proxyHits++;
-						break;
-					} catch (error) {
-						attempt++;
-						if (attempt >= 3) {
-							throw new Error(
-								`Segmen ${resolution}p#${seg.index} gagal setelah 3x: ${(error as Error).message ?? error}`
-							);
-						}
-						await new Promise((r) => setTimeout(r, 500 * attempt));
-					}
-				}
-			}
-		});
-
-		await Promise.all(workers);
-		pushLog(`Selesai upload segmen ${resolution}p — direct=${directHits}, proxy=${proxyHits}`);
-	}
-
-	async function processOneUrlSource(
-		uploadId: string,
-		source: UrlSourceInput
-	) {
-		pushLog(`[${source.resolution}p] Ambil playlist`);
-		const { text, usedProxy } = await fetchPlaylistText(source.url);
-		if (usedProxy) pushLog(`[${source.resolution}p] playlist via server proxy`);
-
-		const registerRes = await auth.authFetch(`/api/upload/${uploadId}/url-playlist`, {
-			method: 'POST',
-			body: JSON.stringify({
-				resolution: source.resolution,
-				raw: text,
-				baseUrl: source.url
-			})
-		});
-		const registerJson = await registerRes.json().catch(() => ({}));
-		if (!registerRes.ok) {
-			throw new Error(registerJson?.message ?? `Register playlist ${source.resolution}p gagal`);
-		}
-		const data = registerJson?.data as {
-			totalSegments: number;
-			segments: Array<{ index: number; url: string; durationSec: number }>;
-			completedIndexes: number[];
-		};
-
-		const completed = new Set<number>(data.completedIndexes ?? []);
-		const pending = data.segments.filter((s) => !completed.has(s.index));
-		pushLog(
-			`[${source.resolution}p] ${data.totalSegments} segmen total, ${pending.length} perlu diproses (${completed.size} sudah ada)`
-		);
-
-		if (pending.length === 0) return;
-		await processSegmentsConcurrent(uploadId, source.resolution, pending);
-	}
-
 	async function startUrlUpload() {
 		if (isUrlBusy) return;
 
@@ -797,32 +665,8 @@
 			adoptStatus(sessData);
 			openEventStream(sessData.uploadId);
 			persistSession(session, sessData);
-
-			for (const source of cleaned) {
-				if (abortUrlRequested) {
-					pushLog('Dibatalkan user');
-					break;
-				}
-				try {
-					await processOneUrlSource(sessData.uploadId, source);
-				} catch (error) {
-					const msg = error instanceof Error ? error.message : String(error);
-					pushLog(`ERR ${source.resolution}p: ${msg}`);
-					adminToast.error(`Gagal pada ${source.resolution}p: ${msg}`);
-					return;
-				}
-			}
-
-			if (abortUrlRequested) return;
-
-			pushLog('Semua segmen selesai, finalize...');
-			const finRes = await auth.authFetch(`/api/upload/${sessData.uploadId}/url-finalize`, {
-				method: 'POST'
-			});
-			const finJson = await finRes.json().catch(() => ({}));
-			if (!finRes.ok) throw new Error(finJson?.message ?? 'Finalize gagal');
-			pushLog(`Selesai. Master: ${finJson?.data?.masterUrl ?? '-'}`);
-			adminToast.success('Upload URL selesai, server R2 ter-set di episode');
+			pushLog(`URL upload masuk queue server: ${sessData.uploadId}`);
+			adminToast.success('Upload URL masuk queue server');
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : String(error);
 			adminToast.error(msg);
@@ -834,7 +678,7 @@
 
 	function abortUrlUpload() {
 		abortUrlRequested = true;
-		pushLog('Pembatalan diminta — menunggu request berjalan selesai');
+		pushLog('Job sudah jalan di server; tutup/reload halaman tidak menghentikan proses');
 	}
 
 	$effect(() => {
@@ -856,7 +700,9 @@
 		if (!isBusy) return;
 		const reason =
 			isUploading || isUrlBusy || status?.status === 'uploading'
-				? 'Upload masih berjalan — kalau pindah halaman, upload akan terputus.'
+				? status?.mode === 'url'
+					? 'Upload URL berjalan di server — kamu bisa pindah halaman dan lanjut pantau nanti.'
+					: 'Upload masih berjalan — kalau pindah halaman, upload akan terputus.'
 				: 'Encoding masih berjalan — kamu bisa pindah halaman, progress tetap jalan di server. Yakin pindah?';
 		const ok = window.confirm(`${reason}\n\nLanjut keluar dari halaman upload?`);
 		if (!ok) nav.cancel();
@@ -1208,8 +1054,8 @@
 					<h3 class="text-lg font-black">Upload via URL Playlist</h3>
 					<p class="text-sm text-zinc-500">
 						Tempel URL <span class="font-mono">.m3u8</span> per resolusi. Segmen akan
-						didownload di browser dulu, fallback ke server proxy kalau kena CORS. Tidak
-						ada re-encode — segmen langsung di-upload ke R2.
+						didownload oleh server lalu langsung di-upload ke R2. Tidak ada re-encode,
+						progress tetap aman walau halaman di-reload.
 					</p>
 				</div>
 
@@ -1330,7 +1176,7 @@
 							class="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<AppIcon name="link" class="text-[18px]" />
-							Mulai / Resume Upload URL
+							Mulai Upload URL
 						</button>
 					{/if}
 				</div>

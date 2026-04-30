@@ -132,6 +132,7 @@
 									<td class="px-3 py-3">{ep.title}</td>
 									<td class="px-3 py-3 text-zinc-500">{ep.sub}</td>
 									<td class="px-3 py-3 text-right">
+										<a href="/admin/episodes/{ep.id}/upload" class="mr-2 rounded-lg border border-emerald-800 px-2 py-1 text-emerald-300 hover:border-emerald-600 hover:bg-emerald-950/30">Upload</a>
 										<a href="/admin/episodes/{ep.id}" class="mr-2 rounded-lg border border-zinc-700 px-2 py-1">Edit</a>
 										<button type="button" onclick={() => (episodeToDelete = ep.id)} class="rounded-lg border border-red-900 px-2 py-1 text-red-400">Hapus</button>
 									</td>

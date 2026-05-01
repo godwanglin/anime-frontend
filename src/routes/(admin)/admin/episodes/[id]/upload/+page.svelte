@@ -1069,10 +1069,10 @@
 				label: s.label.trim(),
 				sourceUrl: s.sourceUrl.trim()
 			}))
-			.filter((s) => s.language || s.label || s.sourceUrl);
+			.filter((s) => s.sourceUrl);
 		for (const subtitle of subtitles) {
-			if (!subtitle.language || !subtitle.sourceUrl) {
-				adminToast.error('Subtitle wajib punya kode bahasa dan URL');
+			if (!subtitle.language) {
+				adminToast.error('Subtitle yang punya URL wajib punya kode bahasa');
 				return;
 			}
 			if (!/^https?:\/\//i.test(subtitle.sourceUrl)) {

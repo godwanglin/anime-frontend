@@ -1153,7 +1153,7 @@
 	.vp-settings-mobile-backdrop {
 		position: fixed;
 		inset: 0;
-		z-index: 49;
+		z-index: 80;
 		display: block;
 		border: 0;
 		background: rgba(0, 0, 0, 0.44);
@@ -1164,11 +1164,13 @@
 
 	.vp-settings-panel {
 		position: fixed;
-		right: max(10px, env(safe-area-inset-right));
+		left: 50%;
+		right: auto;
 		bottom: max(8px, env(safe-area-inset-bottom));
-		left: max(10px, env(safe-area-inset-left));
-		z-index: 50;
-		width: auto;
+		z-index: 90;
+		width: min(54vw, 380px);
+		min-width: min(240px, calc(100vw - 20px));
+		max-width: calc(100vw - 20px);
 		max-height: min(72vh, 420px);
 		overflow: hidden;
 		border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1177,6 +1179,7 @@
 		box-shadow: 0 -18px 52px rgba(0, 0, 0, 0.48);
 		backdrop-filter: blur(18px) saturate(150%);
 		-webkit-backdrop-filter: blur(18px) saturate(150%);
+		transform: translateX(-50%);
 		animation: vp-settings-sheet-in 0.18s ease-out;
 	}
 
@@ -1245,7 +1248,7 @@
 	.vp-container:fullscreen .vp-settings-mobile-backdrop {
 		position: fixed;
 		inset: 0;
-		z-index: 49;
+		z-index: 80;
 		display: block;
 		border: 0;
 		background: rgba(0, 0, 0, 0.44);
@@ -1257,11 +1260,13 @@
 	.vp-container.vp-fullscreen .vp-settings-panel,
 	.vp-container:fullscreen .vp-settings-panel {
 		position: fixed;
-		right: max(10px, env(safe-area-inset-right));
+		left: 50%;
+		right: auto;
 		bottom: max(8px, env(safe-area-inset-bottom));
-		left: max(10px, env(safe-area-inset-left));
-		z-index: 50;
-		width: auto;
+		z-index: 90;
+		width: min(54vw, 380px);
+		min-width: min(240px, calc(100vw - 20px));
+		max-width: calc(100vw - 20px);
 		max-height: min(72vh, 420px);
 		overflow: hidden;
 		border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1270,6 +1275,7 @@
 		box-shadow: 0 -18px 52px rgba(0, 0, 0, 0.48);
 		backdrop-filter: blur(18px) saturate(150%);
 		-webkit-backdrop-filter: blur(18px) saturate(150%);
+		transform: translateX(-50%);
 		animation: vp-settings-sheet-in 0.18s ease-out;
 	}
 
@@ -1295,12 +1301,12 @@
 
 @keyframes vp-settings-sheet-in {
 	from {
-		transform: translateY(18px);
+		transform: translate(-50%, 18px);
 		opacity: 0;
 	}
 
 	to {
-		transform: translateY(0);
+		transform: translate(-50%, 0);
 		opacity: 1;
 	}
 }

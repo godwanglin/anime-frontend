@@ -194,7 +194,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 		if (newKey !== previousSrcKey) {
 			previousSrcKey = newKey;
 			currentSrcIndex = 0;
-			videoEl?.pause();
+			playback.resetForSourceChange();
 			hls.destroyHls();
 			waveform.reset();
 			hls.setupHls(srcList[0], playbackCfg.persistProgress === false ? undefined : progress.load());
@@ -238,6 +238,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 	function onTimeUpdate() {
 		playback.onTimeUpdate();
 		subtitle.syncActiveCues();
+		skipIntro.onTimeUpdate();
 		if (playbackCfg.persistProgress !== false) {
 			progress.remember(playback.currentTime, playback.duration);
 		}

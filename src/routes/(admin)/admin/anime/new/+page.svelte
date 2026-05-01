@@ -17,6 +17,8 @@
 	let season = $state('');
 	let duration = $state('');
 	let totalEpisodes = $state<number | null>(null);
+	let skipIntroSeconds = $state<number | null>(null);
+	let skipOutroSeconds = $state<number | null>(null);
 	let thumbnail = $state('');
 	let bigCover = $state('');
 	let synopsis = $state('');
@@ -28,7 +30,7 @@
 		try {
 			const result = await adminApi<{ id: number }>('/anime', {
 				method: 'POST',
-				body: JSON.stringify({ title, slug, type, status, rating, network, studio, country, released, season, duration, totalEpisodes, thumbnail, bigCover, synopsis, genres })
+				body: JSON.stringify({ title, slug, type, status, rating, network, studio, country, released, season, duration, totalEpisodes, skipIntroSeconds, skipOutroSeconds, thumbnail, bigCover, synopsis, genres })
 			});
 			adminToast.success('Anime berhasil dibuat');
 			goto(`/admin/anime/${result.data.id}`);
@@ -64,6 +66,8 @@
 			<AdminFormInput label="Released" name="released" bind:value={released} />
 			<AdminFormInput label="Season" name="season" bind:value={season} />
 			<AdminFormInput label="Duration" name="duration" bind:value={duration} />
+			<AdminFormInput label="Skip intro mulai (detik)" name="skipIntroSeconds" type="number" bind:value={skipIntroSeconds} />
+			<AdminFormInput label="Skip outro mulai (detik)" name="skipOutroSeconds" type="number" bind:value={skipOutroSeconds} />
 		</div>
 		<div class="mt-4">
 			<AdminTagInput label="Genre" bind:tags={genres} />

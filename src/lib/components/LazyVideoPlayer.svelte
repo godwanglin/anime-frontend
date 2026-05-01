@@ -16,6 +16,7 @@
 		config?: PlayerConfig;
 		prevHref?: string;
 		nextHref?: string;
+		autoNext?: boolean;
 		episodeList?: PlayerEpisodeList;
 	};
 
@@ -29,6 +30,7 @@
 		config = {},
 		prevHref,
 		nextHref,
+		autoNext = true,
 		episodeList
 	}: Props = $props();
 
@@ -44,5 +46,6 @@
 	{config}
 	{prevHref}
 	{nextHref}
+	{autoNext}
 	{episodeList}
 />

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
 	import FullscreenTopBar from './FullscreenTopBar.svelte';
@@ -8,7 +9,38 @@
 
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
 
-	let { vp, title }: { vp: VideoPlayerState; title: string } = $props();
+	let {
+		vp,
+		title,
+		nextHref,
+		autoNext = true
+	}: { vp: VideoPlayerState; title: string; nextHref?: string; autoNext?: boolean } = $props();
+
+	let nextEpisodeNavigating = false;
+	const nextEpisodeThreshold = 20;
+	const nextEpisodeRemaining = $derived(
+		vp.duration > 0 ? Math.max(0, Math.ceil(vp.duration - vp.currentTime)) : 0
+	);
+	const showNextEpisodeOverlay = $derived(
+		!!nextHref &&
+			!vp.controlsLocked &&
+			vp.duration > 0 &&
+			nextEpisodeRemaining <= nextEpisodeThreshold
+	);
+
+	function openNextEpisode() {
+		if (!nextHref || nextEpisodeNavigating) return;
+		nextEpisodeNavigating = true;
+		vp.pause();
+		window.setTimeout(() => {
+			void goto(nextHref, { replaceState: true });
+		}, 160);
+	}
+
+	$effect(() => {
+		if (!autoNext || !showNextEpisodeOverlay || !vp.isPlaying || nextEpisodeRemaining > 0) return;
+		openNextEpisode();
+	});
 </script>
 
 <FullscreenTopBar {vp} {title} />
@@ -21,6 +53,26 @@
 		<AppIcon name="schedule" />
 		<span>{vp.sleepTimerLabel}</span>
 		<b>{vp.sleepTimerCountdown}</b>
+	</div>
+{/if}
+
+{#if showNextEpisodeOverlay}
+	<div class="vp-next-episode-overlay">
+		<button
+			type="button"
+			class="vp-next-episode-btn"
+			class:vp-next-episode-btn-loading={nextEpisodeNavigating}
+			disabled={nextEpisodeNavigating}
+			onclick={openNextEpisode}
+		>
+			<span class="vp-next-episode-icon">
+				<AppIcon name="skip_next" />
+			</span>
+			<span class="vp-next-episode-copy">
+				<small>{nextEpisodeNavigating ? 'Menyiapkan episode...' : `Berikutnya dalam ${nextEpisodeRemaining}s`}</small>
+				<b>{nextEpisodeNavigating ? 'Memuat' : 'Episode Berikutnya'}</b>
+			</span>
+		</button>
 	</div>
 {/if}
 

@@ -21,6 +21,7 @@
 		status?: string;
 		views?: number;
 		skipIntroSeconds?: number | null;
+		skipOutroSeconds?: number | null;
 		createdAt?: string;
 		updatedAt?: string;
 		_count?: { servers: number };
@@ -43,6 +44,7 @@
 	let date = $state('');
 	let status = $state('published');
 	let skipIntroSeconds = $state<number | null>(null);
+	let skipOutroSeconds = $state<number | null>(null);
 
 	const url = $derived(pageState.url);
 	const currentPage = $derived(Number(url.searchParams.get('page') ?? 1));
@@ -168,7 +170,17 @@
 		try {
 			await adminApi('/episodes', {
 				method: 'POST',
-				body: JSON.stringify({ animeId, slug, number, title, sub, date, status, skipIntroSeconds })
+				body: JSON.stringify({
+					animeId,
+					slug,
+					number,
+					title,
+					sub,
+					date,
+					status,
+					skipIntroSeconds,
+					skipOutroSeconds
+				})
 			});
 			adminToast.success('Episode dibuat');
 			showCreate = false;
@@ -238,6 +250,12 @@
 				name="skipIntroSeconds"
 				type="number"
 				bind:value={skipIntroSeconds}
+			/>
+			<AdminFormInput
+				label="Skip outro mulai (detik)"
+				name="skipOutroSeconds"
+				type="number"
+				bind:value={skipOutroSeconds}
 			/>
 			<button class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white md:col-span-3"
 				>Simpan Episode</button

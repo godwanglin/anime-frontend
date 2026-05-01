@@ -10,17 +10,30 @@ interface SkipIntroContext {
 
 export function createSkipIntroManager(ctx: SkipIntroContext) {
 	let didAutoSkip = $state(false);
+	let didAutoSkipOutro = $state(false);
 	let toastVisible = $state(false);
 	let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 	const seconds = $derived(Number(ctx.getConfig()?.seconds ?? 0));
-	const enabled = $derived(ctx.getConfig()?.enabled === true && seconds > 0);
+	const outroSeconds = $derived(Number(ctx.getConfig()?.outroSeconds ?? 0));
+	const hasIntro = $derived(seconds > 0);
+	const hasOutro = $derived(outroSeconds > 0);
+	const autoSkipEnabled = $derived(ctx.getConfig()?.enabled === true && ctx.getConfig()?.autoSkip !== false);
 	const canSkip = $derived(
-		enabled &&
+		hasIntro &&
 			ctx.getConfig()?.showButton !== false &&
+			ctx.getConfig()?.enabled !== true &&
 			isTargetValid() &&
 			ctx.getCurrentTime() < seconds &&
 			ctx.getCurrentTime() <= (ctx.getConfig()?.buttonUntil ?? Math.min(seconds, 90))
+	);
+	const canSkipOutro = $derived(
+		hasOutro &&
+			ctx.getConfig()?.showButton !== false &&
+			ctx.getConfig()?.enabled !== true &&
+			isOutroTargetValid() &&
+			ctx.getCurrentTime() >= Math.max(0, outroSeconds - (ctx.getConfig()?.outroButtonLead ?? 30)) &&
+			ctx.getCurrentTime() < outroSeconds
 	);
 
 	function isTargetValid() {
@@ -30,8 +43,21 @@ export function createSkipIntroManager(ctx: SkipIntroContext) {
 		);
 	}
 
+	function isOutroTargetValid() {
+		const duration = ctx.getDuration();
+		return (
+			Number.isFinite(outroSeconds) &&
+			outroSeconds > 0 &&
+			Number.isFinite(duration) &&
+			duration > 0 &&
+			outroSeconds < duration
+		);
+	}
+
 	function onLoadedMetadata() {
-		if (!enabled || didAutoSkip || ctx.getConfig()?.autoSkip === false) return;
+		didAutoSkip = false;
+		didAutoSkipOutro = false;
+		if (!autoSkipEnabled || !hasIntro || didAutoSkip) return;
 		didAutoSkip = true;
 
 		window.setTimeout(() => {
@@ -41,6 +67,13 @@ export function createSkipIntroManager(ctx: SkipIntroContext) {
 		}, 250);
 	}
 
+	function onTimeUpdate() {
+		if (!autoSkipEnabled || !hasOutro || didAutoSkipOutro) return;
+		if (!isOutroTargetValid() || ctx.getCurrentTime() < outroSeconds) return;
+		didAutoSkipOutro = true;
+		skipOutro();
+	}
+
 	function skip() {
 		const video = ctx.getVideoEl();
 		if (!video || !isTargetValid()) return;
@@ -48,9 +81,26 @@ export function createSkipIntroManager(ctx: SkipIntroContext) {
 		showToast();
 	}
 
+	function skipOutro() {
+		const video = ctx.getVideoEl();
+		const duration = ctx.getDuration();
+		if (!video || !isOutroTargetValid()) return;
+		video.currentTime = Math.max(0, duration - 0.05);
+		showOutroToast();
+	}
+
 	function showToast() {
 		toastVisible = true;
 		ctx.notify(`Intro dilewati ke ${Math.round(seconds)} detik`);
+		if (toastTimer) clearTimeout(toastTimer);
+		toastTimer = setTimeout(() => {
+			toastVisible = false;
+		}, 2600);
+	}
+
+	function showOutroToast() {
+		toastVisible = true;
+		ctx.notify("Outro dilewati");
 		if (toastTimer) clearTimeout(toastTimer);
 		toastTimer = setTimeout(() => {
 			toastVisible = false;
@@ -63,13 +113,21 @@ export function createSkipIntroManager(ctx: SkipIntroContext) {
 
 	return {
 		onLoadedMetadata,
+		onTimeUpdate,
 		skip,
+		skipOutro,
 		destroy,
 		get seconds() {
 			return seconds;
 		},
+		get outroSeconds() {
+			return outroSeconds;
+		},
 		get canSkip() {
 			return canSkip;
+		},
+		get canSkipOutro() {
+			return canSkipOutro;
 		},
 		get toastVisible() {
 			return toastVisible;

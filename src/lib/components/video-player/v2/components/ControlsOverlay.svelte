@@ -27,6 +27,25 @@
 				(episodeList.seasons?.some((s) => s.episodes.length > 0) ?? false))
 	);
 	const showEpisodeButton = $derived(vp.isFullscreen && hasEpisodeList);
+	const subtitleQuickLabel = $derived(getSubtitleQuickLabel());
+
+	function getSubtitleQuickLabel() {
+		if (vp.activeSubtitleIndex === -1) return 'OFF';
+		const track = vp.allSubtitles[vp.activeSubtitleIndex];
+		const label = (track?.lang || track?.label || 'SUB').trim();
+		return label.slice(0, 3).toUpperCase();
+	}
+
+	function cycleSubtitleQuickSwitch() {
+		if (vp.allSubtitles.length === 0) return;
+		const nextIndex =
+			vp.activeSubtitleIndex === -1
+				? 0
+				: vp.activeSubtitleIndex >= vp.allSubtitles.length - 1
+					? -1
+					: vp.activeSubtitleIndex + 1;
+		vp.applySubtitle(nextIndex);
+	}
 </script>
 
 {#if vp.controlsCfg.enabled !== false}
@@ -169,6 +188,43 @@
 				</div>
 
 				<div class="vp-right-controls">
+					{#if vp.isFullscreen && vp.qualityLevels.length > 0 && vp.controlsCfg.showSettings !== false}
+						<button
+							type="button"
+							class="vp-quality-trigger"
+							class:vp-quality-trigger-active={vp.showSettings && vp.settingsSubPanel === 'quality'}
+							onclick={(e) => {
+								e.stopPropagation();
+								vp.openShortcutPanel('quality');
+							}}
+							aria-label="Pilih resolusi"
+							aria-expanded={vp.showSettings && vp.settingsSubPanel === 'quality'}
+						>
+							<AppIcon name="hd" />
+							{vp.currentResolutionLabel()}
+						</button>
+					{/if}
+
+					{#if vp.isFullscreen && vp.allSubtitles.length > 0}
+						<button
+							type="button"
+							class="vp-subtitle-trigger"
+							class:vp-subtitle-trigger-active={vp.activeSubtitleIndex !== -1}
+							onclick={(e) => {
+								e.stopPropagation();
+								cycleSubtitleQuickSwitch();
+							}}
+							aria-label="Ganti subtitle"
+						>
+							<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+								<path
+									d="M4 5h16c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2zm0 2v10h16V7H4zm2 4c0-1.1.9-2 2-2h3v2H8v2h3v2H8c-1.1 0-2-.9-2-2v-2zm7 0c0-1.1.9-2 2-2h3v2h-3v2h3v2h-3c-1.1 0-2-.9-2-2v-2z"
+								/>
+							</svg>
+							{subtitleQuickLabel}
+						</button>
+					{/if}
+
 					{#if showEpisodeButton}
 						<button
 							type="button"

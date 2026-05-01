@@ -33,6 +33,7 @@
 		preferExternalSubtitles = false,
 		prevHref,
 		nextHref,
+		autoNext = true,
 		episodeList,
 		onStateChange = () => null
 	}: {
@@ -52,6 +53,7 @@
 		preferExternalSubtitles?: boolean;
 		prevHref?: string;
 		nextHref?: string;
+		autoNext?: boolean;
 		episodeList?: PlayerEpisodeList;
 		onStateChange?: (state: {
 			currentTime: number;
@@ -247,7 +249,7 @@
 			externalLines={externalSubtitleLines}
 			{preferExternalSubtitles}
 		/>
-		<PlayerOverlays {vp} {title} />
+		<PlayerOverlays {vp} {title} {nextHref} {autoNext} />
 		<CenterControls {vp} {prevHref} {nextHref} />
 		<ControlsOverlay
 			{vp}

@@ -92,9 +92,11 @@ export interface FullscreenConfig {
 export interface SkipIntroConfig {
 	enabled?: boolean;
 	seconds?: number | null;
+	outroSeconds?: number | null;
 	autoSkip?: boolean;
 	showButton?: boolean;
 	buttonUntil?: number;
+	outroButtonLead?: number;
 }
 
 export interface PlayerConfig {

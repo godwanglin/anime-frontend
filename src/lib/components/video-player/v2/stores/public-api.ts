@@ -18,6 +18,7 @@ export function createPublicApi(ctx: any) {
 		updateOptions: ctx.updateOptions,
 		init: ctx.init,
 		destroy: ctx.destroy,
+		resetForSourceChange: playback.resetForSourceChange,
 		setVideoEl: ctx.setVideoEl,
 		setContainerEl: ctx.setContainerEl,
 		setSeekbarEl: ctx.setSeekbarEl,
@@ -38,6 +39,7 @@ export function createPublicApi(ctx: any) {
 		toggleSleepTimer: playback.toggleSleepTimer,
 		setQuality: hls.setQuality,
 		currentQualityLabel: hls.currentQualityLabel,
+		currentResolutionLabel: hls.currentResolutionLabel,
 		applySubtitle: subtitle.applySubtitle,
 		preferredSubtitleIndex: subtitle.preferredSubtitleIndex,
 		loadThumbnails: thumbnail.loadThumbnails,
@@ -46,6 +48,8 @@ export function createPublicApi(ctx: any) {
 		exitFullscreen: playback.exitFullscreen,
 		toggleControlsLock: playback.toggleControlsLock,
 		toggleSettings: settings.toggleSettings,
+		openShortcutPanel: settings.openShortcutPanel,
+		finishSettingsSelection: settings.finishSelection,
 		toggleStats: ctx.toggleStats,
 		closeAllMenus: settings.closeAllMenus,
 		onMouseMove: playback.onMouseMove,
@@ -160,6 +164,9 @@ export function createPublicApi(ctx: any) {
 		get currentQuality() {
 			return hls.currentQuality;
 		},
+		get activeQualityHeight() {
+			return hls.activeQualityHeight;
+		},
 		get isQualitySwitching() {
 			return hls.isQualitySwitching;
 		},
@@ -235,10 +242,17 @@ export function createPublicApi(ctx: any) {
 		get skipIntroVisible() {
 			return skipIntro.canSkip;
 		},
+		get skipOutroSeconds() {
+			return skipIntro.outroSeconds;
+		},
+		get skipOutroVisible() {
+			return skipIntro.canSkipOutro;
+		},
 		get skipIntroToastVisible() {
 			return skipIntro.toastVisible;
 		},
 		skipIntro: skipIntro.skip,
+		skipOutro: skipIntro.skipOutro,
 		removeNotification: notifications.remove,
 		get notifications() {
 			return notifications.notifications;

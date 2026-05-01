@@ -114,6 +114,19 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		videoEl.playbackRate = playbackRate;
 	}
 
+	function resetForSourceChange() {
+		const videoEl = ctx.getVideoEl();
+		isPlaying = false;
+		currentTime = 0;
+		duration = 0;
+		buffered = 0;
+		isBuffering = true;
+		showControls = true;
+		if (!videoEl) return;
+		videoEl.pause();
+		videoEl.currentTime = 0;
+	}
+
 	function play() {
 		ctx
 			.getVideoEl()
@@ -288,6 +301,7 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 	return {
 		loadPersistedState,
 		syncVideoPrefs,
+		resetForSourceChange,
 		play,
 		pause,
 		togglePlay,

@@ -17,6 +17,7 @@ interface HlsContext {
 export function createHlsManager(ctx: HlsContext) {
 	let qualityLevels = $state<QualityLevel[]>([]);
 	let currentQuality = $state(-1);
+	let activeQualityHeight = $state(0);
 	let isQualitySwitching = $state(false);
 	let errorMessage = $state('');
 
@@ -123,6 +124,7 @@ export function createHlsManager(ctx: HlsContext) {
 		destroyHls();
 		errorMessage = '';
 		qualityLevels = [];
+		activeQualityHeight = 0;
 		ctx.resetHlsSubtitleMode();
 		await ctx.buildSubtitleList();
 
@@ -181,6 +183,8 @@ export function createHlsManager(ctx: HlsContext) {
 						}
 					});
 					qualityLevels = Array.from(seen.values()).sort((a, b) => b.height - a.height);
+					const currentLevel = hls.currentLevel >= 0 ? hls.currentLevel : hls.loadLevel;
+					activeQualityHeight = hls.levels?.[currentLevel]?.height ?? qualityLevels[0]?.height ?? 0;
 				}, 0);
 
 				if (currentQuality !== -1 && currentQuality < data.levels.length) {
@@ -205,6 +209,7 @@ export function createHlsManager(ctx: HlsContext) {
 
 		hls.on(HlsConstructor.Events.LEVEL_SWITCHING, (_: unknown, data: { level: number }) => {
 			const height = hls.levels?.[data.level]?.height ?? 0;
+			activeQualityHeight = height || activeQualityHeight;
 			if (!height || height === lastNotifiedHeight) return;
 			startQualitySwitch();
 		});
@@ -213,6 +218,7 @@ export function createHlsManager(ctx: HlsContext) {
 			finishQualitySwitch();
 			const level = hls.levels?.[data.level];
 			const height = level?.height ?? 0;
+			activeQualityHeight = height || activeQualityHeight;
 			const video = ctx.getVideoEl();
 			if (!height || height === lastNotifiedHeight || (video?.currentTime ?? 0) < 1) return;
 			lastNotifiedHeight = height;
@@ -254,7 +260,12 @@ export function createHlsManager(ctx: HlsContext) {
 	function currentQualityLabel(): string {
 		if (currentQuality === -1) return 'Auto';
 		const q = qualityLevels.find((level) => level.level === currentQuality);
-		return q ? `${q.height}p` : 'Auto';
+		return q ? `${q.height}P` : 'Auto';
+	}
+
+	function currentResolutionLabel(): string {
+		if (currentQuality === -1) return activeQualityHeight ? `AUTO ${activeQualityHeight}P` : 'AUTO';
+		return currentQualityLabel();
 	}
 
 	return {
@@ -263,6 +274,7 @@ export function createHlsManager(ctx: HlsContext) {
 		destroyHls,
 		setQuality,
 		currentQualityLabel,
+		currentResolutionLabel,
 		get hlsInstance() {
 			return hlsInstance;
 		},
@@ -271,6 +283,9 @@ export function createHlsManager(ctx: HlsContext) {
 		},
 		get currentQuality() {
 			return currentQuality;
+		},
+		get activeQualityHeight() {
+			return activeQualityHeight;
 		},
 		get isQualitySwitching() {
 			return isQualitySwitching;

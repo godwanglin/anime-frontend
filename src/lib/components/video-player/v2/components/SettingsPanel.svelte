@@ -183,7 +183,7 @@
 							class:vp-settings-item-active={vp.currentQuality === -1}
 							onclick={() => {
 								vp.setQuality(-1);
-								vp.settingsSubPanel = null;
+								vp.finishSettingsSelection();
 							}}
 						>
 							{@render Check(vp.currentQuality === -1)}
@@ -195,7 +195,7 @@
 								class:vp-settings-item-active={vp.currentQuality === q.level}
 								onclick={() => {
 									vp.setQuality(q.level);
-									vp.settingsSubPanel = null;
+									vp.finishSettingsSelection();
 								}}
 							>
 								{@render Check(vp.currentQuality === q.level)}

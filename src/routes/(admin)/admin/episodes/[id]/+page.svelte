@@ -16,6 +16,7 @@
 	let date = $state('');
 	let status = $state('published');
 	let skipIntroSeconds = $state<number | null>(null);
+	let skipOutroSeconds = $state<number | null>(null);
 	let label = $state('');
 	let value = $state('');
 	let deleteServerId = $state<number | null>(null);
@@ -30,15 +31,16 @@
 			date = episode.date ?? '';
 			status = episode.status ?? 'published';
 			skipIntroSeconds = episode.skipIntroSeconds ?? null;
+			skipOutroSeconds = episode.skipOutroSeconds ?? null;
 		}
 		servers = (await adminApi<any[]>(`/episodes/${id}/servers`)).data;
 	}
 
 	async function save() {
-		await adminApi(`/episodes/${id}`, {
-			method: 'PUT',
-			body: JSON.stringify({ number, title, sub, date, status, skipIntroSeconds })
-		});
+	await adminApi(`/episodes/${id}`, {
+		method: 'PUT',
+		body: JSON.stringify({ number, title, sub, date, status, skipIntroSeconds, skipOutroSeconds })
+	});
 		adminToast.success('Episode disimpan');
 		await load();
 	}
@@ -117,6 +119,12 @@
 				name="skipIntroSeconds"
 				type="number"
 				bind:value={skipIntroSeconds}
+			/>
+			<AdminFormInput
+				label="Skip outro mulai (detik)"
+				name="skipOutroSeconds"
+				type="number"
+				bind:value={skipOutroSeconds}
 			/>
 		</div>
 		<button class="mt-4 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white"

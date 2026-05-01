@@ -6,8 +6,10 @@ export function createSettingsManager() {
 	let showSubtitleMenu = $state(false);
 	let showSettings = $state(false);
 	let settingsSubPanel = $state<SettingsSubPanel>(null);
+	let closeOnSelect = $state(false);
 
 	function toggleSettings(sub: SettingsSubPanel = null) {
+		closeOnSelect = false;
 		if (sub === null) {
 			showSettings = !showSettings;
 			if (!showSettings) settingsSubPanel = null;
@@ -17,9 +19,25 @@ export function createSettingsManager() {
 		}
 	}
 
+	function openShortcutPanel(sub: SettingsSubPanel) {
+		showSettings = true;
+		settingsSubPanel = sub;
+		closeOnSelect = true;
+	}
+
+	function finishSelection() {
+		if (closeOnSelect) {
+			closeAllMenus();
+			return;
+		}
+
+		settingsSubPanel = null;
+	}
+
 	function closeAllMenus() {
 		showSettings = false;
 		settingsSubPanel = null;
+		closeOnSelect = false;
 		showRateMenu = false;
 		showQualityMenu = false;
 		showSubtitleMenu = false;
@@ -38,6 +56,8 @@ export function createSettingsManager() {
 
 	return {
 		toggleSettings,
+		openShortcutPanel,
+		finishSelection,
 		closeAllMenus,
 		onDocClick,
 		get showSettings() {

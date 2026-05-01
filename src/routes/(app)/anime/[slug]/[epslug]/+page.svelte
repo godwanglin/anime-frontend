@@ -14,6 +14,7 @@
 	import { extractEpisodeSubtitles, groupSubtitlesForPlayer } from '$lib/subtitle-studio';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
+	import { notifications } from '$lib/stores/notifications.svelte';
 	import { preference } from '$lib/stores/preference.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
 	import type { PageData } from './$types';
@@ -420,7 +421,8 @@
 					description: reportDescription,
 					contact: reportContact,
 					pageUrl: location.href,
-					serverLabel: streamSources[0]?.label ?? null
+					serverLabel: streamSources[0]?.label ?? null,
+					deviceId: notifications.deviceId
 				})
 			});
 			const payload = await response.json().catch(() => null);

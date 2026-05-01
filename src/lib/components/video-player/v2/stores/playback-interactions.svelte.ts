@@ -30,6 +30,7 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 	let pendingSurfaceTap: 'left' | 'center' | 'right' | null = null;
 	let centerClickTimer: ReturnType<typeof setTimeout> | null = null;
 	let centerClickCount = 0;
+	let controlsLocked = $state(false);
 	let suppressClickTimer: ReturnType<typeof setTimeout> | null = null;
 	let suppressNextClick = false;
 	let suppressMouseActivityUntil = 0;
@@ -73,10 +74,12 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 	const skipSeconds = () => ctx.getPlaybackConfig()?.skipSeconds ?? 10;
 
 	function skipBackward() {
+		if (controlsLocked) return;
 		ctx.seek(ctx.getCurrentTime() - skipSeconds());
 	}
 
 	function skipForward() {
+		if (controlsLocked) return;
 		ctx.seek(ctx.getCurrentTime() + skipSeconds());
 	}
 
@@ -107,12 +110,18 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 		if (!document.fullscreenElement) {
 			containerEl.requestFullscreen().then(lockLandscapeOrientation).catch(() => {});
 		} else {
-			unlockScreenOrientation();
-			document.exitFullscreen().catch(() => {});
+			exitFullscreen();
 		}
 	}
 
+	function exitFullscreen() {
+		if (!document.fullscreenElement) return;
+		unlockScreenOrientation();
+		document.exitFullscreen().catch(() => {});
+	}
+
 	function handleTap(side: 'left' | 'right') {
+		if (controlsLocked) return;
 		if (tapTimer) clearTimeout(tapTimer);
 		if (tapSide !== side) {
 			tapAccumulator = skipSeconds();
@@ -147,6 +156,36 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 		if (!controlsTimer) return;
 		clearTimeout(controlsTimer);
 		controlsTimer = null;
+	}
+
+	function clearTapState() {
+		if (tapTimer) clearTimeout(tapTimer);
+		tapTimer = null;
+		tapSide = null;
+		tapAccumulator = 0;
+		tapToastVisible = false;
+		clearSideTapTimer();
+		clearSurfaceTapTimer();
+		clearCenterClickTimer();
+	}
+
+	function toggleControlsLock() {
+		controlsLocked = !controlsLocked;
+		pointerStart = null;
+		activeSeekPointerId = null;
+		volumeGestureVisible = false;
+		brightnessGestureVisible = false;
+		clearVolumeGestureTimer();
+		clearBrightnessGestureTimer();
+		clearTapState();
+
+		if (controlsLocked) {
+			controlsHeld = false;
+			resetControlsTimer();
+			return;
+		}
+
+		resetControlsTimer();
 	}
 
 	function clearVolumeGestureTimer() {
@@ -211,6 +250,7 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 	}
 
 	function handleSideTapCandidate(side: 'left' | 'right') {
+		if (controlsLocked) return;
 		if (tapToastVisible && tapSide === side) {
 			handleTap(side);
 			return;
@@ -269,6 +309,7 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 
 	function shouldHideVisibleControls(pointerType?: string) {
 		return (
+			!controlsLocked &&
 			pointerType !== 'mouse' &&
 			ctx.getControlsVisible() &&
 			ctx.getIsPlaying() &&
@@ -308,6 +349,11 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 	}
 
 	function scheduleSurfaceTap(clientX: number, surfaceEl: HTMLElement) {
+		if (controlsLocked) {
+			toggleControlsFromSingleTap();
+			return;
+		}
+
 		const side = getSurfaceTapSide(clientX, surfaceEl);
 
 		if (
@@ -336,6 +382,11 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 		const rect = surfaceEl.getBoundingClientRect();
 		if (rect.width <= 0) return;
 		const ratio = (clientX - rect.left) / rect.width;
+
+		if (controlsLocked) {
+			toggleControlsFromSingleTap();
+			return;
+		}
 
 		if (shouldHideVisibleControls(pointerType)) {
 			if (ratio < 0.3) handleSideTapCandidate('left');
@@ -387,6 +438,7 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 	function onSurfacePointerMove(e: PointerEvent) {
 		if (!pointerStart || pointerStart.id !== e.pointerId) return;
 		if (!e.isPrimary || e.pointerType === 'mouse') return;
+		if (controlsLocked) return;
 
 		const dx = e.clientX - pointerStart.x;
 		const dy = e.clientY - pointerStart.y;
@@ -522,6 +574,7 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 	}
 
 	function onSeekbarPointerDown(e: PointerEvent) {
+		if (controlsLocked) return;
 		if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
 		activeSeekPointerId = e.pointerId;
 		(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -552,6 +605,7 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 	}
 
 	function onSeekbarInput() {
+		if (controlsLocked) return;
 		resetControlsTimer();
 	}
 
@@ -582,17 +636,24 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 			ctx.togglePlay();
 		} else if (e.key === 'ArrowRight') {
 			e.preventDefault();
+			if (controlsLocked) return;
 			skipForward();
 		} else if (e.key === 'ArrowLeft') {
 			e.preventDefault();
+			if (controlsLocked) return;
 			skipBackward();
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault();
+			if (controlsLocked) return;
 			ctx.setVolume(ctx.getVolume() + 0.1);
 		} else if (e.key === 'ArrowDown') {
 			e.preventDefault();
+			if (controlsLocked) return;
 			ctx.setVolume(ctx.getVolume() - 0.1);
-		} else if (e.key === 'm') ctx.toggleMute();
+		} else if (e.key === 'm') {
+			if (controlsLocked) return;
+			ctx.toggleMute();
+		}
 		else if (e.key === 'f') toggleFullscreen();
 	}
 
@@ -609,6 +670,7 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 		brightnessGestureVisible = false;
 		suppressMouseActivityUntil = 0;
 		controlsHeld = false;
+		controlsLocked = false;
 		activeSeekPointerId = null;
 		pointerStart = null;
 		unlockScreenOrientation();
@@ -618,6 +680,8 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 		skipBackward,
 		skipForward,
 		toggleFullscreen,
+		exitFullscreen,
+		toggleControlsLock,
 		handleTap,
 		onVideoClick,
 		onSurfaceClickCapture,
@@ -636,6 +700,9 @@ export function createPlaybackInteractions(ctx: InteractionContext) {
 		destroy,
 		get isFullscreen() {
 			return isFullscreen;
+		},
+		get controlsLocked() {
+			return controlsLocked;
 		},
 		get tapSide() {
 			return tapSide;

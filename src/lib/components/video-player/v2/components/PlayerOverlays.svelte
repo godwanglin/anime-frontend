@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppIcon from '$lib/components/AppIcon.svelte';
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
 	import FullscreenTopBar from './FullscreenTopBar.svelte';
 	import NotificationOverlay from './NotificationOverlay.svelte';
@@ -14,6 +15,14 @@
 <StatsOverlay {vp} />
 <NotificationOverlay {vp} />
 <SkipIntroOverlay {vp} />
+
+{#if vp.sleepTimerActive && (vp.showControls || !vp.isPlaying || vp.showSettings)}
+	<div class="vp-sleep-timer-badge" aria-label="Timer tidur aktif">
+		<AppIcon name="schedule" />
+		<span>{vp.sleepTimerLabel}</span>
+		<b>{vp.sleepTimerCountdown}</b>
+	</div>
+{/if}
 
 {#if vp.isQualitySwitching && !vp.errorMessage}
 	<div class="vp-quality-switch" aria-hidden="true"></div>

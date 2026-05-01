@@ -122,6 +122,30 @@
 						{vp.statsVisible ? 'On' : 'Off'}
 					</span>
 				</button>
+
+				<button class="vp-settings-row" onclick={() => vp.toggleSettings('sleep')}>
+					<span class="vp-settings-row-label">
+						<svg
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							class="vp-settings-row-icon"
+							aria-hidden="true"
+							><path
+								d="M12 2a10 10 0 1 0 10 10h-2a8 8 0 1 1-8-8V2zm1 5h-2v6l5 3 .95-1.64L13 12.01V7z"
+							/></svg
+						>
+						Timer tidur
+					</span>
+					<span class="vp-settings-row-value">
+						{vp.sleepTimerActive ? vp.sleepTimerCountdown : 'Off'}
+						<svg
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							class="vp-settings-row-chevron"
+							aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" /></svg
+						>
+					</span>
+				</button>
 			</div>
 		{:else}
 			<div class="vp-settings-subpanel">
@@ -133,7 +157,9 @@
 						? 'Speed'
 						: vp.settingsSubPanel === 'quality'
 							? 'Quality'
-							: 'Subtitle'}
+							: vp.settingsSubPanel === 'subtitle'
+								? 'Subtitle'
+								: 'Timer tidur'}
 				</button>
 
 				<div class="vp-settings-list">
@@ -202,6 +228,32 @@
 							>
 								{@render Check(vp.activeSubtitleIndex === i)}
 								{track.label}
+							</button>
+						{/each}
+					{:else if vp.settingsSubPanel === 'sleep'}
+						{#if vp.sleepTimerActive}
+							<button
+								class="vp-settings-item"
+								onclick={() => {
+									vp.cancelSleepTimer();
+									vp.settingsSubPanel = null;
+								}}
+							>
+								{@render Check(false)}
+								Off
+							</button>
+						{/if}
+						{#each vp.sleepTimerOptions as item}
+							<button
+								class="vp-settings-item"
+								class:vp-settings-item-active={vp.sleepTimerOption === item.value}
+								onclick={() => {
+									vp.toggleSleepTimer(item.value);
+									vp.settingsSubPanel = null;
+								}}
+							>
+								{@render Check(vp.sleepTimerOption === item.value)}
+								{item.label}
 							</button>
 						{/each}
 					{/if}

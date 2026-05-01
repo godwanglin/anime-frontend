@@ -314,18 +314,24 @@
 								style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
 							>
 								<div class="relative h-20 w-32 shrink-0 overflow-hidden rounded-xl bg-zinc-800">
-									<OptimizedImage
-										src={item.thumbnail}
-										alt={item.animeTitle}
-										className="h-full w-full"
-										imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
-										loading="lazy"
-										fetchpriority="low"
-										sizes="128px"
-										data-sync-asset-context="episode"
-										data-sync-asset-id={String(item.id)}
-										data-sync-asset-field="thumbnail"
-									/>
+									{#if item.thumbnail}
+										<OptimizedImage
+											src={item.thumbnail}
+											alt={item.animeTitle}
+											className="h-full w-full"
+											imageClass="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.04]"
+											loading="lazy"
+											fetchpriority="low"
+											sizes="128px"
+											data-sync-asset-context="episode"
+											data-sync-asset-id={String(item.id)}
+											data-sync-asset-field="thumbnail"
+										/>
+									{:else}
+										<div class="flex h-full w-full items-center justify-center bg-zinc-900 text-zinc-500">
+											<AppIcon name="videocam_off" class="text-2xl" />
+										</div>
+									{/if}
 									<div class="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent"></div>
 									<span
 										class="absolute bottom-1.5 left-1.5 rounded-lg bg-black/65 px-2 py-0.5 text-[9px] font-black text-white ring-1 ring-white/10"

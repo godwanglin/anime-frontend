@@ -30,6 +30,22 @@
 </script>
 
 {#if vp.controlsCfg.enabled !== false}
+	<button
+		type="button"
+		class="vp-btn vp-lock-float"
+		class:vp-lock-float-visible={vp.showControls || !vp.isPlaying || vp.showSettings}
+		class:vp-lock-btn-active={vp.controlsLocked}
+		onclick={(e) => {
+			e.stopPropagation();
+			vp.toggleControlsLock();
+		}}
+		aria-label={vp.controlsLocked ? 'Unlock controls' : 'Lock controls'}
+		aria-pressed={vp.controlsLocked}
+	>
+		<AppIcon name={vp.controlsLocked ? 'lock' : 'lock_open'} />
+	</button>
+
+	{#if !vp.controlsLocked}
 	<div
 		class="vp-controls-wrapper vp-controls-{vp.controlsCfg.position ?? 'bottom'}"
 		class:vp-controls-visible={vp.showControls || !vp.isPlaying || vp.showSettings}
@@ -81,6 +97,7 @@
 							step="0.1"
 							value={vp.currentTime}
 							oninput={(e) => {
+								if (vp.controlsLocked) return;
 								vp.onSeekbarInput();
 								vp.seek(parseFloat((e.target as HTMLInputElement).value));
 							}}
@@ -91,6 +108,7 @@
 							onblur={vp.onSeekbarPointerRelease}
 							onmousemove={vp.onSeekbarMouseMove}
 							onmouseleave={vp.onSeekbarMouseLeave}
+							disabled={vp.controlsLocked}
 							aria-label="Seek"
 							aria-valuetext={vp.formatTime(vp.currentTime)}
 						/>
@@ -120,11 +138,21 @@
 					{/if}
 
 					{#if vp.controlsCfg.showSkip !== false}
-						<button class="vp-btn" onclick={vp.skipBackward} aria-label="Rewind">
+						<button
+							class="vp-btn"
+							onclick={vp.skipBackward}
+							disabled={vp.controlsLocked}
+							aria-label="Rewind"
+						>
 							<AppIcon name="replay_10" />
 						</button>
 
-						<button class="vp-btn" onclick={vp.skipForward} aria-label="Skip forward">
+						<button
+							class="vp-btn"
+							onclick={vp.skipForward}
+							disabled={vp.controlsLocked}
+							aria-label="Skip forward"
+						>
 							<AppIcon name="forward_10" />
 						</button>
 					{/if}
@@ -240,6 +268,7 @@
 			</div>
 		</div>
 	</div>
+	{/if}
 {/if}
 
 {#snippet VolumeControl(vp: VideoPlayerState)}
@@ -247,6 +276,7 @@
 		<button
 			class="vp-btn"
 			onclick={vp.toggleMute}
+			disabled={vp.controlsLocked}
 			aria-label={vp.isMuted || vp.volume === 0 ? 'Unmute' : 'Mute'}
 		>
 			{#if vp.isMuted || vp.volume === 0}
@@ -303,7 +333,11 @@
 					max="1"
 					step="0.01"
 					value={vp.isMuted ? 0 : vp.volume}
-					oninput={(e) => vp.setVolume(parseFloat((e.target as HTMLInputElement).value))}
+					oninput={(e) => {
+						if (vp.controlsLocked) return;
+						vp.setVolume(parseFloat((e.target as HTMLInputElement).value));
+					}}
+					disabled={vp.controlsLocked}
 					aria-label="Volume"
 				/>
 			</div>

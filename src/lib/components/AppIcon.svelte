@@ -74,6 +74,7 @@
 		left_panel_open: 'ViewBoards',
 		link: 'Link',
 		lock: 'LockClosed',
+		lock_open: 'LockOpen',
 		login: 'Login',
 		logout: 'Logout',
 		manage_accounts: 'UserCircle',

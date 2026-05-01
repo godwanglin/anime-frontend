@@ -168,6 +168,12 @@
 		emitState();
 	}
 
+	function handleEnded() {
+		vp.onEnded();
+		stopPlaybackTicker();
+		emitState();
+	}
+
 	$effect(() => {
 		if (vp.isPlaying) startPlaybackTicker();
 		else stopPlaybackTicker();
@@ -232,6 +238,7 @@
 			onpause={handlePause}
 			ontimeupdate={handleTimeUpdate}
 			onloadedmetadata={handleLoadedMetadata}
+			onended={handleEnded}
 		/>
 		<div class="vp-brightness-gesture-zone" aria-hidden="true"></div>
 		<div class="vp-volume-gesture-zone" aria-hidden="true"></div>

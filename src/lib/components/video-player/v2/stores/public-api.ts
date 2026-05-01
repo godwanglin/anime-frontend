@@ -33,6 +33,9 @@ export function createPublicApi(ctx: any) {
 		setVideoBrightness: playback.setVideoBrightness,
 		toggleMute: playback.toggleMute,
 		setPlaybackRate: playback.setPlaybackRate,
+		startSleepTimer: playback.startSleepTimer,
+		cancelSleepTimer: playback.cancelSleepTimer,
+		toggleSleepTimer: playback.toggleSleepTimer,
 		setQuality: hls.setQuality,
 		currentQualityLabel: hls.currentQualityLabel,
 		applySubtitle: subtitle.applySubtitle,
@@ -40,6 +43,8 @@ export function createPublicApi(ctx: any) {
 		loadThumbnails: thumbnail.loadThumbnails,
 		handleTap: playback.handleTap,
 		toggleFullscreen: playback.toggleFullscreen,
+		exitFullscreen: playback.exitFullscreen,
+		toggleControlsLock: playback.toggleControlsLock,
 		toggleSettings: settings.toggleSettings,
 		toggleStats: ctx.toggleStats,
 		closeAllMenus: settings.closeAllMenus,
@@ -60,6 +65,7 @@ export function createPublicApi(ctx: any) {
 		onPause: ctx.onPause,
 		onTimeUpdate: ctx.onTimeUpdate,
 		onLoadedMetadata: ctx.onLoadedMetadata,
+		onEnded: playback.onEnded,
 		onWaiting: playback.onWaiting,
 		onCanPlay: playback.onCanPlay,
 		onPlaying: playback.onPlaying,
@@ -121,6 +127,9 @@ export function createPublicApi(ctx: any) {
 		get isFullscreen() {
 			return playback.isFullscreen;
 		},
+		get controlsLocked() {
+			return playback.controlsLocked;
+		},
 		get errorMessage() {
 			return hls.errorMessage;
 		},
@@ -129,6 +138,21 @@ export function createPublicApi(ctx: any) {
 		},
 		get playbackRate() {
 			return playback.playbackRate;
+		},
+		get sleepTimerOptions() {
+			return playback.sleepTimerOptions;
+		},
+		get sleepTimerOption() {
+			return playback.sleepTimerOption;
+		},
+		get sleepTimerActive() {
+			return playback.sleepTimerActive;
+		},
+		get sleepTimerLabel() {
+			return playback.sleepTimerLabel;
+		},
+		get sleepTimerCountdown() {
+			return playback.sleepTimerCountdown;
 		},
 		get qualityLevels() {
 			return hls.qualityLevels;

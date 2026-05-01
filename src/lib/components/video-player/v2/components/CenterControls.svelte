@@ -14,7 +14,7 @@
 		nextHref?: string;
 	} = $props();
 
-	const visible = $derived(vp.showControls || !vp.isPlaying);
+	const visible = $derived(!vp.controlsLocked && (vp.showControls || !vp.isPlaying));
 
 	function shouldUseNativeLink(event: MouseEvent, href?: string) {
 		if (!href || event.defaultPrevented) return true;

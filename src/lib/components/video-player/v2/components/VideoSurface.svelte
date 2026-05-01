@@ -11,7 +11,8 @@
 		onplay = () => null,
 		onpause = () => null,
 		ontimeupdate = () => null,
-		onloadedmetadata = () => null
+		onloadedmetadata = () => null,
+		onended = () => null
 	}: {
 		vp: VideoPlayerState;
 		poster: string;
@@ -21,6 +22,7 @@
 		onpause?: () => void;
 		ontimeupdate?: () => void;
 		onloadedmetadata?: () => void;
+		onended?: () => void;
 	} = $props();
 </script>
 
@@ -33,6 +35,7 @@
 	onpause={onpause}
 	ontimeupdate={ontimeupdate}
 	onloadedmetadata={onloadedmetadata}
+	onended={onended}
 	onwaiting={vp.onWaiting}
 	oncanplay={vp.onCanPlay}
 	onplaying={vp.onPlaying}

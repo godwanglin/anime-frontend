@@ -7,7 +7,7 @@
 
 	const showBack = $derived(vp.fullscreenCfg.showBackButton !== false);
 	const showTitle = $derived(vp.fullscreenCfg.showTitle !== false);
-	const visible = $derived(vp.showControls || !vp.isPlaying);
+	const visible = $derived(!vp.controlsLocked && (vp.showControls || !vp.isPlaying));
 </script>
 
 {#if vp.isFullscreen && visible && vp.fullscreenCfg.showTopBar !== false && (showBack || showTitle)}

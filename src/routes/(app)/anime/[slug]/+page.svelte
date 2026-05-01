@@ -232,6 +232,7 @@
 	async function parseApi<T>(response: Response) {
 		const json = (await response.json().catch(() => null)) as ApiEnvelope<T> | null;
 		if (!response.ok) throw new Error(json?.message ?? 'Request gagal');
+		if (!json) throw new Error('Response API tidak valid');
 		return json;
 	}
 

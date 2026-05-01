@@ -51,7 +51,7 @@
 {#if showOverlay}
 	<div
 		class="vp-subtitle-overlay"
-		style:bottom={vp.showControls
+		style:bottom={vp.showControls && !vp.controlsLocked
 			? 'calc(72px + ' + (vp.subCfg.bottomOffset ?? '2%') + ')'
 			: (vp.subCfg.bottomOffset ?? '10%')}
 		style:opacity={vp.subCfg.opacity ?? 1}

@@ -1,6 +1,6 @@
 import { createPlaybackInteractions } from './playback-interactions.svelte';
-import { STORAGE_KEYS, type PlaybackConfig } from './types';
-import { clamp } from './utils';
+import { STORAGE_KEYS, type PlaybackConfig, type SleepTimerOption } from './types';
+import { clamp, formatTime } from './utils';
 
 interface PlaybackUiContext {
 	getVideoEl: () => HTMLVideoElement | undefined;
@@ -19,9 +19,31 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 	let isBuffering = $state(false);
 	let playbackRate = $state(1);
 	let showControls = $state(true);
+	let sleepTimerOption = $state<SleepTimerOption | null>(null);
+	let sleepTimerTargetAt = $state<number | null>(null);
+	let sleepTimerRemainingSeconds = $state<number | null>(null);
+	let sleepTimerTicker: ReturnType<typeof setInterval> | null = null;
 
 	const DEFAULT_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 	const MAX_VIDEO_BRIGHTNESS = 2;
+	const EPISODE_SLEEP_GAP_SECONDS = 5;
+	const SLEEP_TIMER_DURATIONS: Record<Exclude<SleepTimerOption, 'episode'>, number> = {
+		'30m': 30 * 60,
+		'1h': 60 * 60,
+		'2h': 2 * 60 * 60,
+		'3h': 3 * 60 * 60,
+		'4h': 4 * 60 * 60,
+		'5h': 5 * 60 * 60
+	};
+	const SLEEP_TIMER_OPTIONS: { value: SleepTimerOption; label: string }[] = [
+		{ value: 'episode', label: 'Setelah episode ini' },
+		{ value: '30m', label: '30 menit' },
+		{ value: '1h', label: '1 jam' },
+		{ value: '2h', label: '2 jam' },
+		{ value: '3h', label: '3 jam' },
+		{ value: '4h', label: '4 jam' },
+		{ value: '5h', label: '5 jam' }
+	];
 	const RATES = $derived(
 		ctx.getPlaybackConfig()?.speeds?.length ? ctx.getPlaybackConfig()!.speeds! : DEFAULT_RATES
 	);
@@ -110,6 +132,73 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		else pause();
 	}
 
+	function stopSleepTimerTicker() {
+		if (!sleepTimerTicker) return;
+		clearInterval(sleepTimerTicker);
+		sleepTimerTicker = null;
+	}
+
+	function getEpisodeSleepRemainingSeconds() {
+		if (!Number.isFinite(duration) || duration <= 0) return null;
+		return Math.max(0, duration - currentTime - EPISODE_SLEEP_GAP_SECONDS);
+	}
+
+	function refreshSleepTimerRemaining() {
+		if (!sleepTimerOption) {
+			sleepTimerRemainingSeconds = null;
+			return;
+		}
+
+		if (sleepTimerOption === 'episode') {
+			sleepTimerRemainingSeconds = getEpisodeSleepRemainingSeconds();
+			return;
+		}
+
+		if (!sleepTimerTargetAt) {
+			sleepTimerRemainingSeconds = null;
+			return;
+		}
+
+		sleepTimerRemainingSeconds = Math.max(0, Math.ceil((sleepTimerTargetAt - Date.now()) / 1000));
+		if (sleepTimerRemainingSeconds <= 0) runSleepTimerAction();
+	}
+
+	function runSleepTimerAction() {
+		if (!sleepTimerOption) return;
+		cancelSleepTimer();
+		pause();
+		interactions.exitFullscreen();
+	}
+
+	function startSleepTimer(option: SleepTimerOption) {
+		sleepTimerOption = option;
+		sleepTimerTargetAt = option === 'episode' ? null : Date.now() + SLEEP_TIMER_DURATIONS[option] * 1000;
+		refreshSleepTimerRemaining();
+		stopSleepTimerTicker();
+		sleepTimerTicker = setInterval(refreshSleepTimerRemaining, 1000);
+		interactions.resetControlsTimer();
+	}
+
+	function cancelSleepTimer() {
+		sleepTimerOption = null;
+		sleepTimerTargetAt = null;
+		sleepTimerRemainingSeconds = null;
+		stopSleepTimerTicker();
+	}
+
+	function toggleSleepTimer(option: SleepTimerOption) {
+		if (sleepTimerOption === option) cancelSleepTimer();
+		else startSleepTimer(option);
+	}
+
+	function checkEpisodeSleepTimer(force = false) {
+		if (sleepTimerOption !== 'episode') return;
+		refreshSleepTimerRemaining();
+		if (force || (duration > 0 && currentTime >= Math.max(0, duration - EPISODE_SLEEP_GAP_SECONDS))) {
+			runSleepTimerAction();
+		}
+	}
+
 	function toggleMute() {
 		const videoEl = ctx.getVideoEl();
 		if (!videoEl) return;
@@ -174,6 +263,7 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		if (!videoEl) return;
 		currentTime = videoEl.currentTime;
 		updateBuffered();
+		checkEpisodeSleepTimer();
 	}
 
 	function onLoadedMetadata() {
@@ -190,6 +280,11 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		isMuted = videoEl.muted;
 	}
 
+	function onEnded() {
+		isPlaying = false;
+		checkEpisodeSleepTimer(true);
+	}
+
 	return {
 		loadPersistedState,
 		syncVideoPrefs,
@@ -203,7 +298,12 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		setVideoBrightness,
 		toggleMute,
 		setPlaybackRate,
+		startSleepTimer,
+		cancelSleepTimer,
+		toggleSleepTimer,
 		toggleFullscreen: interactions.toggleFullscreen,
+		exitFullscreen: interactions.exitFullscreen,
+		toggleControlsLock: interactions.toggleControlsLock,
 		handleTap: interactions.handleTap,
 		onKeydown: interactions.onKeydown,
 		onFullscreenChange: interactions.onFullscreenChange,
@@ -226,8 +326,12 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		onCanPlay: () => (isBuffering = false),
 		onPlaying: () => (isBuffering = false),
 		onVolumeChange,
+		onEnded,
 		onProgress: updateBuffered,
-		destroy: interactions.destroy,
+		destroy: () => {
+			cancelSleepTimer();
+			interactions.destroy();
+		},
 		get RATES() {
 			return RATES;
 		},
@@ -258,8 +362,28 @@ export function createPlaybackUiManager(ctx: PlaybackUiContext) {
 		get isFullscreen() {
 			return interactions.isFullscreen;
 		},
+		get controlsLocked() {
+			return interactions.controlsLocked;
+		},
 		get playbackRate() {
 			return playbackRate;
+		},
+		get sleepTimerOptions() {
+			return SLEEP_TIMER_OPTIONS;
+		},
+		get sleepTimerOption() {
+			return sleepTimerOption;
+		},
+		get sleepTimerActive() {
+			return sleepTimerOption !== null;
+		},
+		get sleepTimerLabel() {
+			return SLEEP_TIMER_OPTIONS.find((option) => option.value === sleepTimerOption)?.label ?? '';
+		},
+		get sleepTimerCountdown() {
+			if (!sleepTimerOption) return '';
+			if (sleepTimerRemainingSeconds === null) return sleepTimerOption === 'episode' ? 'Akhir ep' : '';
+			return formatTime(sleepTimerRemainingSeconds);
 		},
 		get showControls() {
 			return showControls;

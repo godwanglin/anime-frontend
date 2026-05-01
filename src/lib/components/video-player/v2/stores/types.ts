@@ -145,7 +145,8 @@ export interface QualityLevel {
 	level: number;
 }
 
-export type SettingsSubPanel = 'speed' | 'quality' | 'subtitle' | null;
+export type SettingsSubPanel = 'speed' | 'quality' | 'subtitle' | 'sleep' | null;
+export type SleepTimerOption = 'episode' | '30m' | '1h' | '2h' | '3h' | '4h' | '5h';
 export type TapSide = 'left' | 'right' | null;
 
 export interface PlayerEpisodeItem {

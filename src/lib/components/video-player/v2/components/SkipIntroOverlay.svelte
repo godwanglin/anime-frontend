@@ -4,7 +4,7 @@
 
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
 
-	let { vp }: { vp: VideoPlayerState } = $props();
+	let { vp, suppressOutro = false }: { vp: VideoPlayerState; suppressOutro?: boolean } = $props();
 </script>
 
 {#if vp.skipIntroVisible}
@@ -12,7 +12,7 @@
 		<AppIcon name="skip_next" />
 		Skip Intro
 	</button>
-{:else if vp.skipOutroVisible}
+{:else if vp.skipOutroVisible && !suppressOutro}
 	<button type="button" class="vp-skip-intro-btn" onclick={vp.skipOutro}>
 		<AppIcon name="skip_next" />
 		Skip Outro

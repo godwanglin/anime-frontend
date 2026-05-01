@@ -19,6 +19,7 @@ export function createSkipIntroManager(ctx: SkipIntroContext) {
 	const hasIntro = $derived(seconds > 0);
 	const hasOutro = $derived(outroSeconds > 0);
 	const autoSkipEnabled = $derived(ctx.getConfig()?.enabled === true && ctx.getConfig()?.autoSkip !== false);
+	const autoSkipOutroEnabled = $derived(autoSkipEnabled && ctx.getConfig()?.autoSkipOutro !== false);
 	const canSkip = $derived(
 		hasIntro &&
 			ctx.getConfig()?.showButton !== false &&
@@ -68,7 +69,7 @@ export function createSkipIntroManager(ctx: SkipIntroContext) {
 	}
 
 	function onTimeUpdate() {
-		if (!autoSkipEnabled || !hasOutro || didAutoSkipOutro) return;
+		if (!autoSkipOutroEnabled || !hasOutro || didAutoSkipOutro) return;
 		if (!isOutroTargetValid() || ctx.getCurrentTime() < outroSeconds) return;
 		didAutoSkipOutro = true;
 		skipOutro();

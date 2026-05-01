@@ -622,6 +622,7 @@
 							seconds: resolvedSkipIntroSeconds,
 							outroSeconds: resolvedSkipOutroSeconds,
 							autoSkip: true,
+							autoSkipOutro: !nextEpisodeHref,
 							showButton: true
 						}
 					}}

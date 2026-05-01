@@ -17,7 +17,20 @@
 	}: { vp: VideoPlayerState; title: string; nextHref?: string; autoNext?: boolean } = $props();
 
 	let nextEpisodeNavigating = $state(false);
-	const nextEpisodeThreshold = 20;
+	const defaultNextEpisodeLead = 20;
+	const nextEpisodeLead = $derived.by(() => {
+		const skipOutroSeconds = Number(vp.skipOutroSeconds ?? 0);
+		if (
+			Number.isFinite(skipOutroSeconds) &&
+			skipOutroSeconds > 0 &&
+			vp.duration > 0 &&
+			skipOutroSeconds < vp.duration
+		) {
+			return Math.max(0, Math.ceil(vp.duration - skipOutroSeconds));
+		}
+
+		return defaultNextEpisodeLead;
+	});
 	const nextEpisodeRemaining = $derived(
 		vp.duration > 0 ? Math.max(0, Math.ceil(vp.duration - vp.currentTime)) : 0
 	);
@@ -25,7 +38,7 @@
 		!!nextHref &&
 			!vp.controlsLocked &&
 			vp.duration > 0 &&
-			nextEpisodeRemaining <= nextEpisodeThreshold
+			nextEpisodeRemaining <= nextEpisodeLead
 	);
 
 	function openNextEpisode() {
@@ -51,7 +64,7 @@
 <FullscreenTopBar {vp} {title} />
 <StatsOverlay {vp} />
 <NotificationOverlay {vp} />
-<SkipIntroOverlay {vp} />
+<SkipIntroOverlay {vp} suppressOutro={!!nextHref} />
 
 {#if vp.sleepTimerActive && (vp.showControls || !vp.isPlaying || vp.showSettings)}
 	<div class="vp-sleep-timer-badge" aria-label="Timer tidur aktif">

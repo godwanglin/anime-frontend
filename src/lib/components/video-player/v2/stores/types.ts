@@ -94,6 +94,7 @@ export interface SkipIntroConfig {
 	seconds?: number | null;
 	outroSeconds?: number | null;
 	autoSkip?: boolean;
+	autoSkipOutro?: boolean;
 	showButton?: boolean;
 	buttonUntil?: number;
 	outroButtonLead?: number;

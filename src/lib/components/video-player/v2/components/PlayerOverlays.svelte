@@ -16,7 +16,7 @@
 		autoNext = true
 	}: { vp: VideoPlayerState; title: string; nextHref?: string; autoNext?: boolean } = $props();
 
-	let nextEpisodeNavigating = false;
+	let nextEpisodeNavigating = $state(false);
 	const nextEpisodeThreshold = 20;
 	const nextEpisodeRemaining = $derived(
 		vp.duration > 0 ? Math.max(0, Math.ceil(vp.duration - vp.currentTime)) : 0

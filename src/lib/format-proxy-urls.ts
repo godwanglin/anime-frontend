@@ -63,6 +63,15 @@ function extractRubyId(url: string): string | null {
 }
 
 /**
+ * Ekstrak video ID dari URL sbchill.com
+ * Format: https://sbchill.com/e/iprjkhnlz0ue.html
+ */
+function extractSbchillId(url: string): string | null {
+	const match = url.match(/sbchill\.com\/e\/([^.\/?#]+)(?:\.html)?/);
+	return match ? match[1] : null;
+}
+
+/**
  * Format satu StreamSource → proxy URL string.
  * Return null jika provider tidak didukung.
  */
@@ -98,6 +107,13 @@ export function formatProxyUrl(
 		const id = extractRubyId(value);
 		if (!id) return null;
 		return `${baseUrl}/api/video-stream/ruby-stream/playlist/${id}`;
+	}
+
+	// ── sbchill.com ─────────────────────────────────────────────────────────────
+	if (value.includes('sbchill.com')) {
+		const id = extractSbchillId(value);
+		if (!id) return null;
+		return `${baseUrl}/api/video-stream/okru-stream/playlist/${id}?host=sbchill.com`;
 	}
 
 	if (/\.m3u8(?:$|[?#])/.test(value)) {

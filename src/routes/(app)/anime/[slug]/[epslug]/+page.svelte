@@ -549,85 +549,83 @@
 	>
 		{#if streamUrls.length}
 			<div class="relative w-full aspect-video">
-				{#key episode?.id ?? episode?.slug ?? title}
-					<LazyVideoPlayer
-						src={streamUrls}
-						poster={cover}
-						{title}
-						autoPlay={preference.pref.autoPlay}
-						{subtitlesBySrc}
-						forceHls
-						prevHref={previousEpisodeHref}
-						nextHref={nextEpisodeHref}
-						autoNext={preference.pref.autoNextEpisode}
-						episodeList={playerEpisodeList}
-						config={{
-							subtitle: {
-								color: preference.pref.subtitleColor,
-								fontSize: preference.pref.subtitleFontSize,
-								fontFamily: preference.pref.subtitleFontFamily,
-								fontWeight: 700,
-								background: preference.pref.subtitleBg,
-								borderRadius: '4px',
-								padding: '2px 8px',
-								bottomOffset: preference.pref.subtitlePosition,
-								textShadow: preference.pref.subtitleShadow,
-								opacity: preference.pref.subtitleOpacity,
-								maxWidth: preference.pref.subtitleMaxWidth,
-								defaultLanguage: preference.pref.subtitleLang,
-								enabled: preference.pref.subtitleEnabled
-							},
-							theme: {
-								primaryColor: '#ffffff',
-								accentColor: '#7c3aed',
-								controlTextColor: '#ffffff',
-								controlBackground: 'rgba(255,255,255,.16)'
-							},
-							ambient: {
-								enabled: isDesktop,
-								intensity: isDesktop ? 1.5 : 0,
-								opacity: isDesktop ? 0.42 : 0,
-								blur: isDesktop ? 72 : 0,
-								saturation: isDesktop ? 1.65 : 1,
-								contrast: 1
-							},
-							controls: {
-								enabled: true,
-								position: 'bottom',
-								showPlay: true,
-								showSeek: true,
-								showSkip: true,
-								showVolume: true,
-								showTime: true,
-								showSettings: true,
-								showFullscreen: true,
-								showSourceBadge: true,
-								showThumbnailPreview: true,
-								showStats: false,
-								preloadAudioWaveform: false,
-								maxAudioWaveformBytes: 30 * 1024 * 1024,
-								waveformEnable: false
-							},
-							playback: {
-								speeds: [0.25, 0.5, 1, 1.5, 2],
-								skipSeconds: 10,
-								persistProgress: true
-							},
-							fullscreen: {
-								showTopBar: true,
-								showBackButton: true,
-								showTitle: true
-							},
-							skipIntro: {
-								enabled: preference.pref.skipIntroEnabled,
-								seconds: resolvedSkipIntroSeconds,
-								outroSeconds: resolvedSkipOutroSeconds,
-								autoSkip: true,
-								showButton: true
-							}
-						}}
-					/>
-				{/key}
+				<LazyVideoPlayer
+					src={streamUrls}
+					poster={cover}
+					{title}
+					autoPlay={preference.pref.autoPlay}
+					{subtitlesBySrc}
+					forceHls
+					prevHref={previousEpisodeHref}
+					nextHref={nextEpisodeHref}
+					autoNext={preference.pref.autoNextEpisode}
+					episodeList={playerEpisodeList}
+					config={{
+						subtitle: {
+							color: preference.pref.subtitleColor,
+							fontSize: preference.pref.subtitleFontSize,
+							fontFamily: preference.pref.subtitleFontFamily,
+							fontWeight: 700,
+							background: preference.pref.subtitleBg,
+							borderRadius: '4px',
+							padding: '2px 8px',
+							bottomOffset: preference.pref.subtitlePosition,
+							textShadow: preference.pref.subtitleShadow,
+							opacity: preference.pref.subtitleOpacity,
+							maxWidth: preference.pref.subtitleMaxWidth,
+							defaultLanguage: preference.pref.subtitleLang,
+							enabled: preference.pref.subtitleEnabled
+						},
+						theme: {
+							primaryColor: '#ffffff',
+							accentColor: '#7c3aed',
+							controlTextColor: '#ffffff',
+							controlBackground: 'rgba(255,255,255,.16)'
+						},
+						ambient: {
+							enabled: isDesktop,
+							intensity: isDesktop ? 1.5 : 0,
+							opacity: isDesktop ? 0.42 : 0,
+							blur: isDesktop ? 72 : 0,
+							saturation: isDesktop ? 1.65 : 1,
+							contrast: 1
+						},
+						controls: {
+							enabled: true,
+							position: 'bottom',
+							showPlay: true,
+							showSeek: true,
+							showSkip: true,
+							showVolume: true,
+							showTime: true,
+							showSettings: true,
+							showFullscreen: true,
+							showSourceBadge: true,
+							showThumbnailPreview: true,
+							showStats: false,
+							preloadAudioWaveform: false,
+							maxAudioWaveformBytes: 30 * 1024 * 1024,
+							waveformEnable: false
+						},
+						playback: {
+							speeds: [0.25, 0.5, 1, 1.5, 2],
+							skipSeconds: 10,
+							persistProgress: true
+						},
+						fullscreen: {
+							showTopBar: true,
+							showBackButton: true,
+							showTitle: true
+						},
+						skipIntro: {
+							enabled: preference.pref.skipIntroEnabled,
+							seconds: resolvedSkipIntroSeconds,
+							outroSeconds: resolvedSkipOutroSeconds,
+							autoSkip: true,
+							showButton: true
+						}
+					}}
+				/>
 				<WatchProgressTracker payload={trackerPayload} enabled={auth.isLoggedIn} />
 			</div>
 		{:else}

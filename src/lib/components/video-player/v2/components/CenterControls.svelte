@@ -16,6 +16,12 @@
 	let navigationPending = $state(false);
 	const visible = $derived(!vp.controlsLocked && (vp.showControls || !vp.isPlaying));
 
+	$effect(() => {
+		prevHref;
+		nextHref;
+		navigationPending = false;
+	});
+
 	function prepareEpisodeNavigation() {
 		if (navigationPending) return;
 		navigationPending = true;

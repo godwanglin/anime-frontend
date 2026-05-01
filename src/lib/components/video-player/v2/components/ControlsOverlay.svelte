@@ -67,6 +67,7 @@
 	{#if !vp.controlsLocked}
 	<div
 		class="vp-controls-wrapper vp-controls-{vp.controlsCfg.position ?? 'bottom'}"
+		class:vp-controls-has-settings={vp.showSettings}
 		class:vp-controls-visible={vp.showControls || !vp.isPlaying || vp.showSettings}
 	>
 		<div class="vp-gradient" aria-hidden="true"></div>

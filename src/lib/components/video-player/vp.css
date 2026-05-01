@@ -381,6 +381,10 @@
 	pointer-events: auto;
 }
 
+.vp-controls-has-settings {
+	z-index: 9000;
+}
+
 /* ── Gradient overlay ───────────────────────────────────────────────────── */
 .vp-gradient {
 	position: absolute;
@@ -1153,7 +1157,7 @@
 	.vp-settings-mobile-backdrop {
 		position: fixed;
 		inset: 0;
-		z-index: 80;
+		z-index: 9010;
 		display: block;
 		border: 0;
 		background: rgba(0, 0, 0, 0.44);
@@ -1167,7 +1171,7 @@
 		left: 50%;
 		right: auto;
 		bottom: max(8px, env(safe-area-inset-bottom));
-		z-index: 90;
+		z-index: 9020;
 		width: min(54vw, 380px);
 		min-width: min(240px, calc(100vw - 20px));
 		max-width: calc(100vw - 20px);
@@ -1248,7 +1252,7 @@
 	.vp-container:fullscreen .vp-settings-mobile-backdrop {
 		position: fixed;
 		inset: 0;
-		z-index: 80;
+		z-index: 9010;
 		display: block;
 		border: 0;
 		background: rgba(0, 0, 0, 0.44);
@@ -1263,7 +1267,7 @@
 		left: 50%;
 		right: auto;
 		bottom: max(8px, env(safe-area-inset-bottom));
-		z-index: 90;
+		z-index: 9020;
 		width: min(54vw, 380px);
 		min-width: min(240px, calc(100vw - 20px));
 		max-width: calc(100vw - 20px);

@@ -38,6 +38,11 @@
 	}
 
 	$effect(() => {
+		nextHref;
+		nextEpisodeNavigating = false;
+	});
+
+	$effect(() => {
 		if (!autoNext || !showNextEpisodeOverlay || !vp.isPlaying || nextEpisodeRemaining > 0) return;
 		openNextEpisode();
 	});

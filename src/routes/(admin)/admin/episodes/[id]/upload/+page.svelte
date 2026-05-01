@@ -21,6 +21,40 @@
 
 	type UrlSourceInput = { resolution: number; url: string };
 	type UrlSubtitleInput = { language: string; label: string; sourceUrl: string };
+	type SignalRecord = {
+		id: string;
+		url: string;
+		type: string;
+		source?: string;
+		method?: string;
+		contentType?: string;
+		pageUrl?: string;
+		statusCode?: number;
+		requestId?: string;
+		capturedAt?: number;
+		receivedAt: string;
+	};
+	type SignalGroupKey = 'playlist' | 'subtitle' | 'video' | 'audio' | 'segment' | 'other';
+	type SignalAnalysis = {
+		url: string;
+		resolution: number | null;
+		bandwidth: number | null;
+		sampleSizeBytes: number | null;
+		sampleDurationSeconds: number | null;
+		sampleSegmentUrl: string | null;
+		detectedFrom: string;
+		error?: string;
+	};
+	type SubtitleAnalysis = {
+		url: string;
+		language: string;
+		label: string;
+		confidence: number;
+		detectedFrom: string;
+		sampleCueCount: number;
+		sampleText: string;
+		error?: string;
+	};
 	type UrlSourceProgress = {
 		resolution: number;
 		url: string;
@@ -115,6 +149,15 @@
 	]);
 	let isUrlBusy = $state(false);
 	let abortUrlRequested = $state(false);
+	let signals = $state<SignalRecord[]>([]);
+	let signalStatus = $state<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+	let signalError = $state('');
+	let signalStream: EventSource | null = null;
+	let signalStreamToken = 0;
+	let isAnalyzingSignals = $state(false);
+	let signalAnalyses = $state<SignalAnalysis[]>([]);
+	let isAnalyzingSubtitles = $state(false);
+	let subtitleAnalyses = $state<SubtitleAnalysis[]>([]);
 
 	// ── Derived ────────────────────────────────────────────────────────────
 	const fileMeta = $derived(
@@ -164,6 +207,22 @@
 		})
 	);
 	const activityLines = $derived([...serverLogLines, ...logLines].slice(-220));
+	const signalGroups = $derived(
+		(() => {
+			const order: SignalGroupKey[] = ['playlist', 'subtitle', 'video', 'audio', 'segment', 'other'];
+			const grouped = new Map<SignalGroupKey, SignalRecord[]>();
+			for (const key of order) grouped.set(key, []);
+			for (const signal of signals) {
+				const key = getSignalGroup(signal);
+				grouped.get(key)?.push(signal);
+			}
+			return order
+				.map((key) => ({ key, label: getSignalGroupLabel(key), items: grouped.get(key) ?? [] }))
+				.filter((group) => group.items.length > 0);
+		})()
+	);
+	const playlistSignals = $derived(signals.filter((signal) => getSignalGroup(signal) === 'playlist'));
+	const subtitleSignals = $derived(signals.filter((signal) => getSignalGroup(signal) === 'subtitle'));
 
 	function pushLog(line: string) {
 		const ts = new Date().toLocaleTimeString();
@@ -618,6 +677,321 @@
 		setTimeout(() => (isAborting = false), 1500);
 	}
 
+	function getSignalGroup(signal: SignalRecord): SignalGroupKey {
+		const haystack = `${signal.type} ${signal.contentType ?? ''} ${signal.url}`.toLowerCase();
+		if (
+			haystack.includes('playlist') ||
+			haystack.includes('mpegurl') ||
+			haystack.includes('m3u8') ||
+			haystack.includes('dash') ||
+			/\.m3u8?(\?|#|$)/i.test(signal.url) ||
+			/\.mpd(\?|#|$)/i.test(signal.url)
+		) {
+			return 'playlist';
+		}
+		if (
+			haystack.includes('subtitle') ||
+			haystack.includes('text/vtt') ||
+			/\.(vtt|srt|ass|ssa|ttml)(\?|#|$)/i.test(signal.url)
+		) {
+			return 'subtitle';
+		}
+		if (
+			haystack.includes('video') ||
+			/\.(mp4|webm|mkv|mov|m4v)(\?|#|$)/i.test(signal.url)
+		) {
+			return 'video';
+		}
+		if (haystack.includes('audio') || /\.(mp3|m4a|aac|ogg|wav)(\?|#|$)/i.test(signal.url)) {
+			return 'audio';
+		}
+		if (/\.(ts|m4s|cmfv|cmfa)(\?|#|$)/i.test(signal.url)) {
+			return 'segment';
+		}
+		return 'other';
+	}
+
+	function getSignalGroupLabel(key: SignalGroupKey) {
+		const labels: Record<SignalGroupKey, string> = {
+			playlist: 'Playlist / Manifest',
+			subtitle: 'Subtitle',
+			video: 'Video',
+			audio: 'Audio',
+			segment: 'Segment',
+			other: 'Response Lain'
+		};
+		return labels[key];
+	}
+
+	function getSignalIcon(key: SignalGroupKey) {
+		const icons: Record<SignalGroupKey, string> = {
+			playlist: 'playlist_play',
+			subtitle: 'subtitles',
+			video: 'movie',
+			audio: 'graphic_eq',
+			segment: 'view_stream',
+			other: 'data_object'
+		};
+		return icons[key];
+	}
+
+	function formatSignalTime(signal: SignalRecord) {
+		const raw = signal.receivedAt || signal.capturedAt;
+		const date = raw ? new Date(raw) : null;
+		return date && !Number.isNaN(date.getTime()) ? date.toLocaleTimeString() : '-';
+	}
+
+	function formatBitrate(bps: number | null) {
+		if (!bps) return '-';
+		if (bps >= 1_000_000) return `${(bps / 1_000_000).toFixed(2)} Mbps`;
+		return `${Math.round(bps / 1_000)} Kbps`;
+	}
+
+	function formatConfidence(value: number) {
+		return `${Math.round(value * 100)}%`;
+	}
+
+	function inferResolutionFromSignalUrl(url: string): number | null {
+		const match = url.match(/\.f(\d{6})\.ts\.m3u8/i);
+		if (!match) return null;
+		const wetvMap: Record<string, number> = {
+			'007': 144,
+			'004': 360,
+			'003': 480,
+			'002': 720,
+			'001': 1080
+		};
+		return wetvMap[match[1].slice(-3)] ?? null;
+	}
+
+	function mergeSignals(incoming: SignalRecord[]) {
+		const map = new Map<string, SignalRecord>();
+		for (const signal of [...signals, ...incoming]) {
+			if (!signal?.url) continue;
+			const key = signal.id || `${signal.type}:${signal.url}`;
+			map.set(key, signal);
+		}
+		signals = Array.from(map.values())
+			.sort((a, b) => {
+				const aTime = new Date(a.receivedAt).getTime() || a.capturedAt || 0;
+				const bTime = new Date(b.receivedAt).getTime() || b.capturedAt || 0;
+				return bTime - aTime;
+			})
+			.slice(0, 80);
+	}
+
+	async function loadSignals() {
+		try {
+			const res = await fetch(`${config.API_BASE_URL}/api/signals`);
+			const json = await res.json();
+			if (!res.ok) throw new Error(json?.message ?? 'Gagal memuat signal');
+			mergeSignals(Array.isArray(json?.data) ? json.data : []);
+			signalError = '';
+		} catch (error) {
+			signalError = error instanceof Error ? error.message : String(error);
+			signalStatus = 'error';
+		}
+	}
+
+	function closeSignalStream() {
+		signalStreamToken += 1;
+		signalStream?.close();
+		signalStream = null;
+		if (signalStatus === 'connected' || signalStatus === 'connecting') {
+			signalStatus = 'idle';
+		}
+	}
+
+	function openSignalStream() {
+		if (typeof window === 'undefined') return;
+		closeSignalStream();
+		const token = signalStreamToken;
+		signalStatus = 'connecting';
+		signalError = '';
+		const stream = new EventSource(`${config.API_BASE_URL}/api/signals/stream`);
+		signalStream = stream;
+		stream.addEventListener('ready', (event) => {
+			if (token !== signalStreamToken || stream !== signalStream) return;
+			try {
+				const payload = JSON.parse((event as MessageEvent).data);
+				mergeSignals(Array.isArray(payload?.signals) ? payload.signals : []);
+				signalStatus = 'connected';
+			} catch {
+				signalError = 'Payload signal tidak valid.';
+			}
+		});
+		stream.addEventListener('signal', (event) => {
+			if (token !== signalStreamToken || stream !== signalStream) return;
+			try {
+				const signal = JSON.parse((event as MessageEvent).data) as SignalRecord;
+				mergeSignals([signal]);
+				signalStatus = 'connected';
+			} catch {
+				signalError = 'Payload signal tidak valid.';
+			}
+		});
+		stream.addEventListener('clear', () => {
+			if (token !== signalStreamToken || stream !== signalStream) return;
+			signals = [];
+			signalStatus = 'connected';
+		});
+		stream.onerror = () => {
+			if (token !== signalStreamToken || stream !== signalStream) return;
+			signalStatus = 'error';
+			signalError = 'Koneksi signal putus, klik Terima Signal untuk sambung ulang.';
+		};
+	}
+
+	function useSignal(signal: SignalRecord) {
+		const group = getSignalGroup(signal);
+		activeTab = 'url';
+		if (group === 'subtitle') {
+			const next = [...urlSubtitles];
+			const emptyIndex = next.findIndex((item) => !item.sourceUrl.trim());
+			const subtitle = {
+				language: 'id',
+				label: 'Signal Subtitle',
+				sourceUrl: signal.url
+			};
+			if (emptyIndex >= 0) next[emptyIndex] = { ...next[emptyIndex], ...subtitle };
+			else next.push(subtitle);
+			urlSubtitles = next;
+			adminToast.success('Signal subtitle masuk ke form');
+			return;
+		}
+		if (group === 'playlist') {
+			const next = [...urlSources];
+			const emptyIndex = next.findIndex((item) => !item.url.trim());
+			const source = { resolution: pickNextResolution(), url: signal.url };
+			if (emptyIndex >= 0) next[emptyIndex] = { ...next[emptyIndex], url: signal.url };
+			else next.push(source);
+			urlSources = next;
+			adminToast.success('Signal playlist masuk ke form');
+			return;
+		}
+		copySignalUrl(signal);
+	}
+
+	async function copySignalUrl(signal: SignalRecord) {
+		try {
+			await navigator.clipboard.writeText(signal.url);
+			adminToast.success('URL signal disalin');
+		} catch {
+			adminToast.info('Browser tidak bisa copy otomatis');
+		}
+	}
+
+	async function clearSignals() {
+		if (signals.length === 0) return;
+		const okToClear = window.confirm(
+			`Hapus ${signals.length} signal dari receiver extension? Data ini akan hilang dari buffer backend.`
+		);
+		if (!okToClear) return;
+
+		try {
+			const res = await fetch(`${config.API_BASE_URL}/api/signals`, { method: 'DELETE' });
+			const json = await res.json();
+			if (!res.ok) throw new Error(json?.message ?? 'Gagal clear signals');
+			signals = [];
+			adminToast.success('Signals dibersihkan');
+		} catch (error) {
+			adminToast.error(error instanceof Error ? error.message : 'Gagal clear signals');
+		}
+	}
+
+	async function autoDetectSignals() {
+		const urls = playlistSignals.map((signal) => signal.url);
+		if (urls.length === 0) {
+			signalAnalyses = [];
+			return;
+		}
+		isAnalyzingSignals = true;
+		try {
+			const res = await fetch(`${config.API_BASE_URL}/api/signals/analyze`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ urls })
+			});
+			const json = await res.json();
+			if (!res.ok) throw new Error(json?.message ?? 'Gagal auto detect signal');
+			const analyses = (Array.isArray(json?.data) ? json.data : []) as SignalAnalysis[];
+			signalAnalyses = analyses;
+			const detected = analyses
+				.map((item) => ({
+					resolution: item.resolution ?? inferResolutionFromSignalUrl(item.url),
+					url: item.url
+				}))
+				.filter(
+					(item): item is UrlSourceInput =>
+						typeof item.resolution === 'number' &&
+						RESOLUTION_OPTIONS.includes(item.resolution as any) &&
+						/^https?:\/\//i.test(item.url)
+				);
+			if (detected.length === 0) {
+				return;
+			}
+			const byResolution = new Map<number, string>();
+			for (const item of detected) byResolution.set(item.resolution, item.url);
+			urlSources = Array.from(byResolution.entries())
+				.sort((a, b) => b[0] - a[0])
+				.map(([resolution, url]) => ({ resolution, url }));
+		} catch (error) {
+			adminToast.error(error instanceof Error ? error.message : 'Gagal auto detect signal');
+		} finally {
+			isAnalyzingSignals = false;
+		}
+	}
+
+	async function autoDetectSubtitles() {
+		const urls = subtitleSignals.map((signal) => signal.url);
+		if (urls.length === 0) {
+			subtitleAnalyses = [];
+			return;
+		}
+		isAnalyzingSubtitles = true;
+		try {
+			const res = await fetch(`${config.API_BASE_URL}/api/signals/analyze-subtitles`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ urls })
+			});
+			const json = await res.json();
+			if (!res.ok) throw new Error(json?.message ?? 'Gagal auto detect subtitle');
+			const analyses = (Array.isArray(json?.data) ? json.data : []) as SubtitleAnalysis[];
+			subtitleAnalyses = analyses;
+			const detected = analyses
+				.filter((item) => item.language && item.language !== 'unknown' && item.confidence >= 0.45)
+				.map((item) => ({
+					language: item.language,
+					label: item.label || item.language.toUpperCase(),
+					sourceUrl: item.url
+				}));
+			if (detected.length === 0) {
+				return;
+			}
+			const byLanguage = new Map<string, UrlSubtitleInput>();
+			for (const item of detected) byLanguage.set(item.language, item);
+			urlSubtitles = Array.from(byLanguage.values());
+		} catch (error) {
+			adminToast.error(error instanceof Error ? error.message : 'Gagal auto detect subtitle');
+		} finally {
+			isAnalyzingSubtitles = false;
+		}
+	}
+
+	async function autoImportSignals() {
+		if (playlistSignals.length === 0 && subtitleSignals.length === 0) {
+			adminToast.info('Belum ada playlist/subtitle signal untuk auto import');
+			return;
+		}
+		await Promise.all([autoDetectSignals(), autoDetectSubtitles()]);
+		const imported = [
+			playlistSignals.length > 0 ? `${urlSources.length} source` : '',
+			subtitleSignals.length > 0 ? `${urlSubtitles.length} subtitle` : ''
+		].filter(Boolean);
+		adminToast.success(`Auto import selesai: ${imported.join(', ')}`);
+	}
+
 	function handleBeforeUnload(event: BeforeUnloadEvent) {
 		if (!isBusy) return;
 		event.preventDefault();
@@ -788,10 +1162,13 @@
 		}
 		await loadEpisode();
 		await recoverOrCreateSession();
+		await loadSignals();
+		openSignalStream();
 	});
 
 	onDestroy(() => {
 		closeEventStream();
+		closeSignalStream();
 		if (typeof window !== 'undefined') {
 			window.removeEventListener('beforeunload', handleBeforeUnload);
 		}
@@ -1131,6 +1508,180 @@
 						progress tetap aman walau halaman di-reload.
 					</p>
 				</div>
+
+				<section class="space-y-3 rounded-xl border border-violet-500/20 bg-zinc-950/80 p-4 shadow-[0_20px_60px_rgba(124,58,237,0.12)]">
+					<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+						<div>
+							<div class="flex items-center gap-2">
+								<AppIcon name="sensors" class="text-violet-300" />
+								<h4 class="text-sm font-black text-zinc-100">Signal dari Extension</h4>
+							</div>
+							<p class="mt-1 text-xs text-zinc-500">
+								Response extension dikelompokkan dari tipe, mime, dan ekstensi URL.
+							</p>
+						</div>
+						<div class="flex flex-wrap gap-2">
+							<button
+								type="button"
+								onclick={() => {
+									loadSignals();
+									openSignalStream();
+								}}
+								class="inline-flex items-center justify-center gap-2 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-violet-200 hover:bg-violet-500/20"
+							>
+								<AppIcon name="sync" class="text-[17px]" />
+								Terima Signal
+							</button>
+							<button
+								type="button"
+								onclick={clearSignals}
+								disabled={signals.length === 0}
+								class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+							>
+								<AppIcon name="delete_sweep" class="text-[17px]" />
+								Clear
+							</button>
+							<button
+								type="button"
+								onclick={autoImportSignals}
+								disabled={(playlistSignals.length === 0 && subtitleSignals.length === 0) || isAnalyzingSignals || isAnalyzingSubtitles}
+								class="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+							>
+								<AppIcon name="auto_awesome" class="text-[17px]" />
+								{isAnalyzingSignals || isAnalyzingSubtitles ? 'Importing...' : 'Auto Import'}
+							</button>
+						</div>
+					</div>
+
+					<div class="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+						<span
+							class="rounded-full border px-2.5 py-1
+								{signalStatus === 'connected'
+									? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+									: signalStatus === 'error'
+										? 'border-red-500/40 bg-red-500/10 text-red-300'
+										: 'border-zinc-700 bg-zinc-900 text-zinc-400'}"
+						>
+							{signalStatus === 'connected'
+								? 'Live connected'
+								: signalStatus === 'connecting'
+									? 'Connecting'
+									: signalStatus === 'error'
+										? 'Disconnected'
+										: 'Idle'}
+						</span>
+						<span class="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-zinc-400">
+							{signals.length} signal tersimpan
+						</span>
+						{#if signalError}
+							<span class="text-red-300">{signalError}</span>
+						{/if}
+					</div>
+
+					{#if signalGroups.length === 0}
+						<div class="rounded-lg border border-dashed border-zinc-800 bg-zinc-900/60 p-4 text-sm font-semibold text-zinc-500">
+							Belum ada signal. Klik tombol kirim dari extension, lalu panel ini akan update otomatis.
+						</div>
+					{:else}
+						{#if signalAnalyses.length > 0}
+							<div class="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+								<p class="mb-2 text-xs font-black uppercase tracking-wide text-emerald-200">
+									Hasil Auto Detect
+								</p>
+								<div class="space-y-2">
+									{#each signalAnalyses as item (item.url)}
+										<div class="grid gap-2 rounded-lg border border-zinc-800 bg-zinc-950 p-2 text-xs sm:grid-cols-[70px_1fr_110px_95px] sm:items-center">
+											<span class="font-black text-zinc-100">
+												{item.resolution ?? inferResolutionFromSignalUrl(item.url) ?? '?'}p
+											</span>
+											<span class="truncate font-mono text-zinc-400" title={item.url}>{item.url}</span>
+											<span class="font-bold text-zinc-300">{formatBitrate(item.bandwidth)}</span>
+											<span class="font-bold text-zinc-300">{formatBytes(item.sampleSizeBytes ?? 0)}</span>
+											{#if item.error}
+												<p class="sm:col-span-4 text-[11px] text-amber-300">{item.error}</p>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+						{#if subtitleAnalyses.length > 0}
+							<div class="rounded-lg border border-sky-500/20 bg-sky-500/5 p-3">
+								<p class="mb-2 text-xs font-black uppercase tracking-wide text-sky-200">
+									Hasil Auto Subtitle
+								</p>
+								<div class="space-y-2">
+									{#each subtitleAnalyses as item (item.url)}
+										<div class="grid gap-2 rounded-lg border border-zinc-800 bg-zinc-950 p-2 text-xs sm:grid-cols-[90px_90px_1fr_80px] sm:items-center">
+											<span class="font-black text-zinc-100">{item.language}</span>
+											<span class="font-bold text-zinc-300">{formatConfidence(item.confidence)}</span>
+											<span class="truncate font-mono text-zinc-400" title={item.url}>{item.url}</span>
+											<span class="font-bold text-zinc-300">{item.sampleCueCount} cues</span>
+											<p class="sm:col-span-4 text-[11px] text-zinc-500">
+												{item.label} - {item.detectedFrom}{item.sampleText ? ` - ${item.sampleText}` : ''}
+											</p>
+											{#if item.error}
+												<p class="sm:col-span-4 text-[11px] text-amber-300">{item.error}</p>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+						<div class="space-y-3">
+							{#each signalGroups as group}
+								<div class="rounded-lg border border-zinc-800 bg-zinc-900/70 p-3">
+									<div class="mb-2 flex items-center justify-between gap-3">
+										<div class="flex items-center gap-2">
+											<AppIcon name={getSignalIcon(group.key)} class="text-[18px] text-zinc-300" />
+											<p class="text-xs font-black uppercase tracking-wide text-zinc-200">
+												{group.label}
+											</p>
+										</div>
+										<span class="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-bold text-zinc-400">
+											{group.items.length}
+										</span>
+									</div>
+									<div class="space-y-2">
+										{#each group.items.slice(0, 6) as signal (signal.id)}
+											<div class="grid gap-2 rounded-lg border border-zinc-800 bg-zinc-950 p-2 sm:grid-cols-[1fr_auto] sm:items-center">
+												<div class="min-w-0">
+													<p class="truncate font-mono text-xs text-zinc-200" title={signal.url}>
+														{signal.url}
+													</p>
+													<p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold text-zinc-500">
+														<span>{signal.type || 'unknown'}</span>
+														{#if signal.contentType}<span>{signal.contentType}</span>{/if}
+														{#if signal.statusCode}<span>HTTP {signal.statusCode}</span>{/if}
+														<span>{formatSignalTime(signal)}</span>
+													</p>
+												</div>
+												<div class="flex gap-2">
+													<button
+														type="button"
+														onclick={() => useSignal(signal)}
+														class="inline-flex items-center justify-center gap-1 rounded-lg bg-zinc-100 px-3 py-2 text-xs font-black text-zinc-950 hover:bg-white"
+													>
+														<AppIcon name={group.key === 'subtitle' ? 'subtitles' : group.key === 'playlist' ? 'add_link' : 'content_copy'} class="text-[16px]" />
+														{group.key === 'playlist' || group.key === 'subtitle' ? 'Pakai' : 'Copy'}
+													</button>
+													<button
+														type="button"
+														onclick={() => copySignalUrl(signal)}
+														class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+														aria-label="Copy URL signal"
+													>
+														<AppIcon name="content_copy" class="text-[16px]" />
+													</button>
+												</div>
+											</div>
+										{/each}
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</section>
 
 				<div class="space-y-2">
 					{#each urlSources as source, idx (idx)}

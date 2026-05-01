@@ -14,16 +14,28 @@
 	let error = $state('');
 	let savingProfile = $state(false);
 	let savingPassword = $state(false);
+	let uploadingAvatar = $state(false);
 	let showCurrent = $state(false);
 	let showNew = $state(false);
 	let showConfirm = $state(false);
 
-	// Avatar preview — pakai input value kalau valid URL, fallback ke dicebear
+	const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+	const ALLOWED_AVATAR_TYPES = new Set(['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif']);
+
+	// Avatar preview — pakai avatar akun kalau ada, fallback ke dicebear
 	const avatarPreview = $derived(
 		avatar.trim()
 			? avatar
 			: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(username || 'A')}&backgroundColor=7c3aed`
 	);
+
+	function formatBytes(bytes: number) {
+		if (!bytes) return '0 B';
+		const units = ['B', 'KB', 'MB'];
+		const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+		const value = bytes / 1024 ** index;
+		return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
+	}
 
 	async function saveProfile() {
 		if (!username.trim()) {
@@ -34,12 +46,46 @@
 		message = '';
 		savingProfile = true;
 		try {
-			await auth.updateProfile({ fullName: username, avatar: avatar.trim() || null });
-			message = 'Profil berhasil disimpan';
+			await auth.updateProfile({ fullName: username });
+			message = 'Nama profil berhasil disimpan';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Gagal menyimpan profil';
 		} finally {
 			savingProfile = false;
+		}
+	}
+
+	async function uploadAvatar(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0] ?? null;
+		input.value = '';
+
+		if (!file) return;
+
+		if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
+			error = 'Avatar harus PNG, JPG, JPEG, SVG, atau GIF';
+			message = '';
+			return;
+		}
+
+		if (file.size > MAX_AVATAR_BYTES) {
+			error = `Ukuran avatar maksimal 5MB. File ini ${formatBytes(file.size)}`;
+			message = '';
+			return;
+		}
+
+		error = '';
+		message = '';
+		uploadingAvatar = true;
+
+		try {
+			const updated = await auth.uploadAvatar(file);
+			avatar = updated.avatar ?? '';
+			message = 'Avatar berhasil diperbarui';
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Gagal upload avatar';
+		} finally {
+			uploadingAvatar = false;
 		}
 	}
 
@@ -164,10 +210,7 @@
 				class="flex items-center gap-4 px-4 py-4"
 				style="border-bottom: 1px solid var(--border);"
 			>
-				<!--
-                    Avatar preview — reaktif terhadap input URL.
-                    Ring double seperti di halaman profil utama.
-                -->
+				<!-- Ring double seperti di halaman profil utama. -->
 				<div
 					class="w-14 h-14 rounded-[var(--radius-xl)] overflow-hidden shrink-0"
 					style="
@@ -260,35 +303,50 @@
 					</div>
 				</div>
 
-				<!-- Avatar URL field -->
+				<!-- Avatar upload field -->
 				<div>
 					<label
 						for="profile-avatar"
 						class="block text-[9px] font-black uppercase tracking-[0.15em] mb-1.5"
 						style="color: var(--text-faint);"
 					>
-						Avatar URL
-						<span class="ml-1 normal-case font-semibold" style="color: var(--text-faint);">
-							— kosongkan untuk auto
-						</span>
+						Avatar
 					</label>
-					<div class="relative">
-						<AppIcon name="link" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-							style="font-size:16px; color: var(--text-faint);" />
+					<label
+						for="profile-avatar"
+						class="flex min-h-[92px] cursor-pointer items-center gap-3 rounded-[var(--radius-xl)] px-4 py-3 transition-all active:scale-[0.99]"
+						style="
+							background: var(--surface-offset);
+							border: 1px dashed color-mix(in oklch, var(--accent) 38%, var(--border-strong));
+						"
+					>
 						<input
 							id="profile-avatar"
-							bind:value={avatar}
-							type="url"
-							autocomplete="off"
-							placeholder="https://..."
-							class="w-full h-11 pl-9 pr-4 rounded-[var(--radius-xl)] text-[13px] outline-none transition-all"
-							style="
-                                background: var(--surface-offset);
-                                border: 1px solid var(--border-strong);
-                                color: var(--text-primary);
-                            "
+							type="file"
+							accept="image/png,image/jpeg,image/svg+xml,image/gif"
+							class="hidden"
+							disabled={uploadingAvatar}
+							onchange={uploadAvatar}
 						/>
-					</div>
+						<div
+							class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-lg)]"
+							style="background: color-mix(in oklch, var(--accent) 12%, var(--surface)); color: var(--accent);"
+						>
+							<AppIcon
+								name={uploadingAvatar ? 'progress_activity' : 'cloud_upload'}
+								class={uploadingAvatar ? 'animate-spin' : ''}
+								style="font-size:22px;"
+							/>
+						</div>
+						<div class="min-w-0 flex-1">
+							<p class="text-[13px] font-black" style="color: var(--text-primary);">
+								{uploadingAvatar ? 'Mengupload avatar...' : 'Upload avatar baru'}
+							</p>
+							<p class="mt-1 text-[10px] font-semibold leading-4" style="color: var(--text-faint);">
+								PNG, JPG, JPEG, SVG, GIF. Maksimal 5MB. Otomatis tersimpan setelah upload berhasil.
+							</p>
+						</div>
+					</label>
 				</div>
 
 				<!-- Save profile button -->
@@ -303,7 +361,7 @@
 						Menyimpan...
 					{:else}
 						<AppIcon name="save" style="font-size:16px;" />
-						Simpan Nama & Profil
+						Simpan Nama
 					{/if}
 				</button>
 			</div>

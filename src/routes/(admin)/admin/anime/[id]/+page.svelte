@@ -26,8 +26,8 @@
 	let season = $state('');
 	let duration = $state('');
 	let totalEpisodes = $state<number | null>(null);
-	let skipIntroSeconds = $state<number | null>(null);
-	let skipOutroSeconds = $state<number | null>(null);
+	let skipIntroSeconds = $state<string | number | null>(null);
+	let skipOutroSeconds = $state<string | number | null>(null);
 	let thumbnail = $state('');
 	let bigCover = $state('');
 	let synopsis = $state('');
@@ -117,8 +117,8 @@
 					<AdminFormInput label="Released" name="released" bind:value={released} />
 					<AdminFormInput label="Season" name="season" bind:value={season} />
 					<AdminFormInput label="Duration" name="duration" bind:value={duration} />
-					<AdminFormInput label="Skip intro mulai (detik)" name="skipIntroSeconds" type="number" bind:value={skipIntroSeconds} />
-					<AdminFormInput label="Skip outro mulai (detik)" name="skipOutroSeconds" type="number" bind:value={skipOutroSeconds} />
+					<AdminFormInput label="Skip intro mulai (mm:ss / detik)" name="skipIntroSeconds" bind:value={skipIntroSeconds} />
+					<AdminFormInput label="Skip outro mulai (mm:ss / detik)" name="skipOutroSeconds" bind:value={skipOutroSeconds} />
 				</div>
 				<div class="mt-4"><AdminTagInput label="Genre" bind:tags={genres} /></div>
 				<label class="mt-4 block"><span class="mb-1.5 block text-xs font-bold text-zinc-500">Synopsis</span><textarea bind:value={synopsis} rows="6" class="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm outline-none focus:border-violet-500"></textarea></label>

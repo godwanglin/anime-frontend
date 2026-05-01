@@ -92,7 +92,7 @@ export function createSkipIntroManager(ctx: SkipIntroContext) {
 
 	function showToast() {
 		toastVisible = true;
-		ctx.notify(`Intro dilewati ke ${Math.round(seconds)} detik`);
+		ctx.notify(`Intro dilewati ke ${formatSkipTime(seconds)}`);
 		if (toastTimer) clearTimeout(toastTimer);
 		toastTimer = setTimeout(() => {
 			toastVisible = false;
@@ -101,11 +101,22 @@ export function createSkipIntroManager(ctx: SkipIntroContext) {
 
 	function showOutroToast() {
 		toastVisible = true;
-		ctx.notify("Outro dilewati");
+		ctx.notify('Outro dilewati');
 		if (toastTimer) clearTimeout(toastTimer);
 		toastTimer = setTimeout(() => {
 			toastVisible = false;
 		}, 2600);
+	}
+
+	function formatSkipTime(value: number) {
+		const totalSeconds = Math.max(0, Math.floor(value));
+		const hours = Math.floor(totalSeconds / 3600);
+		const minutes = Math.floor((totalSeconds % 3600) / 60);
+		const secondsPart = totalSeconds % 60;
+		const pad = (part: number) => part.toString().padStart(2, '0');
+		return hours > 0
+			? `${pad(hours)}:${pad(minutes)}:${pad(secondsPart)}`
+			: `${pad(minutes)}:${pad(secondsPart)}`;
 	}
 
 	function destroy() {

@@ -15,8 +15,8 @@
 	let sub = $state('');
 	let date = $state('');
 	let status = $state('published');
-	let skipIntroSeconds = $state<number | null>(null);
-	let skipOutroSeconds = $state<number | null>(null);
+	let skipIntroSeconds = $state<string | number | null>(null);
+	let skipOutroSeconds = $state<string | number | null>(null);
 	let label = $state('');
 	let value = $state('');
 	let deleteServerId = $state<number | null>(null);
@@ -115,15 +115,13 @@
 			</label>
 			<AdminFormInput label="Tanggal Tayang" name="date" bind:value={date} />
 			<AdminFormInput
-				label="Skip intro (detik)"
+				label="Skip intro (mm:ss / detik)"
 				name="skipIntroSeconds"
-				type="number"
 				bind:value={skipIntroSeconds}
 			/>
 			<AdminFormInput
-				label="Skip outro mulai (detik)"
+				label="Skip outro mulai (mm:ss / detik)"
 				name="skipOutroSeconds"
-				type="number"
 				bind:value={skipOutroSeconds}
 			/>
 		</div>

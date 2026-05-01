@@ -204,10 +204,24 @@ async function logout(callApi = true) {
 	rememberUser(null);
 }
 
-async function updateProfile(payload: { username?: string; fullName?: string; avatar?: string | null }) {
+async function updateProfile(payload: { username?: string; fullName?: string }) {
 	const response = await authFetch('/creds/me', {
 		method: 'PUT',
 		body: JSON.stringify(payload)
+	});
+	const data = await parseApi<AuthUser>(response);
+	user = data;
+	rememberUser(data);
+	return data;
+}
+
+async function uploadAvatar(file: File) {
+	const form = new FormData();
+	form.append('file', file);
+
+	const response = await authFetch('/api/auth/me/avatar', {
+		method: 'POST',
+		body: form
 	});
 	const data = await parseApi<AuthUser>(response);
 	user = data;
@@ -255,6 +269,7 @@ export const auth = {
 	refreshToken,
 	fetchMe,
 	updateProfile,
+	uploadAvatar,
 	updatePassword,
 	authFetch,
 	parseApi,

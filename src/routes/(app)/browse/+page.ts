@@ -1,5 +1,11 @@
 import config from '$lib/config';
+import { API_CACHE_TTL, cachedApiJson } from '$lib/browser-api-cache';
 import type { PageLoad } from './$types';
+
+type ApiResponse<T = unknown> = {
+	data?: T;
+	meta?: Record<string, unknown> | null;
+};
 
 function appendIfPresent(params: URLSearchParams, key: string, value: string | null) {
 	if (value && value.trim()) params.set(key, value.trim());
@@ -27,14 +33,13 @@ export const load: PageLoad = async ({ fetch, url }) => {
 
 	const [animeRes, genresRes, tagsRes, studiosRes] = await Promise.all([
 		fetch(`${config.API_BASE_URL}/api/anime?${animeParams}`),
-		fetch(`${config.API_BASE_URL}/api/anime/genres`),
+		cachedApiJson<ApiResponse>(fetch, `${config.API_BASE_URL}/api/anime/genres`, API_CACHE_TTL.oneDay),
 		fetch(`${config.API_BASE_URL}/api/anime/tags?limit=80`),
 		fetch(`${config.API_BASE_URL}/api/anime/studios?limit=120`)
 	]);
 
-	const [animeJson, genresJson, tagsJson, studiosJson] = await Promise.all([
+	const [animeJson, tagsJson, studiosJson] = await Promise.all([
 		animeRes.json().catch(() => ({})),
-		genresRes.json().catch(() => ({})),
 		tagsRes.json().catch(() => ({})),
 		studiosRes.json().catch(() => ({}))
 	]);
@@ -42,7 +47,7 @@ export const load: PageLoad = async ({ fetch, url }) => {
 	return {
 		animes: animeRes.ok ? (animeJson.data ?? []) : [],
 		meta: animeRes.ok ? (animeJson.meta ?? null) : null,
-		genres: genresRes.ok ? (genresJson.data ?? []) : [],
+		genres: genresRes.ok ? (genresRes.data?.data ?? []) : [],
 		tags: tagsRes.ok ? (tagsJson.data ?? []) : [],
 		studios: studiosRes.ok ? (studiosJson.data ?? []) : [],
 		filters: {

@@ -1,5 +1,11 @@
 import config from '$lib/config';
+import { API_CACHE_TTL, cachedApiJson } from '$lib/browser-api-cache';
 import type { PageLoad } from './$types';
+
+type ApiResponse<T = unknown> = {
+	data?: T;
+	meta?: Record<string, unknown> | null;
+};
 
 function normalizeLimit(value: string | null) {
 	const parsed = Number(value ?? '48');
@@ -9,12 +15,15 @@ function normalizeLimit(value: string | null) {
 
 export const load: PageLoad = async ({ fetch, url }) => {
 	const limit = normalizeLimit(url.searchParams.get('limit'));
-	const res = await fetch(`${config.API_BASE_URL}/api/episodes/latest?limit=${limit}`);
-	const json = await res.json().catch(() => ({}));
+	const res = await cachedApiJson<ApiResponse>(
+		fetch,
+		`${config.API_BASE_URL}/api/episodes/latest?limit=${limit}`,
+		API_CACHE_TTL.thirtyMinutes
+	);
 
 	return {
-		episodes: res.ok ? (json.data ?? []) : [],
-		meta: res.ok ? (json.meta ?? null) : null,
+		episodes: res.ok ? (res.data?.data ?? []) : [],
+		meta: res.ok ? (res.data?.meta ?? res.meta ?? null) : null,
 		limit
 	};
 };

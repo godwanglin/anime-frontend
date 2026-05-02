@@ -88,7 +88,12 @@ let bootstrapped = $state(false);
 let refreshPromise: Promise<string | null> | null = null;
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
-const isLoggedIn = $derived(Boolean(user && accessToken));
+const isLoggedIn = $derived(Boolean(user));
+const hasAccessToken = $derived(Boolean(accessToken));
+
+function bootstrapLazy() {
+	bootstrapped = true;
+}
 
 async function refreshToken() {
 	if (refreshPromise) return refreshPromise;
@@ -115,8 +120,27 @@ async function refreshToken() {
 	return refreshPromise;
 }
 
+async function ensureAccessToken() {
+	if (accessToken) return accessToken;
+	if (!user) return null;
+	return refreshToken();
+}
+
 async function authFetch(path: string, init: RequestInit = {}, retry = true) {
 	// console.log('authFetch', path, init);
+	const method = (init.method ?? 'GET').toUpperCase();
+	if (!accessToken && user) {
+		const token = await ensureAccessToken();
+		if (!token) {
+			await logout(false);
+			if (method !== 'GET' && method !== 'HEAD') {
+				return new Response(JSON.stringify({ message: 'Sesi login sudah berakhir' }), {
+					status: 401,
+					headers: { 'Content-Type': 'application/json' }
+				});
+			}
+		}
+	}
 
 	const headers = new Headers(init.headers);
 	const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData;
@@ -145,8 +169,11 @@ async function authFetch(path: string, init: RequestInit = {}, retry = true) {
 async function fetchMe() {
 	isLoading = true;
 	try {
-		if (!accessToken) await refreshToken();
-		if (!accessToken) return null;
+		const token = await ensureAccessToken();
+		if (!token) {
+			await logout(false);
+			return null;
+		}
 		const response = await authFetch('/creds/me');
 		const data = await parseApi<AuthUser>(response);
 		user = data;
@@ -241,7 +268,7 @@ function startAutoRefresh() {
 	if (!browser || refreshTimer) return;
 	refreshTimer = setInterval(
 		() => {
-			if (user) refreshToken();
+			if (user && accessToken) refreshToken();
 		},
 		12 * 60 * 1000
 	);
@@ -253,6 +280,9 @@ export const auth = {
 	},
 	get accessToken() {
 		return accessToken;
+	},
+	get hasAccessToken() {
+		return hasAccessToken;
 	},
 	get isLoading() {
 		return isLoading;
@@ -267,7 +297,9 @@ export const auth = {
 	register,
 	logout,
 	refreshToken,
+	ensureAccessToken,
 	fetchMe,
+	bootstrapLazy,
 	updateProfile,
 	uploadAvatar,
 	updatePassword,

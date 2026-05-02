@@ -27,6 +27,7 @@
 	let activityReady = $state(false);
 	let stopActivityHeartbeat: (() => void) | null = null;
 	let lastActivityPath = '';
+	let authedBackgroundStarted = $state(false);
 
 	let siteConfig = $derived(($page.data.siteConfig ?? {}) as Record<string, string>);
 	let siteName = $derived(siteConfig['site.name'] ?? 'AniMe');
@@ -87,7 +88,7 @@
 	}
 
 	async function claimOpenAppExp() {
-		if (!auth.isLoggedIn) return;
+		if (!auth.accessToken) return;
 		const response = await auth.authFetch('/api/exp/open-app', {
 			method: 'POST',
 			body: JSON.stringify({})
@@ -145,28 +146,47 @@
 		activity.ping(buildActivityPayload(), true);
 	});
 
+	$effect(() => {
+		if (auth.accessToken && auth.user && !authedBackgroundStarted) {
+			authedBackgroundStarted = true;
+			startAuthedBackground().catch(() => {
+				authedBackgroundStarted = false;
+			});
+		}
+
+		if (!auth.user && authedBackgroundStarted) {
+			authedBackgroundStarted = false;
+			activityReady = false;
+			notifications.stopPolling();
+			stopActivityHeartbeat?.();
+			stopActivityHeartbeat = null;
+		}
+	});
+
+	async function startAuthedBackground() {
+		await claimOpenAppExp().catch(() => null);
+		await preference.fetchPreference();
+		await Promise.all([
+			history.fetchHistory(),
+			savedStore.fetchSaved(),
+			notifications.fetchNotifications().catch(() => null),
+			notifications.fetchPreferences().catch(() => null)
+		]);
+		notifications.startPolling();
+		stopActivityHeartbeat = activity.start(buildActivityPayload);
+		lastActivityPath = $page.url.pathname;
+		activityReady = true;
+	}
+
 	onMount(() => {
 		const saved = localStorage.getItem('theme');
 		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 		applyTheme(saved ? saved === 'dark' : prefersDark);
+		auth.bootstrapLazy();
 		auth.startAutoRefresh();
-		auth.fetchMe().then(async () => {
-			await claimOpenAppExp().catch(() => null);
-			await preference.fetchPreference();
-			if (auth.isLoggedIn) {
-				await Promise.all([
-					history.fetchHistory(),
-					savedStore.fetchSaved(),
-					notifications.fetchNotifications().catch(() => null),
-					notifications.fetchPreferences().catch(() => null)
-				]);
-				notifications.startPolling();
-				stopActivityHeartbeat = activity.start(buildActivityPayload);
-				lastActivityPath = $page.url.pathname;
-				activityReady = true;
-			}
-			isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-		});
+		preference.applyTheme();
+		preference.syncPlayerStorage();
+		isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 		document.addEventListener('click', onDocClick);
 		return () => {
 			document.removeEventListener('click', onDocClick);

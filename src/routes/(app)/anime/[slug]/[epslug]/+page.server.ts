@@ -89,13 +89,19 @@ async function accessTokenFromRefresh(input: {
 export const load: PageServerLoad = async ({ params, fetch, cookies }) => {
 	const episodeUrl = `${config.API_BASE_URL}/api/anime/${params.slug}/${params.epslug}`;
 	const guestId = ensureGuestId(cookies);
-	const accessToken = await accessTokenFromRefresh({ fetch, cookies });
 	const headers = new Headers({ 'x-guest-watch-id': guestId });
 
-	if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+	let episodeRes = await fetch(episodeUrl, { headers });
+	let episodeJson = await episodeRes.json().catch(() => null);
 
-	const episodeRes = await fetch(episodeUrl, { headers });
-	const episodeJson = await episodeRes.json().catch(() => null);
+	if (!episodeRes.ok && episodeJson?.errorCode === 'LOGIN_REQUIRED') {
+		const accessToken = await accessTokenFromRefresh({ fetch, cookies });
+		if (accessToken) {
+			headers.set('Authorization', `Bearer ${accessToken}`);
+			episodeRes = await fetch(episodeUrl, { headers });
+			episodeJson = await episodeRes.json().catch(() => null);
+		}
+	}
 
 	if (episodeRes.ok) {
 		const detail = pickEpisodePayload(episodeJson);

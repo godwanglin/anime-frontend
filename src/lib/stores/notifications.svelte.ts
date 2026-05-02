@@ -174,7 +174,7 @@ async function init() {
 		await subscribePush().catch(() => null);
 	}
 
-	if (auth.isLoggedIn) {
+	if (auth.accessToken) {
 		await Promise.all([fetchNotifications(), fetchPreferences()]);
 		startPolling();
 	}

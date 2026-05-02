@@ -10,6 +10,7 @@
 	import { notifications } from '$lib/stores/notifications.svelte';
 	import { preference } from '$lib/stores/preference.svelte';
 	import { saved as savedStore } from '$lib/stores/saved.svelte';
+	import { activity, type ActivityPingPayload } from '$lib/stores/activity.svelte';
 	import { pageTitle } from '$lib/stores/page.svelte';
 	import { displayUserName, userInitial } from '$lib/user-display';
 	import PwaInstallBanner from '$lib/components/PwaInstallBanner.svelte';
@@ -23,6 +24,9 @@
 	let searchWrapperEl = $state<HTMLDivElement>();
 	let searchInputEl = $state<HTMLInputElement>();
 	let pwaBannerVisible = $state(false);
+	let activityReady = $state(false);
+	let stopActivityHeartbeat: (() => void) | null = null;
+	let lastActivityPath = '';
 
 	let siteConfig = $derived(($page.data.siteConfig ?? {}) as Record<string, string>);
 	let siteName = $derived(siteConfig['site.name'] ?? 'AniMe');
@@ -91,6 +95,29 @@
 		if (response.ok) await auth.fetchMe();
 	}
 
+	function buildActivityPayload(): ActivityPingPayload {
+		const anime = $page.data?.anime as
+			| { id?: number; title?: string }
+			| null
+			| undefined;
+		const episode = $page.data?.episode as
+			| { id?: number; title?: string; number?: number; anime?: { id?: number; title?: string } }
+			| null
+			| undefined;
+		const watchingAnimeId = anime?.id ?? episode?.anime?.id ?? null;
+		const watchingAnimeTitle = anime?.title ?? episode?.anime?.title ?? null;
+
+		return {
+			path: $page.url.pathname,
+			title: document.title,
+			watchingAnimeId,
+			watchingEpisodeId: episode?.id ?? null,
+			watchingAnimeTitle,
+			watchingEpisodeTitle: episode?.title ?? null,
+			watchingEpisodeNumber: episode?.number ?? null
+		};
+	}
+
 	function onSearchInput() {
 		searchOpen = searchQuery.trim().length > 0;
 	}
@@ -111,6 +138,13 @@
 		}
 	}
 
+	$effect(() => {
+		const path = $page.url.pathname;
+		if (!activityReady || !auth.isLoggedIn || path === lastActivityPath) return;
+		lastActivityPath = path;
+		activity.ping(buildActivityPayload(), true);
+	});
+
 	onMount(() => {
 		const saved = localStorage.getItem('theme');
 		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -127,11 +161,17 @@
 					notifications.fetchPreferences().catch(() => null)
 				]);
 				notifications.startPolling();
+				stopActivityHeartbeat = activity.start(buildActivityPayload);
+				lastActivityPath = $page.url.pathname;
+				activityReady = true;
 			}
 			isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 		});
 		document.addEventListener('click', onDocClick);
-		return () => document.removeEventListener('click', onDocClick);
+		return () => {
+			document.removeEventListener('click', onDocClick);
+			stopActivityHeartbeat?.();
+		};
 	});
 </script>
 

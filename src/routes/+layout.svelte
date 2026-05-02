@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Analytics from '$lib/components/Analytics.svelte';
+	import AppUpdatePrompt from '$lib/components/AppUpdatePrompt.svelte';
 	import AssetSync from '$lib/components/AssetSync.svelte';
 	import GlobalImageUploader from '$lib/components/GlobalImageUploader.svelte';
 	import { notifications } from '$lib/stores/notifications.svelte';
@@ -31,6 +32,7 @@
 <Analytics {siteConfig} />
 <AssetSync />
 <GlobalImageUploader />
+<AppUpdatePrompt />
 
 {#if siteConfig['appearance.announcementBar']}
 	<div class="bg-violet-600 px-4 py-2 text-center text-xs font-bold text-white">

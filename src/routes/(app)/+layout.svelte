@@ -12,6 +12,7 @@
 	import { saved as savedStore } from '$lib/stores/saved.svelte';
 	import { pageTitle } from '$lib/stores/page.svelte';
 	import { displayUserName, userInitial } from '$lib/user-display';
+	import PwaInstallBanner from '$lib/components/PwaInstallBanner.svelte';
 
 	let { children } = $props();
 
@@ -21,6 +22,7 @@
 	let searchOpen = $state(false);
 	let searchWrapperEl = $state<HTMLDivElement>();
 	let searchInputEl = $state<HTMLInputElement>();
+	let pwaBannerVisible = $state(false);
 
 	let siteConfig = $derived(($page.data.siteConfig ?? {}) as Record<string, string>);
 	let siteName = $derived(siteConfig['site.name'] ?? 'AniMe');
@@ -36,6 +38,9 @@
 			'Anime') as string
 	);
 	let mobilePageTitle = $derived(pageTitle.value || animeAppBarTitle || siteName);
+	let headerSpacerHeight = $derived(
+		`${pwaBannerVisible ? (isHomePage ? 148 : 100) : isHomePage ? 104 : 56}px`
+	);
 
 	const mainNav = [
 		{ href: '/', icon: 'home', label: 'Beranda' },
@@ -314,6 +319,12 @@
         box-shadow: 0 1px 0 var(--border), 0 4px 16px oklch(0 0 0 / 0.04);
     	"
 	>
+		<PwaInstallBanner
+			{siteName}
+			{siteLogo}
+			onVisibleChange={(visible) => (pwaBannerVisible = visible)}
+		/>
+
 		<!-- ── DESKTOP TOPBAR ── -->
 		<div class="hidden md:flex max-w-7xl mx-auto px-5 h-[60px] items-center gap-4">
 			<!-- Logo -->
@@ -594,7 +605,8 @@
 			</div>
 		{/if}
 	</header>
-	<div class={isHomePage ? 'h-[104px] md:h-[60px]' : 'h-[56px] md:h-[60px]'}></div>
+	<div class="md:hidden" style="height: {headerSpacerHeight};"></div>
+	<div class="hidden md:block" style="height: {pwaBannerVisible ? 100 : 60}px;"></div>
 
 	<!-- ══════════════════════════════════════════════
          BODY — sidebar (desktop) + main content
@@ -603,7 +615,11 @@
 		<!-- ── DESKTOP SIDEBAR ── -->
 		<aside
 			class="hidden md:flex flex-col w-[220px] shrink-0 self-start sticky top-15 h-[calc(100dvh-60px)] overflow-y-auto py-5 px-3"
-			style="border-right: 1px solid var(--border);"
+			style="
+				top: {pwaBannerVisible ? '100px' : '60px'};
+				height: calc(100dvh - {pwaBannerVisible ? '100px' : '60px'});
+				border-right: 1px solid var(--border);
+			"
 		>
 			<nav class="flex flex-col gap-0.5">
 				{#each mainNav as item}

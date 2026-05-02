@@ -49,6 +49,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
 let initialized = $state(false);
 let supported = $state(false);
+let pushSupported = $state(false);
 let permission = $state<NotificationPermission>('default');
 let pushEnabled = $state(false);
 let configuringPush = $state(false);
@@ -80,13 +81,21 @@ async function getPublicConfig() {
 }
 
 async function registerServiceWorker() {
-	if (!browser || !('serviceWorker' in navigator)) return null;
+	if (!browser || !pushSupported) return null;
 	serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js');
 	return serviceWorkerRegistration;
 }
 
 async function subscribePush() {
-	if (!browser || !pushConfig.enabled || !pushConfig.publicKey || !serviceWorkerRegistration) return null;
+	if (
+		!browser ||
+		!pushSupported ||
+		!pushConfig.enabled ||
+		!pushConfig.publicKey ||
+		!serviceWorkerRegistration
+	) {
+		return null;
+	}
 	if (permission !== 'granted') return null;
 
 	const existing = await serviceWorkerRegistration.pushManager.getSubscription();
@@ -130,15 +139,38 @@ async function subscribePush() {
 	return subscription;
 }
 
+async function unsubscribePush() {
+	if (!browser || !pushSupported || !serviceWorkerRegistration) {
+		pushEnabled = false;
+		return;
+	}
+
+	const subscription = await serviceWorkerRegistration.pushManager.getSubscription();
+	if (subscription) {
+		await fetch(`${config.API_BASE_URL}/api/notifications/push/unsubscribe`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				deviceId: storageDeviceId(),
+				endpoint: subscription.endpoint
+			})
+		}).catch(() => null);
+		await subscription.unsubscribe().catch(() => null);
+	}
+
+	pushEnabled = false;
+}
+
 async function init() {
 	if (!browser || initialized) return;
 	initialized = true;
-	supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+	supported = 'Notification' in window;
+	pushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
 	permission = supported ? Notification.permission : 'denied';
 
 	await getPublicConfig();
-	if (supported) await registerServiceWorker();
-	if (permission === 'granted') {
+	if (pushSupported) await registerServiceWorker();
+	if (permission === 'granted' && pushSupported) {
 		await subscribePush().catch(() => null);
 	}
 
@@ -153,7 +185,7 @@ async function requestPermission() {
 	configuringPush = true;
 	try {
 		permission = await Notification.requestPermission();
-		if (permission === 'granted') {
+		if (permission === 'granted' && pushSupported) {
 			await subscribePush();
 		}
 		return permission;
@@ -256,6 +288,9 @@ export const notifications = {
 	get supported() {
 		return supported;
 	},
+	get pushSupported() {
+		return pushSupported;
+	},
 	get permission() {
 		return permission;
 	},
@@ -296,5 +331,6 @@ export const notifications = {
 	togglePanel,
 	startPolling,
 	stopPolling,
-	subscribePush
+	subscribePush,
+	unsubscribePush
 };

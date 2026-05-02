@@ -38,6 +38,7 @@
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
+	import { episodeBadgeLabel, isMovieContent } from '$lib/content-label';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
 
@@ -48,6 +49,9 @@
 		genre: string[];
 		thumbnail: string;
 		status: 'Ongoing' | 'Completed';
+		type?: string | null;
+		totalEpisodes?: number | null;
+		episodeCount?: number | null;
 	};
 
 	type PopularAnime = Anime & {
@@ -66,6 +70,9 @@
 		episode: string;
 		thumbnail: string;
 		time: string;
+		animeType?: string | null;
+		totalEpisodes?: number | null;
+		episodeCount?: number | null;
 		[key: string]: any;
 	};
 
@@ -335,15 +342,22 @@
 								<Icon icon={Play} class="text-white text-[24px]" />
 							</div>
 						</div>
-						{#if item.status === 'Ongoing'}
+						{#if isMovieContent(item)}
+							<span
+								class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-violet-950/70 border border-violet-500/40 text-violet-200"
+							>
+								<span class="h-1 w-1 rounded-full bg-violet-300"></span>
+								Movie
+							</span>
+						{:else if item.status === 'Ongoing'}
 							<span
 								class="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-950/70 border border-emerald-500/40 text-emerald-300"
 							>
 								<span class="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
-								Tayang
-							</span>
-						{/if}
-					</div>
+							Tayang
+						</span>
+					{/if}
+				</div>
 				</div>
 
 				<!-- Title BELOW, aligned under poster via ml-auto -->
@@ -400,6 +414,12 @@
 		class="flex max-w-[calc(100%+2rem)] gap-3 md:gap-4 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4"
 	>
 		{#each newEpisodes as item}
+			{@const episodeLabel = episodeBadgeLabel({
+				episode: item.episode,
+				animeType: item.animeType,
+				totalEpisodes: item.totalEpisodes,
+				episodeCount: item.episodeCount
+			})}
 			<a href={item.href} class="shrink-0 w-56 md:w-72 group">
 				<div
 					class="relative aspect-video rounded-xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 shadow-lg shadow-black/20 ring-1 ring-white/5 mb-2"
@@ -424,10 +444,16 @@
 					<!-- Episode badge top-left — premium gradient -->
 					<div class="absolute top-2 left-2">
 						<span
-							class="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black text-white bg-linear-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-600/40 ring-1 ring-white/20"
+							class="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black {episodeLabel === 'Movie'
+								? 'bg-violet-950/70 border border-violet-500/40 text-violet-100 shadow-lg shadow-violet-600/20'
+								: 'text-white bg-linear-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-600/40 ring-1 ring-white/20'}"
 						>
-							<Icon icon={Play} class="text-[12px] leading-none" />
-							{item.episode}
+							{#if episodeLabel === 'Movie'}
+								<span class="h-1.5 w-1.5 rounded-full bg-violet-300"></span>
+							{:else}
+								<Icon icon={Play} class="text-[12px] leading-none" />
+							{/if}
+							{episodeLabel}
 						</span>
 					</div>
 
@@ -557,7 +583,7 @@
 								{#if item.episodeCount}
 									<span class="flex items-center gap-1">
 										<Icon icon={Play} class="text-[12px] leading-none" />
-										{item.episodeCount} ep
+										{isMovieContent(item) ? 'Movie' : `${item.episodeCount} ep`}
 									</span>
 								{/if}
 							</div>

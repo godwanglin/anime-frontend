@@ -1,10 +1,10 @@
 <script lang="ts">
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
+	import NotificationPermissionSettings from '$lib/components/profile/NotificationPermissionSettings.svelte';
 	import CustomSelect from '$lib/components/ui/CustomSelect.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
-	import { notifications, type NotificationPreference } from '$lib/stores/notifications.svelte';
 	import { preference, type UserPreference } from '$lib/stores/preference.svelte';
 
 	const volumePct = $derived(Math.round(preference.pref.defaultVolume * 100));
@@ -50,75 +50,6 @@
 		{ label: 'Tengah', value: '25%', description: 'Area tengah' }
 	];
 
-	const notificationItems: Array<{
-		key: keyof NotificationPreference;
-		icon: string;
-		label: string;
-		desc: string;
-		forced?: boolean;
-	}> = [
-		{
-			key: 'announcement',
-			icon: 'campaign',
-			label: 'Pengumuman',
-			desc: 'Info penting, maintenance, dan kabar umum'
-		},
-		{
-			key: 'contentNew',
-			icon: 'movie_info',
-			label: 'Series baru',
-			desc: 'Notif saat ada series baru masuk'
-		},
-		{
-			key: 'contentUpdate',
-			icon: 'new_releases',
-			label: 'Episode update',
-			desc: 'Episode baru dan update konten terbaru'
-		},
-		{
-			key: 'personalActivity',
-			icon: 'forum',
-			label: 'Aktivitas personal',
-			desc: 'Balasan komentar dan aktivitas yang terkait akunmu'
-		},
-		{
-			key: 'watchReminder',
-			icon: 'schedule',
-			label: 'Reminder nonton',
-			desc: 'Pengingat lanjut nonton dan update yang relevan'
-		},
-		{
-			key: 'accountSystem',
-			icon: 'shield_person',
-			label: 'Akun & sistem',
-			desc: 'Perubahan penting akun dan sistem'
-		},
-		{
-			key: 'adminOperational',
-			icon: 'monitor_heart',
-			label: 'Operasional admin',
-			desc: 'Khusus event admin seperti scraping dan subtitle'
-		},
-		{
-			key: 'pushEnabled',
-			icon: 'notifications_active',
-			label: 'Push notification',
-			desc: 'Izinkan notifikasi browser saat aplikasi tidak dibuka'
-		},
-		{
-			key: 'inAppEnabled',
-			icon: 'notifications',
-			label: 'Inbox aplikasi',
-			desc: 'Tampilkan notif di halaman notifikasi'
-		}
-	];
-
-	async function toggleNotificationPreference(
-		key: keyof NotificationPreference,
-		value: boolean
-	) {
-		await notifications.updatePreferences({ [key]: value } as Partial<NotificationPreference>);
-	}
 </script>
 
 <SEO title="Preferensi" noindex />
@@ -545,117 +476,7 @@
 			</div>
 		</div>
 
-		<p
-			class="text-[9px] font-black uppercase tracking-[0.2em] mb-2 px-1"
-			style="color: var(--text-faint);"
-		>
-			Notifikasi
-		</p>
-		<div
-			class="rounded-[var(--radius-2xl)] overflow-hidden mb-6"
-			style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);"
-		>
-			<div class="px-4 py-4" style="border-bottom: 1px solid var(--border);">
-				<div class="flex items-start gap-3">
-					<div
-						class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
-						style="background: var(--surface-offset);"
-					>
-						<AppIcon name="notifications_active" style="font-size:16px; color: var(--text-muted);" />
-					</div>
-					<div class="min-w-0 flex-1">
-						<p class="text-[13px] font-bold" style="color: var(--text-primary);">
-							Preferensi notifikasi
-						</p>
-						<p class="text-[10px] leading-4" style="color: var(--text-faint);">
-							Atur kategori notif yang mau kamu terima. Inbox lengkapnya ada di halaman
-							notifikasi.
-						</p>
-					</div>
-					<a
-						href="/notifications"
-						class="shrink-0 rounded-[var(--radius-xl)] px-3 py-2 text-[11px] font-black transition-all"
-						style="background: var(--accent-surface); color: var(--accent-text); border: 1px solid oklch(from var(--accent) l c h / 0.2);"
-					>
-						Buka Inbox
-					</a>
-				</div>
-			</div>
-
-			{#if !notifications.preferences}
-				<div class="px-4 py-8 text-center">
-					<p class="text-[12px] font-bold" style="color: var(--text-primary);">
-						Memuat preferensi notifikasi...
-					</p>
-				</div>
-			{:else}
-				{#each notificationItems as item, i}
-					<label
-						class="flex items-center justify-between gap-4 px-4 py-4 cursor-pointer transition-colors"
-						style="border-bottom: {i < notificationItems.length - 1 ? '1px solid var(--border)' : 'none'};"
-					>
-						<div class="flex items-center gap-3">
-							<div
-								class="w-8 h-8 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0"
-								style="background: var(--surface-offset);"
-							>
-								<AppIcon name={item.icon} style="font-size:16px; color: var(--text-muted);" />
-							</div>
-							<div>
-								<div class="flex items-center gap-2">
-									<p class="text-[13px] font-bold" style="color: var(--text-primary);">
-										{item.label}
-									</p>
-									{#if item.forced}
-										<span
-											class="rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.18em]"
-											style="background: var(--accent-surface); color: var(--accent-text);"
-										>
-											Wajib
-										</span>
-									{/if}
-								</div>
-								<p class="text-[10px]" style="color: var(--text-faint);">{item.desc}</p>
-							</div>
-						</div>
-
-						<div class="relative shrink-0">
-							<input
-								type="checkbox"
-								class="sr-only peer"
-								checked={notifications.preferences[item.key]}
-								onchange={(e) =>
-									toggleNotificationPreference(item.key, e.currentTarget.checked)}
-							/>
-							<div
-								class="w-12 h-6 rounded-full transition-all duration-200 peer-checked:shadow-sm"
-								style="
-                                background: {notifications.preferences[item.key]
-									? 'var(--accent)'
-									: 'var(--surface-offset)'};
-                                border: 1.5px solid {notifications.preferences[item.key]
-									? 'oklch(from var(--accent) l c h / 0.4)'
-									: 'var(--border-strong)'};
-                                box-shadow: {notifications.preferences[item.key]
-									? '0 2px 8px var(--accent-glow)'
-									: 'none'};
-                            "
-							>
-								<div
-									class="w-5 h-5 rounded-full bg-white transition-transform duration-200 mt-[1px]"
-									style="
-                                    transform: translateX({notifications.preferences[item.key]
-										? '24px'
-										: '2px'});
-                                    box-shadow: 0 1px 4px oklch(0 0 0 / 0.2);
-                                "
-								></div>
-							</div>
-						</div>
-					</label>
-				{/each}
-			{/if}
-		</div>
+		<NotificationPermissionSettings />
 	</div>
 {/if}
 

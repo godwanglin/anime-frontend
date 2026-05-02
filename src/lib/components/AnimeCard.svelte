@@ -2,6 +2,7 @@
 <script lang="ts">
 	import Icon from 'heroicons-for-svelte';
 	import { Play, Star } from 'heroicons-for-svelte/icons/solid';
+	import { episodeBadgeLabel, isMovieContent } from '$lib/content-label';
 	import OptimizedImage from './OptimizedImage.svelte';
 
 	type AnimeCardProps = {
@@ -16,6 +17,9 @@
 		rating?: number | string | null;
 		aboveFold?: boolean;
 		episode?: number | string | null;
+		type?: string | null;
+		totalEpisodes?: number | null;
+		episodeCount?: number | null;
 		syncAssetContext?: 'anime' | 'episode';
 	};
 
@@ -31,12 +35,17 @@
 		rating,
 		aboveFold = false,
 		episode = null,
+		type = null,
+		totalEpisodes = null,
+		episodeCount = null,
 		syncAssetContext = 'anime'
 	}: AnimeCardProps = $props();
 
 	const link = $derived(href ?? (slug ? `/anime/${slug}` : '#'));
 	const loading = $derived(aboveFold ? 'eager' : 'lazy');
 	const fetchpriority = $derived(aboveFold ? 'high' : 'low');
+	const movieContent = $derived(isMovieContent({ type, totalEpisodes, episodeCount }));
+	const episodeLabel = $derived(episodeBadgeLabel({ episode, type, totalEpisodes, episodeCount }));
 </script>
 
 <a href={link} class="anime-card group flex flex-col">
@@ -114,7 +123,16 @@
 		{/if}
 
 		<!-- Status badge -->
-		{#if status}
+		{#if movieContent}
+			<div class="absolute top-2 right-2 z-10">
+				<span
+					class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-violet-950/70 border border-violet-500/40 text-violet-200"
+				>
+					<span class="h-1 w-1 rounded-full bg-violet-300"></span>
+					Movie
+				</span>
+			</div>
+		{:else if status}
 			<div class="absolute top-2 right-2 z-10">
 				{#if status === 'Ongoing'}
 					<span
@@ -134,11 +152,11 @@
 		{/if}
 
 		<!-- display salah sat antara rating dan episode -->
-		{#if episode && !rating}
+		{#if episodeLabel && !rating && !movieContent}
 			<div
 				class="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5"
 			>
-				<span class="text-[11px] font-bold text-white">Ep {episode}</span>
+				<span class="text-[11px] font-bold text-white">{episodeLabel}</span>
 			</div>
 		{/if}
 		{#if rating && !episode}

@@ -3,6 +3,7 @@
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import { episodeBadgeLabel } from '$lib/content-label';
 	import type { PageData } from './$types';
 
 	type Episode = {
@@ -12,6 +13,9 @@
 		time: string;
 		thumbnail: string;
 		href: string;
+		animeType?: string | null;
+		totalEpisodes?: number | null;
+		episodeCount?: number | null;
 	};
 
 	const { data }: { data: PageData } = $props();
@@ -101,7 +105,7 @@
 								{featured.title}
 							</p>
 							<div class="mt-1 flex items-center gap-2 text-[11px] font-semibold text-white/65">
-								<span>{featured.episode}</span>
+								<span>{episodeBadgeLabel(featured)}</span>
 								<span class="h-1 w-1 rounded-full bg-white/35"></span>
 								<span>{featured.time}</span>
 							</div>
@@ -148,6 +152,7 @@
 	{#if episodes.length > 0}
 		<div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
 			{#each restEpisodes as item, i}
+				{@const episodeLabel = episodeBadgeLabel(item)}
 				<a
 					href={item.href}
 					class="episode-card group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-200 md:hover:-translate-y-0.5 md:hover:shadow-lg md:hover:shadow-black/10 md:hover:ring-violet-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-violet-500/40"
@@ -168,10 +173,17 @@
 						<div class="absolute inset-0 bg-linear-to-t from-black/90 via-black/25 to-transparent"></div>
 						<div class="absolute left-3 top-3 flex items-center gap-2">
 							<span
-								class="flex items-center gap-1 rounded-lg bg-linear-to-br from-violet-500 to-fuchsia-600 px-1.5 py-0.5 text-[9px] font-black text-white shadow-lg shadow-violet-600/35 ring-1 ring-white/20 md:px-2 md:py-1 md:text-[10px]"
+								class="flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[9px] font-black md:px-2 md:py-1 md:text-[10px] {episodeLabel ===
+								'Movie'
+									? 'bg-violet-950/70 border border-violet-500/40 text-violet-100 shadow-lg shadow-violet-600/20'
+									: 'bg-linear-to-br from-violet-500 to-fuchsia-600 text-white shadow-lg shadow-violet-600/35 ring-1 ring-white/20'}"
 							>
-								<AppIcon name="play_arrow" class="text-[11px] md:text-[12px]" />
-								{item.episode}
+								{#if episodeLabel === 'Movie'}
+									<span class="h-1.5 w-1.5 rounded-full bg-violet-300"></span>
+								{:else}
+									<AppIcon name="play_arrow" class="text-[11px] md:text-[12px]" />
+								{/if}
+								{episodeLabel}
 							</span>
 						</div>
 						<span
@@ -192,7 +204,7 @@
 								Update #{i + 2}
 							</p>
 							<p class="line-clamp-1 text-[13px] font-black text-zinc-900 dark:text-white">
-								{item.episode} tersedia
+								{episodeLabel} tersedia
 							</p>
 						</div>
 						<div

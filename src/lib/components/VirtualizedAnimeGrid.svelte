@@ -14,6 +14,9 @@
 		href?: string;
 		rating?: number | string | null;
 		episode?: number | string | null;
+		type?: string | null;
+		totalEpisodes?: number | null;
+		episodeCount?: number | null;
 	};
 
 	type Columns = {
@@ -176,6 +179,9 @@
 					rank={showRank ? entry.index + 1 : entry.item.rank}
 					rating={entry.item.rating}
 					episode={entry.item.episode}
+					type={entry.item.type}
+					totalEpisodes={entry.item.totalEpisodes}
+					episodeCount={entry.item.episodeCount}
 					aboveFold={entry.index < columnCount * 2}
 					// rating="10"
 				/>

@@ -268,6 +268,48 @@
 			</div>
 		</div>
 
+		{#if !auth.isPremium}
+			<a
+				href="/premium?redirect=/profile"
+				class="mb-6 flex items-center gap-3 rounded-[var(--radius-2xl)] p-4 transition-all active:scale-[0.99]"
+				style="
+					background:
+						linear-gradient(135deg, oklch(from var(--accent) 0.32 0.18 h / 0.55), transparent 58%),
+						linear-gradient(180deg, oklch(1 0 0 / 0.09), oklch(1 0 0 / 0.045));
+					border: 1px solid oklch(from var(--accent) l c h / 0.28);
+					box-shadow: var(--shadow-sm), inset 0 1px 0 oklch(1 0 0 / 0.08);
+				"
+			>
+				<div
+					class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-xl)]"
+					style="background: oklch(1 0 0 / 0.12); border: 1px solid oklch(1 0 0 / 0.12);"
+				>
+					<AppIcon name="workspace_premium" style="font-size:24px; color: #facc15;" />
+				</div>
+				<div class="min-w-0 flex-1">
+					<div class="mb-1 flex flex-wrap items-center gap-2">
+						<p class="text-[14px] font-black leading-tight" style="color: var(--text-primary);">
+							Premium Rp5.000/bulan
+						</p>
+						<span
+							class="rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em]"
+							style="background: oklch(from var(--accent) l c h / 0.18); color: var(--accent-text); border: 1px solid oklch(from var(--accent) l c h / 0.22);"
+						>
+							Upgrade
+						</span>
+					</div>
+					<p class="text-[11px] font-semibold leading-relaxed" style="color: var(--text-muted);">
+						Buka 1080p, bebas iklan, dan benefit premium lainnya.
+					</p>
+				</div>
+				<AppIcon
+					name="chevron_right"
+					class="shrink-0"
+					style="font-size:22px; color: var(--accent);"
+				/>
+			</a>
+		{/if}
+
 		<!-- ══════════════════════════════════════
              CONTINUE WATCHING — last 3 items
         ══════════════════════════════════════ -->

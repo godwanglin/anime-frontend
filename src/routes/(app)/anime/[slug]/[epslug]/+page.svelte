@@ -17,6 +17,7 @@
 	import { notifications } from '$lib/stores/notifications.svelte';
 	import { preference } from '$lib/stores/preference.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
+	import type { PlayerConfig } from '$lib/components/video-player/v2/stores/vpstate.svelte';
 	import type { PageData } from './$types';
 
 	type Episode = {
@@ -231,7 +232,6 @@
 
 		return undefined;
 	});
-
 	let showAllEpisodes = $state(false);
 	let episodeSheetOpen = $state(false);
 	let episodeOrder = $state<'desc' | 'asc'>('desc');
@@ -256,6 +256,77 @@
 			? 'Kualitas 1080p tersedia untuk akun yang sudah masuk.'
 			: 'Masuk untuk lanjut menonton episode terbaru ini.'
 	);
+	const playerConfig = $derived.by<PlayerConfig>(() => ({
+		subtitle: {
+			color: preference.pref.subtitleColor,
+			fontSize: preference.pref.subtitleFontSize,
+			fontFamily: preference.pref.subtitleFontFamily,
+			fontWeight: 700,
+			background: preference.pref.subtitleBg,
+			borderRadius: '4px',
+			padding: '2px 8px',
+			bottomOffset: preference.pref.subtitlePosition,
+			textShadow: preference.pref.subtitleShadow,
+			opacity: preference.pref.subtitleOpacity,
+			maxWidth: preference.pref.subtitleMaxWidth,
+			defaultLanguage: preference.pref.subtitleLang,
+			enabled: preference.pref.subtitleEnabled
+		},
+		theme: {
+			primaryColor: '#ffffff',
+			accentColor: '#7c3aed',
+			controlTextColor: '#ffffff',
+			controlBackground: 'rgba(255,255,255,.16)'
+		},
+		ambient: {
+			enabled: isDesktop,
+			intensity: isDesktop ? 1.5 : 0,
+			opacity: isDesktop ? 0.42 : 0,
+			blur: isDesktop ? 72 : 0,
+			saturation: isDesktop ? 1.65 : 1,
+			contrast: 1
+		},
+		controls: {
+			enabled: true,
+			position: 'bottom',
+			showPlay: true,
+			showSeek: true,
+			showSkip: true,
+			showVolume: true,
+			showTime: true,
+			showSettings: true,
+			showFullscreen: true,
+			showSourceBadge: true,
+			showThumbnailPreview: true,
+			showStats: false,
+			preloadAudioWaveform: false,
+			maxAudioWaveformBytes: 30 * 1024 * 1024,
+			waveformEnable: false
+		},
+		playback: {
+			speeds: [0.25, 0.5, 1, 1.5, 2],
+			skipSeconds: 10,
+			persistProgress: true
+		},
+		fullscreen: {
+			showTopBar: true,
+			showBackButton: true,
+			showTitle: true
+		},
+		skipIntro: {
+			enabled: preference.pref.skipIntroEnabled,
+			seconds: resolvedSkipIntroSeconds,
+			outroSeconds: resolvedSkipOutroSeconds,
+			autoSkip: true,
+			autoSkipOutro: !nextEpisodeHref,
+			showButton: true
+		},
+		access: {
+			loginHref,
+			lockedQualityMessage: 'Masuk untuk membuka kualitas 1080p',
+			onLockedQuality: openQualityLoginPrompt
+		}
+	}));
 
 	const reportReasons = [
 		{
@@ -670,77 +741,7 @@
 					autoNext={preference.pref.autoNextEpisode}
 					episodeList={playerEpisodeList}
 					isLoggedIn={auth.isLoggedIn}
-					config={{
-						subtitle: {
-							color: preference.pref.subtitleColor,
-							fontSize: preference.pref.subtitleFontSize,
-							fontFamily: preference.pref.subtitleFontFamily,
-							fontWeight: 700,
-							background: preference.pref.subtitleBg,
-							borderRadius: '4px',
-							padding: '2px 8px',
-							bottomOffset: preference.pref.subtitlePosition,
-							textShadow: preference.pref.subtitleShadow,
-							opacity: preference.pref.subtitleOpacity,
-							maxWidth: preference.pref.subtitleMaxWidth,
-							defaultLanguage: preference.pref.subtitleLang,
-							enabled: preference.pref.subtitleEnabled
-						},
-						theme: {
-							primaryColor: '#ffffff',
-							accentColor: '#7c3aed',
-							controlTextColor: '#ffffff',
-							controlBackground: 'rgba(255,255,255,.16)'
-						},
-						ambient: {
-							enabled: isDesktop,
-							intensity: isDesktop ? 1.5 : 0,
-							opacity: isDesktop ? 0.42 : 0,
-							blur: isDesktop ? 72 : 0,
-							saturation: isDesktop ? 1.65 : 1,
-							contrast: 1
-						},
-						controls: {
-							enabled: true,
-							position: 'bottom',
-							showPlay: true,
-							showSeek: true,
-							showSkip: true,
-							showVolume: true,
-							showTime: true,
-							showSettings: true,
-							showFullscreen: true,
-							showSourceBadge: true,
-							showThumbnailPreview: true,
-							showStats: false,
-							preloadAudioWaveform: false,
-							maxAudioWaveformBytes: 30 * 1024 * 1024,
-							waveformEnable: false
-						},
-						playback: {
-							speeds: [0.25, 0.5, 1, 1.5, 2],
-							skipSeconds: 10,
-							persistProgress: true
-						},
-						fullscreen: {
-							showTopBar: true,
-							showBackButton: true,
-							showTitle: true
-						},
-						skipIntro: {
-							enabled: preference.pref.skipIntroEnabled,
-							seconds: resolvedSkipIntroSeconds,
-							outroSeconds: resolvedSkipOutroSeconds,
-							autoSkip: true,
-							autoSkipOutro: !nextEpisodeHref,
-							showButton: true
-						},
-						access: {
-							loginHref,
-							lockedQualityMessage: 'Masuk untuk membuka kualitas 1080p',
-							onLockedQuality: openQualityLoginPrompt
-						}
-					}}
+					config={playerConfig}
 				/>
 				<WatchProgressTracker payload={trackerPayload} enabled={auth.isLoggedIn} />
 			</div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 
 	import '../vp.css';
 	import CenterControls from './components/CenterControls.svelte';
@@ -88,7 +88,8 @@
 	});
 
 	$effect(() => {
-		vp.updateOptions(getOptions());
+		const nextOptions = getOptions();
+		untrack(() => vp.updateOptions(nextOptions));
 	});
 
 	$effect(() => vp.setVideoEl(videoEl));

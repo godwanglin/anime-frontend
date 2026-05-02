@@ -67,31 +67,9 @@
 	let seekbarEl = $state<HTMLInputElement>();
 	let subtitleReapplyRaf = 0;
 	let showEpisodeDrawer = $state(false);
-	let qualityLoginPromptOpen = $state(false);
-
-	const playerConfig = $derived({
-		...config,
-		access: {
-			...(config.access ?? {}),
-			onLockedQuality: () => {
-				qualityLoginPromptOpen = true;
-				config.access?.onLockedQuality?.();
-			}
-		}
-	});
-	const qualityLoginHref = $derived(playerConfig.access?.loginHref ?? '/login');
 
 	function getOptions() {
-		return {
-			src,
-			autoPlay,
-			subtitles,
-			subtitlesBySrc,
-			subtitleUrl,
-			thumbnailUrl,
-			forceHls,
-			config: playerConfig
-		};
+		return { src, autoPlay, subtitles, subtitlesBySrc, subtitleUrl, thumbnailUrl, forceHls, config };
 	}
 
 	const vp = createVideoPlayerState(getOptions());
@@ -285,44 +263,5 @@
 			{episodeList}
 			onClose={closeEpisodeDrawer}
 		/>
-		{#if qualityLoginPromptOpen}
-			<div class="vp-login-prompt" role="dialog" aria-modal="true" aria-label="Masuk untuk kualitas terbaik">
-				<button
-					type="button"
-					class="vp-login-prompt-backdrop"
-					aria-label="Tutup"
-					onclick={() => (qualityLoginPromptOpen = false)}
-				></button>
-				<div class="vp-login-prompt-card">
-					<div class="vp-login-prompt-icon" aria-hidden="true">
-						<svg viewBox="0 0 24 24" fill="none">
-							<path
-								d="M7 10V8a5 5 0 0 1 10 0v2"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-							/>
-							<path
-								d="M6.5 10h11A1.5 1.5 0 0 1 19 11.5v7A1.5 1.5 0 0 1 17.5 20h-11A1.5 1.5 0 0 1 5 18.5v-7A1.5 1.5 0 0 1 6.5 10Z"
-								stroke="currentColor"
-								stroke-width="2"
-							/>
-						</svg>
-					</div>
-					<p class="vp-login-prompt-title">Masuk untuk kualitas terbaik</p>
-					<p class="vp-login-prompt-copy">Kualitas 1080p tersedia untuk akun yang sudah masuk.</p>
-					<div class="vp-login-prompt-actions">
-						<button
-							type="button"
-							class="vp-login-prompt-secondary"
-							onclick={() => (qualityLoginPromptOpen = false)}
-						>
-							Nanti saja
-						</button>
-						<a class="vp-login-prompt-primary" href={qualityLoginHref}>Masuk</a>
-					</div>
-				</div>
-			</div>
-		{/if}
 	</div>
 </div>

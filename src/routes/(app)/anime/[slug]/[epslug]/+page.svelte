@@ -245,6 +245,17 @@
 	let reportError = $state('');
 	let loginPromptOpen = $state(false);
 	let loginPromptDismissed = $state(false);
+	let loginPromptKind = $state<'episode' | 'quality'>('episode');
+	const loginPromptTitle = $derived(
+		loginPromptKind === 'quality'
+			? 'Masuk untuk kualitas terbaik'
+			: 'Episode terbaru tersedia untuk member'
+	);
+	const loginPromptDescription = $derived(
+		loginPromptKind === 'quality'
+			? 'Kualitas 1080p tersedia untuk akun yang sudah masuk.'
+			: 'Masuk untuk lanjut menonton episode terbaru ini.'
+	);
 
 	const reportReasons = [
 		{
@@ -294,6 +305,7 @@
 
 	$effect(() => {
 		if (loginRequired && !auth.isLoggedIn && !loginPromptDismissed) {
+			loginPromptKind = 'episode';
 			loginPromptOpen = true;
 		}
 	});
@@ -394,6 +406,20 @@
 	function handleEpisodeNavigation(event: MouseEvent, ep: Episode, afterNavigate?: () => void) {
 		const href = isEpisodeLocked(ep) ? episodeLoginHref(ep) : episodeHref(ep);
 		replaceEpisodeNavigation(event, href, afterNavigate);
+	}
+
+	function openQualityLoginPrompt() {
+		if (auth.isLoggedIn) return;
+		loginPromptKind = 'quality';
+		loginPromptDismissed = false;
+
+		if (document.fullscreenElement) {
+			document.exitFullscreen().catch(() => {});
+			setTimeout(() => (loginPromptOpen = true), 80);
+			return;
+		}
+
+		loginPromptOpen = true;
 	}
 
 	function formatCount(value?: number) {
@@ -505,9 +531,9 @@
 			>
 				<AppIcon name="lock" style="font-size:30px; color: white;" />
 			</div>
-			<p class="text-[18px] font-black text-white">Episode terbaru tersedia untuk member</p>
+			<p class="text-[18px] font-black text-white">{loginPromptTitle}</p>
 			<p class="mt-2 text-[12px] font-semibold leading-relaxed text-white/55">
-				Masuk untuk lanjut menonton episode terbaru ini.
+				{loginPromptDescription}
 			</p>
 			<div class="mt-5 grid grid-cols-2 gap-2">
 				<button
@@ -711,7 +737,8 @@
 						},
 						access: {
 							loginHref,
-							lockedQualityMessage: 'Masuk untuk membuka kualitas 1080p'
+							lockedQualityMessage: 'Masuk untuk membuka kualitas 1080p',
+							onLockedQuality: openQualityLoginPrompt
 						}
 					}}
 				/>

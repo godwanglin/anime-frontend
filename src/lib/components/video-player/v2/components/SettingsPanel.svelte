@@ -7,7 +7,10 @@
 	let { vp }: { vp: VideoPlayerState } = $props();
 
 	function selectQuality(level: number) {
-		if (vp.setQuality(level) === false) return;
+		if (vp.setQuality(level) === false) {
+			vp.closeAllMenus();
+			return;
+		}
 		vp.finishSettingsSelection();
 	}
 </script>

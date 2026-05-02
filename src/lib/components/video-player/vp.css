@@ -895,6 +895,102 @@
 	cursor: pointer;
 }
 
+.vp-login-prompt {
+	position: absolute;
+	inset: 0;
+	z-index: 90;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 18px;
+}
+
+.vp-login-prompt-backdrop {
+	position: absolute;
+	inset: 0;
+	border: 0;
+	background: rgba(0, 0, 0, 0.72);
+	backdrop-filter: blur(10px);
+	cursor: pointer;
+}
+
+.vp-login-prompt-card {
+	position: relative;
+	width: min(360px, 100%);
+	padding: 22px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 22px;
+	background: rgba(9, 9, 11, 0.94);
+	box-shadow: 0 26px 84px rgba(124, 58, 237, 0.32);
+	text-align: center;
+	color: #fff;
+}
+
+.vp-login-prompt-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	margin-bottom: 14px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: 18px;
+	color: #fff;
+	background: rgba(124, 58, 237, 0.24);
+}
+
+.vp-login-prompt-icon svg {
+	width: 30px;
+	height: 30px;
+}
+
+.vp-login-prompt-title {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 950;
+	line-height: 1.2;
+}
+
+.vp-login-prompt-copy {
+	margin: 9px 0 0;
+	color: rgba(255, 255, 255, 0.58);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.55;
+}
+
+.vp-login-prompt-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 9px;
+	margin-top: 20px;
+}
+
+.vp-login-prompt-secondary,
+.vp-login-prompt-primary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 950;
+	text-decoration: none;
+}
+
+.vp-login-prompt-secondary {
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	color: rgba(255, 255, 255, 0.72);
+	background: transparent;
+	cursor: pointer;
+}
+
+.vp-login-prompt-primary {
+	color: #fff;
+	background: linear-gradient(135deg, #8b5cf6, #ec4899);
+	box-shadow: 0 14px 34px rgba(139, 92, 246, 0.35);
+}
+
 .vp-skip-intro-btn {
 	position: absolute;
 	right: 18px;
@@ -1123,6 +1219,21 @@
 
 .vp-settings-item:hover {
 	background: rgba(255, 255, 255, 0.1);
+}
+
+.vp-settings-item-locked {
+	color: rgba(255, 255, 255, 0.72);
+}
+
+.vp-settings-item-locked:hover {
+	background: rgba(139, 92, 246, 0.14);
+}
+
+.vp-settings-item-locked .vp-settings-item-sub {
+	color: #c4b5fd;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
 }
 
 .vp-settings-item-active {
@@ -1686,6 +1797,15 @@
 	background: rgba(255, 255, 255, 0.05);
 }
 
+.vp-ep-drawer-item-locked {
+	opacity: 0.72;
+	cursor: not-allowed;
+}
+
+.vp-ep-drawer-item-locked:hover {
+	background: rgba(255, 255, 255, 0.03);
+}
+
 .vp-ep-drawer-item-active {
 	background: rgba(124, 58, 237, 0.16);
 	border-left-color: var(--vp-accent-color);
@@ -1710,6 +1830,12 @@
 	box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2);
 }
 
+.vp-ep-drawer-lock {
+	width: 17px;
+	height: 17px;
+	color: rgba(255, 255, 255, 0.82);
+}
+
 .vp-ep-drawer-meta {
 	flex: 1;
 	min-width: 0;
@@ -1725,6 +1851,14 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.vp-ep-drawer-login-badge {
+	margin-left: 6px;
+	font-size: 9px;
+	font-weight: 900;
+	text-transform: uppercase;
+	color: #c4b5fd;
 }
 
 .vp-ep-drawer-ep-sub {

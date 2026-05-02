@@ -53,6 +53,55 @@ export function createHlsManager(ctx: HlsContext) {
 		}
 	}
 
+	function maxAllowedDisplayHeight() {
+		const access = ctx.getOptions().config?.access;
+		if (access?.isLoggedIn !== false) return Infinity;
+		return access.maxGuestQuality ?? 720;
+	}
+
+	function qualityLocked(level: number) {
+		if (level === -1) return false;
+		const q = qualityLevels.find((item) => item.level === level);
+		return Boolean(q && q.displayHeight > maxAllowedDisplayHeight());
+	}
+
+	function lockedQualityMessage() {
+		return (
+			ctx.getOptions().config?.access?.lockedQualityMessage ??
+			'Masuk untuk membuka kualitas di atas 720p'
+		);
+	}
+
+	function showLockedQualityPrompt() {
+		ctx.getOptions().config?.access?.onLockedQuality?.();
+		ctx.notify?.(lockedQualityMessage());
+	}
+
+	function highestAllowedLevel() {
+		let selected = -1;
+		for (let index = 0; index < qualityLevels.length; index += 1) {
+			const q = qualityLevels[index];
+			if (q.displayHeight <= maxAllowedDisplayHeight()) {
+				selected = q.level;
+				break;
+			}
+		}
+		return selected;
+	}
+
+	function applyAutoLevelCap() {
+		if (!hlsInstance) return;
+		const allowedLevel = highestAllowedLevel();
+		hlsInstance.autoLevelCapping = allowedLevel;
+		if (currentQuality !== -1 && qualityLocked(currentQuality)) {
+			setQuality(-1);
+		}
+	}
+
+	function refreshQualityAccess() {
+		applyAutoLevelCap();
+	}
+
 	function clearQualitySwitch() {
 		if (qualitySwitchTimer) clearTimeout(qualitySwitchTimer);
 		qualitySwitchTimer = null;
@@ -193,6 +242,7 @@ export function createHlsManager(ctx: HlsContext) {
 					qualityLevels = Array.from(seen.values()).sort(
 						(a, b) => b.displayHeight - a.displayHeight
 					);
+					applyAutoLevelCap();
 					const currentLevel = hls.currentLevel >= 0 ? hls.currentLevel : hls.loadLevel;
 					activeQualityHeight = hls.levels?.[currentLevel]?.height ?? qualityLevels[0]?.height ?? 0;
 				}, 0);
@@ -252,8 +302,14 @@ export function createHlsManager(ctx: HlsContext) {
 	}
 
 	function setQuality(level: number) {
+		if (qualityLocked(level)) {
+			showLockedQualityPrompt();
+			return false;
+		}
+
 		currentQuality = level;
 		if (hlsInstance) {
+			applyAutoLevelCap();
 			const video = ctx.getVideoEl();
 			const canSmooth = level !== -1 && smoothSwitchEnabled() && !!video && video.currentTime > 0;
 			if (canSmooth) {
@@ -265,6 +321,7 @@ export function createHlsManager(ctx: HlsContext) {
 		}
 		ctx.notify?.(level === -1 ? 'Quality: Auto' : `Quality: ${currentQualityLabel()}`);
 		persistQuality();
+		return true;
 	}
 
 	function currentQualityLabel(): string {
@@ -284,8 +341,10 @@ export function createHlsManager(ctx: HlsContext) {
 		setupHls,
 		destroyHls,
 		setQuality,
+		refreshQualityAccess,
 		currentQualityLabel,
 		currentResolutionLabel,
+		qualityLocked,
 		get hlsInstance() {
 			return hlsInstance;
 		},

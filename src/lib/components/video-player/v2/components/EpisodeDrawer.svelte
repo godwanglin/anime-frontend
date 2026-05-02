@@ -60,7 +60,8 @@
 		return !!target && target !== '_self';
 	}
 
-	function handleEpisodeClick(event: MouseEvent, href: string) {
+	function handleEpisodeClick(event: MouseEvent, ep: PlayerEpisodeItem) {
+		const href = ep.locked ? `/login?redirect=${encodeURIComponent(ep.href)}` : ep.href;
 		if (shouldUseNativeLink(event, href)) return;
 		event.preventDefault();
 		onClose();
@@ -150,18 +151,32 @@
 			{#each sortedEpisodes as ep (ep.slug)}
 				{@const isActive = ep.slug === currentSlug}
 				<a
-					href={ep.href}
+					href={ep.locked ? `/login?redirect=${encodeURIComponent(ep.href)}` : ep.href}
 					class="vp-ep-drawer-item"
 					class:vp-ep-drawer-item-active={isActive}
-					onclick={(event) => handleEpisodeClick(event, ep.href)}
+					class:vp-ep-drawer-item-locked={ep.locked}
+					aria-disabled={ep.locked}
+					title={ep.locked ? 'Masuk untuk membuka episode terbaru' : undefined}
+					onclick={(event) => handleEpisodeClick(event, ep)}
 					data-sveltekit-preload-data="hover"
 				>
 					<span class="vp-ep-drawer-num" class:vp-ep-drawer-num-active={isActive}>
-						{ep.number}
+						{#if ep.locked}
+							<svg class="vp-ep-drawer-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+								<path
+									d="M12 17a2 2 0 0 0 2-2c0-.74-.4-1.38-1-1.72V12h-2v1.28c-.6.34-1 .98-1 1.72a2 2 0 0 0 2 2Zm6-7h-1V7A5 5 0 0 0 7 7v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2ZM9 7a3 3 0 0 1 6 0v3H9V7Z"
+								/>
+							</svg>
+						{:else}
+							{ep.number}
+						{/if}
 					</span>
 					<span class="vp-ep-drawer-meta">
 						<span class="vp-ep-drawer-ep-title">
 							Episode {ep.number}
+							{#if ep.locked}
+								<span class="vp-ep-drawer-login-badge">Masuk</span>
+							{/if}
 						</span>
 						{#if ep.sub}
 							<span class="vp-ep-drawer-ep-sub">{ep.sub}</span>

@@ -138,6 +138,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 			forceHls: next.forceHls ?? false,
 			config: next.config ?? {}
 		};
+		hls?.refreshQualityAccess();
 	}
 
 	function setVideoEl(el: HTMLVideoElement | undefined) {

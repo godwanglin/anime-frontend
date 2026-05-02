@@ -100,6 +100,14 @@ export interface SkipIntroConfig {
 	outroButtonLead?: number;
 }
 
+export interface AccessConfig {
+	isLoggedIn?: boolean;
+	maxGuestQuality?: number;
+	loginHref?: string;
+	lockedQualityMessage?: string;
+	onLockedQuality?: () => void;
+}
+
 export interface PlayerConfig {
 	theme?: ThemeConfig;
 	ambient?: AmbientConfig;
@@ -109,6 +117,7 @@ export interface PlayerConfig {
 	fullscreen?: FullscreenConfig;
 	skipIntro?: SkipIntroConfig;
 	subtitle?: SubtitleConfig;
+	access?: AccessConfig;
 }
 
 export interface PlaybackStats {
@@ -160,6 +169,7 @@ export interface PlayerEpisodeItem {
 	sub?: string;
 	href: string;
 	progressPct?: number;
+	locked?: boolean;
 }
 
 export interface PlayerEpisodeSeason {

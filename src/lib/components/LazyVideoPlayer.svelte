@@ -14,6 +14,7 @@
 		subtitlesBySrc?: Record<string, SubtitleTrack[]>;
 		forceHls?: boolean;
 		config?: PlayerConfig;
+		isLoggedIn?: boolean;
 		prevHref?: string;
 		nextHref?: string;
 		autoNext?: boolean;
@@ -28,12 +29,24 @@
 		subtitlesBySrc = {},
 		forceHls = false,
 		config = {},
+		isLoggedIn = false,
 		prevHref,
 		nextHref,
 		autoNext = true,
 		episodeList
 	}: Props = $props();
 
+	const resolvedConfig = $derived({
+		...config,
+		access: {
+			...(config.access ?? {}),
+			isLoggedIn,
+			maxGuestQuality: config.access?.maxGuestQuality ?? 720,
+			loginHref: config.access?.loginHref ?? '/login',
+			lockedQualityMessage:
+				config.access?.lockedQualityMessage ?? 'Masuk untuk membuka kualitas 1080p'
+		}
+	});
 </script>
 
 <VideoPlayer
@@ -43,7 +56,7 @@
 	{autoPlay}
 	{subtitlesBySrc}
 	{forceHls}
-	{config}
+	config={resolvedConfig}
 	{prevHref}
 	{nextHref}
 	{autoNext}

@@ -144,6 +144,14 @@
 	const firstEp = $derived(
 		[...activeEpisodes].sort((a, b) => episodeNumber(a) - episodeNumber(b))[0]
 	);
+	const lockedEpisodeNumbers = $derived(
+		new Set(
+			[...activeEpisodes]
+				.sort((a, b) => episodeNumber(b) - episodeNumber(a))
+				.slice(0, 5)
+				.map((ep) => episodeNumber(ep))
+		)
+	);
 
 	let sortedEpisodes = $derived(
 		[...activeEpisodes].sort((a, b) =>
@@ -208,6 +216,15 @@
 	function episodeHref(ep?: Episode) {
 		if (!ep?.slug) return '#';
 		return `/anime/${ep.animeSlug ?? activeAnimeSlug}/${ep.slug}`;
+	}
+
+	function episodeLoginHref(ep?: Episode) {
+		return `/login?redirect=${encodeURIComponent(episodeHref(ep))}`;
+	}
+
+	function isEpisodeLocked(ep?: Episode) {
+		if (auth.isLoggedIn || !ep) return false;
+		return lockedEpisodeNumbers.has(episodeNumber(ep));
 	}
 
 	function selectSeason(season: number) {
@@ -828,14 +845,29 @@
 				{#each visibleEpisodes as ep}
 					{@const progress = episodeProgress(ep.id)}
 					{@const isWatched = progress > 0}
+					{@const isLocked = isEpisodeLocked(ep)}
 					<a
-						href={episodeHref(ep)}
-						class="ep-card group relative flex flex-col items-center justify-center py-3 rounded-[var(--radius-lg)] border transition-all duration-150 active:scale-[0.95] hover:border-transparent"
+						href={isLocked ? episodeLoginHref(ep) : episodeHref(ep)}
+						aria-disabled={isLocked}
+						title={isLocked ? 'Masuk untuk membuka episode terbaru' : undefined}
+						class="ep-card group relative flex flex-col items-center justify-center py-3 rounded-[var(--radius-lg)] border transition-all duration-150 active:scale-[0.95] hover:border-transparent {isLocked
+							? 'cursor-not-allowed opacity-70'
+							: ''}"
 						style="
-                        --ep-num-color: {isWatched ? 'var(--accent-text)' : 'var(--text-primary)'};
+                        --ep-num-color: {isLocked
+							? 'var(--text-muted)'
+							: isWatched
+								? 'var(--accent-text)'
+								: 'var(--text-primary)'};
                         --ep-sub-color: {isWatched ? 'var(--accent)' : 'var(--accent)'};
-                        background: {isWatched ? 'var(--accent-surface)' : 'var(--surface)'};
-                        border-color: {isWatched
+                        background: {isLocked
+							? 'color-mix(in srgb, var(--surface) 72%, black)'
+							: isWatched
+								? 'var(--accent-surface)'
+								: 'var(--surface)'};
+                        border-color: {isLocked
+							? 'var(--border-strong)'
+							: isWatched
 							? 'oklch(from var(--accent) l c h / 0.25)'
 							: 'var(--border)'};
                         box-shadow: var(--shadow-sm);
@@ -855,6 +887,14 @@
 						{#if isWatched}
 							<AppIcon name="check_circle" class="absolute top-1 right-1 group-hover:text-white transition-colors"
 								style="font-size:10px; color: var(--accent);" />
+						{/if}
+						{#if isLocked}
+							<div
+								class="ep-lock-overlay absolute inset-0 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/35 backdrop-blur-[1px]"
+								aria-hidden="true"
+							>
+								<AppIcon name="lock" class="text-white/90" style="font-size:16px;" />
+							</div>
 						{/if}
 
 						<!-- Episode number — SATU, tidak duplikat -->
@@ -983,19 +1023,39 @@
 							{#each sortedEpisodes as ep}
 								{@const progress = episodeProgress(ep.id)}
 								{@const isWatched = progress > 0}
+								{@const isLocked = isEpisodeLocked(ep)}
 								<a
-									href={episodeHref(ep)}
+									href={isLocked ? episodeLoginHref(ep) : episodeHref(ep)}
 									onclick={() => (episodeSheetOpen = false)}
-									class="relative flex min-h-12 items-center justify-center rounded-[var(--radius-lg)] border text-[13px] font-black transition-all active:scale-[0.95]"
+									aria-disabled={isLocked}
+									title={isLocked ? 'Masuk untuk membuka episode terbaru' : undefined}
+									class="relative flex min-h-12 items-center justify-center rounded-[var(--radius-lg)] border text-[13px] font-black transition-all active:scale-[0.95] {isLocked
+										? 'cursor-not-allowed opacity-70'
+										: ''}"
 									style="
-										background: {isWatched ? 'var(--accent-surface)' : 'var(--surface-offset)'};
-										border-color: {isWatched
+										background: {isLocked
+											? 'color-mix(in srgb, var(--surface-offset) 72%, black)'
+											: isWatched
+												? 'var(--accent-surface)'
+												: 'var(--surface-offset)'};
+										border-color: {isLocked
+											? 'var(--border-strong)'
+											: isWatched
 											? 'oklch(from var(--accent) l c h / 0.25)'
 											: 'var(--border-strong)'};
-										color: {isWatched ? 'var(--accent-text)' : 'var(--text-primary)'};
+										color: {isLocked
+											? 'var(--text-muted)'
+											: isWatched
+												? 'var(--accent-text)'
+												: 'var(--text-primary)'};
 									"
 								>
 									{episodeNumber(ep)}
+									{#if isLocked}
+										<span class="absolute inset-0 z-30 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/35 backdrop-blur-[1px]">
+											<AppIcon name="lock" class="text-white/90" style="font-size:16px;" />
+										</span>
+									{/if}
 									{#if isWatched}
 										<AppIcon name="check_circle" class="absolute right-1 top-1"
 											style="font-size:10px; color: var(--accent);" />
@@ -1254,5 +1314,8 @@
 	}
 	.ep-card [aria-hidden] {
 		z-index: 0;
+	}
+	.ep-card .ep-lock-overlay {
+		z-index: 30;
 	}
 </style>

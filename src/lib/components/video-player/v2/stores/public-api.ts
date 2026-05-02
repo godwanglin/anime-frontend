@@ -52,6 +52,7 @@ export function createPublicApi(ctx: any) {
 		finishSettingsSelection: settings.finishSelection,
 		toggleStats: ctx.toggleStats,
 		closeAllMenus: settings.closeAllMenus,
+		qualityLocked: hls.qualityLocked,
 		onMouseMove: playback.onMouseMove,
 		onMouseLeave: playback.onMouseLeave,
 		onSeekbarMouseMove: thumbnail.onSeekbarMouseMove,

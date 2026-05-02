@@ -5,6 +5,11 @@
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
 
 	let { vp }: { vp: VideoPlayerState } = $props();
+
+	function selectQuality(level: number) {
+		if (vp.setQuality(level) === false) return;
+		vp.finishSettingsSelection();
+	}
 </script>
 
 {#if vp.showSettings}
@@ -182,26 +187,24 @@
 						<button
 							class="vp-settings-item"
 							class:vp-settings-item-active={vp.currentQuality === -1}
-							onclick={() => {
-								vp.setQuality(-1);
-								vp.finishSettingsSelection();
-							}}
+							onclick={() => selectQuality(-1)}
 						>
 							{@render Check(vp.currentQuality === -1)}
 							Auto
 						</button>
 						{#each vp.qualityLevels as q}
+							{@const locked = vp.qualityLocked(q.level)}
 							<button
 								class="vp-settings-item"
 								class:vp-settings-item-active={vp.currentQuality === q.level}
-								onclick={() => {
-									vp.setQuality(q.level);
-									vp.finishSettingsSelection();
-								}}
+								class:vp-settings-item-locked={locked}
+								onclick={() => selectQuality(q.level)}
 							>
 								{@render Check(vp.currentQuality === q.level)}
 								{qualityLabel(q.height).toUpperCase()}
-								{#if q.bitrate}
+								{#if locked}
+									<span class="vp-settings-item-sub">Masuk</span>
+								{:else if q.bitrate}
 									<span class="vp-settings-item-sub">{Math.round(q.bitrate / 1000)}k</span>
 								{/if}
 							</button>

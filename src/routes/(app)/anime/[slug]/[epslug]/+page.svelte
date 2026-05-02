@@ -86,9 +86,12 @@
 	const anime = $derived(data.anime as Anime | null);
 	const episode = $derived(data.episode as Episode | null);
 	const detail = $derived(data.episodeDetail as Record<string, unknown> | null);
+	const loginRequired = $derived(data.errorCode === 'LOGIN_REQUIRED' || data.error === 'LOGIN_REQUIRED');
+	const currentWatchPath = $derived(`/anime/${data.params?.slug ?? ''}/${data.params?.epslug ?? ''}`);
+	const loginHref = $derived(`/login?redirect=${encodeURIComponent(currentWatchPath)}`);
 	const title = $derived(episode?.title ?? anime?.title ?? 'Episode');
 	const cover = $derived(anime?.bigCover || anime?.thumbnail || '');
-	const streamSources = $derived(formatProxySources((detail as any)?.servers ?? []));
+	const streamSources = $derived(loginRequired ? [] : formatProxySources((detail as any)?.servers ?? []));
 	const streamUrls = $derived(streamSources.map((source) => source.playerUrl));
 	const episodeSubtitles = $derived(extractEpisodeSubtitles(detail));
 	const subtitlesBySrc = $derived(groupSubtitlesForPlayer(streamSources, episodeSubtitles));
@@ -120,6 +123,14 @@
 	);
 	const episodes = $derived(
 		activeSeasonData?.episodes?.length ? activeSeasonData.episodes : defaultEpisodes
+	);
+	const lockedEpisodeNumbers = $derived(
+		new Set(
+			[...episodes]
+				.sort((a, b) => episodeNumber(b) - episodeNumber(a))
+				.slice(0, 5)
+				.map((ep) => episodeNumber(ep))
+		)
 	);
 	const hasMultipleEpisodes = $derived(episodes.length > 1);
 	const showEpisodeList = $derived(hasMultipleEpisodes || seasons.length > 1);
@@ -190,7 +201,8 @@
 				title: ep.title,
 				sub: ep.sub,
 				href,
-				progressPct: history.byEpisode(ep.id)?.progressPct ?? 0
+				progressPct: history.byEpisode(ep.id)?.progressPct ?? 0,
+				locked: isEpisodeLocked(ep)
 			};
 		};
 
@@ -231,6 +243,8 @@
 	let reportSubmitting = $state(false);
 	let reportMessage = $state('');
 	let reportError = $state('');
+	let loginPromptOpen = $state(false);
+	let loginPromptDismissed = $state(false);
 
 	const reportReasons = [
 		{
@@ -276,6 +290,12 @@
 		update();
 		mq.addEventListener('change', update);
 		return () => mq.removeEventListener('change', update);
+	});
+
+	$effect(() => {
+		if (loginRequired && !auth.isLoggedIn && !loginPromptDismissed) {
+			loginPromptOpen = true;
+		}
 	});
 	const sortedEpisodes = $derived(
 		[...episodes].sort((left, right) =>
@@ -328,6 +348,11 @@
 		return ep.number ?? ep.episode_number ?? 0;
 	}
 
+	function isEpisodeLocked(ep?: Episode) {
+		if (auth.isLoggedIn || !ep) return false;
+		return lockedEpisodeNumbers.has(episodeNumber(ep));
+	}
+
 	function toggleEpisodeOrder() {
 		episodeOrder = episodeOrder === 'desc' ? 'asc' : 'desc';
 		showAllEpisodes = false;
@@ -346,6 +371,10 @@
 		return animeSlug && ep.slug ? `/anime/${animeSlug}/${ep.slug}` : '#';
 	}
 
+	function episodeLoginHref(ep: Episode) {
+		return `/login?redirect=${encodeURIComponent(episodeHref(ep))}`;
+	}
+
 	function shouldUseNativeLink(event: MouseEvent, href?: string) {
 		if (!href || href === '#' || event.defaultPrevented) return true;
 		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
@@ -360,6 +389,11 @@
 		event.preventDefault();
 		afterNavigate?.();
 		void goto(href as string, { replaceState: true });
+	}
+
+	function handleEpisodeNavigation(event: MouseEvent, ep: Episode, afterNavigate?: () => void) {
+		const href = isEpisodeLocked(ep) ? episodeLoginHref(ep) : episodeHref(ep);
+		replaceEpisodeNavigation(event, href, afterNavigate);
 	}
 
 	function formatCount(value?: number) {
@@ -450,6 +484,53 @@
 	image={anime?.thumbnail ?? cover}
 	type="video.episode"
 />
+
+{#if loginPromptOpen}
+	<div class="fixed inset-0 z-[95] flex items-end justify-center bg-black/70 px-4 py-5 backdrop-blur-sm md:items-center">
+		<button
+			class="absolute inset-0"
+			aria-label="Tutup login prompt"
+			onclick={() => {
+				loginPromptDismissed = true;
+				loginPromptOpen = false;
+			}}
+		></button>
+		<div
+			class="relative w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-950 p-5 text-center shadow-2xl"
+			style="box-shadow: 0 24px 80px rgba(139,92,246,.28);"
+		>
+			<div
+				class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+				style="background: rgba(124,58,237,.22); border: 1px solid rgba(255,255,255,.12);"
+			>
+				<AppIcon name="lock" style="font-size:30px; color: white;" />
+			</div>
+			<p class="text-[18px] font-black text-white">Episode terbaru tersedia untuk member</p>
+			<p class="mt-2 text-[12px] font-semibold leading-relaxed text-white/55">
+				Masuk untuk lanjut menonton episode terbaru ini.
+			</p>
+			<div class="mt-5 grid grid-cols-2 gap-2">
+				<button
+					type="button"
+					class="rounded-full border border-white/10 px-4 py-2.5 text-[12px] font-black text-white/70"
+					onclick={() => {
+						loginPromptDismissed = true;
+						loginPromptOpen = false;
+					}}
+				>
+					Nanti saja
+				</button>
+				<a
+					href={loginHref}
+					class="rounded-full px-4 py-2.5 text-[12px] font-black text-white"
+					style="background: linear-gradient(135deg, #8b5cf6, #ec4899); box-shadow: 0 14px 34px rgba(139,92,246,.35);"
+				>
+					Masuk
+				</a>
+			</div>
+		</div>
+	</div>
+{/if}
 
 {#if reportOpen}
 	<div class="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-4 py-5 backdrop-blur-sm md:items-center">
@@ -562,6 +643,7 @@
 					nextHref={nextEpisodeHref}
 					autoNext={preference.pref.autoNextEpisode}
 					episodeList={playerEpisodeList}
+					isLoggedIn={auth.isLoggedIn}
 					config={{
 						subtitle: {
 							color: preference.pref.subtitleColor,
@@ -626,10 +708,54 @@
 							autoSkip: true,
 							autoSkipOutro: !nextEpisodeHref,
 							showButton: true
+						},
+						access: {
+							loginHref,
+							lockedQualityMessage: 'Masuk untuk membuka kualitas 1080p'
 						}
 					}}
 				/>
 				<WatchProgressTracker payload={trackerPayload} enabled={auth.isLoggedIn} />
+			</div>
+		{:else if loginRequired}
+			<div
+				class="w-full aspect-video flex items-center justify-center"
+				style="background: radial-gradient(circle at 50% 35%, rgba(124,58,237,.28), transparent 42%), #09090b;"
+			>
+				<div class="text-center space-y-4 px-6 max-w-md">
+					<div
+						class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+						style="background: rgba(124,58,237,.22); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 18px 48px rgba(124,58,237,.2);"
+					>
+						<AppIcon name="lock" style="font-size:32px; color: white;" />
+					</div>
+					<div>
+						<p class="text-[17px] font-black text-white">Masuk untuk lanjut menonton</p>
+						<p class="mt-1 text-[12px] font-semibold text-white/55">
+							Episode terbaru ini tersedia untuk akun yang sudah masuk.
+						</p>
+					</div>
+					<div class="flex justify-center gap-2">
+						<a
+							href={loginHref}
+							class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-black text-white"
+							style="background: linear-gradient(135deg, #8b5cf6, #ec4899); box-shadow: 0 14px 34px rgba(139,92,246,.35);"
+						>
+							<AppIcon name="login" style="font-size:17px;" />
+							Masuk sekarang
+						</a>
+						{#if anime?.slug}
+							<a
+								href="/anime/{anime.slug}"
+								class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-black text-white/80"
+								style="background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);"
+							>
+								<AppIcon name="list" style="font-size:17px;" />
+								Lihat Episode
+							</a>
+						{/if}
+					</div>
+				</div>
 			</div>
 		{:else}
 			<!--
@@ -982,35 +1108,61 @@
 					{#each sortedEpisodes as ep}
 						{@const isActive = ep.slug === episode?.slug || ep.slug === data.params?.epslug}
 						{@const progress = episodeProgress(ep.id)}
+						{@const isLocked = isEpisodeLocked(ep)}
 						<a
-							href={episodeHref(ep)}
-							onclick={(event) => replaceEpisodeNavigation(event, episodeHref(ep))}
-							class="flex items-center gap-3 px-4 py-3 transition-all duration-150"
+							href={isLocked ? episodeLoginHref(ep) : episodeHref(ep)}
+							onclick={(event) => handleEpisodeNavigation(event, ep)}
+							aria-disabled={isLocked}
+							title={isLocked ? 'Masuk untuk membuka episode terbaru' : undefined}
+							class="flex items-center gap-3 px-4 py-3 transition-all duration-150 {isLocked
+								? 'cursor-not-allowed opacity-70'
+								: ''}"
 							style="
-                            background: {isActive ? 'var(--accent-surface)' : 'transparent'};
-                            border-left: 2px solid {isActive ? 'var(--accent)' : 'transparent'};
+                            background: {isLocked
+								? 'color-mix(in srgb, var(--surface) 70%, black)'
+								: isActive
+									? 'var(--accent-surface)'
+									: 'transparent'};
+                            border-left: 2px solid {isLocked
+								? 'var(--text-muted)'
+								: isActive
+									? 'var(--accent)'
+									: 'transparent'};
                         "
 						>
 							<!-- Ep number bubble -->
 							<div
 								class="shrink-0 w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center text-[12px] font-black"
 								style="
-                                background: {isActive ? 'var(--accent)' : 'var(--surface-offset)'};
+                                background: {isLocked
+									? 'var(--border-strong)'
+									: isActive
+										? 'var(--accent)'
+										: 'var(--surface-offset)'};
                                 color: {isActive ? '#fff' : 'var(--text-muted)'};
                                 box-shadow: {isActive ? '0 2px 8px var(--accent-glow)' : 'none'};
                             "
 							>
-								{episodeNumber(ep)}
+								{#if isLocked}
+									<AppIcon name="lock" style="font-size:16px;" />
+								{:else}
+									{episodeNumber(ep)}
+								{/if}
 							</div>
 
 							<!-- Ep meta -->
 							<div class="flex-1 min-w-0">
 								<p
 									class="text-[12px] font-bold leading-tight"
-									style="color: {isActive ? 'var(--accent-text)' : 'var(--text-primary)'};"
-								>
-									Episode {episodeNumber(ep)}
-								</p>
+								style="color: {isActive ? 'var(--accent-text)' : 'var(--text-primary)'};"
+							>
+								Episode {episodeNumber(ep)}
+								{#if isLocked}
+									<span class="ml-1 text-[9px] font-black uppercase" style="color: var(--text-muted);">
+										Masuk
+									</span>
+								{/if}
+							</p>
 								<p class="text-[10px] mt-0.5" style="color: var(--text-faint);">
 									{ep.date}
 								</p>
@@ -1261,19 +1413,28 @@
 					{#each visibleEpisodes as ep}
 						{@const isActive = ep.slug === episode?.slug || ep.slug === data.params?.epslug}
 						{@const progress = episodeProgress(ep.id)}
+						{@const isLocked = isEpisodeLocked(ep)}
 						<a
-							href={episodeHref(ep)}
-							onclick={(event) => replaceEpisodeNavigation(event, episodeHref(ep))}
-							class="relative flex flex-col items-center justify-center gap-0.5 py-3 rounded-[var(--radius-lg)] border transition-all duration-150 active:scale-[0.94]"
+							href={isLocked ? episodeLoginHref(ep) : episodeHref(ep)}
+							onclick={(event) => handleEpisodeNavigation(event, ep)}
+							aria-disabled={isLocked}
+							title={isLocked ? 'Masuk untuk membuka episode terbaru' : undefined}
+							class="relative flex flex-col items-center justify-center gap-0.5 py-3 rounded-[var(--radius-lg)] border transition-all duration-150 active:scale-[0.94] {isLocked
+								? 'cursor-not-allowed opacity-70'
+								: ''}"
 							style="
                             background: {isActive
 								? 'var(--accent)'
-								: progress > 0
+								: isLocked
+									? 'color-mix(in srgb, var(--surface) 72%, black)'
+									: progress > 0
 									? 'var(--accent-surface)'
 									: 'var(--surface)'};
                             border-color: {isActive
 								? 'transparent'
-								: progress > 0
+								: isLocked
+									? 'var(--border-strong)'
+									: progress > 0
 									? 'oklch(from var(--accent) l c h / 0.25)'
 									: 'var(--border)'};
                             box-shadow: {isActive
@@ -1290,13 +1451,20 @@
 									{ep.sub}
 								</span>
 							{/if}
+							{#if isLocked}
+								<div class="absolute inset-0 z-30 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/35 backdrop-blur-[1px]">
+									<AppIcon name="lock" class="text-white/90" style="font-size:16px;" />
+								</div>
+							{/if}
 
 							<!-- Ep number -->
 							<span
 								class="text-[13px] font-black leading-none"
 								style="color: {isActive
 									? '#fff'
-									: progress > 0
+									: isLocked
+										? 'var(--text-muted)'
+										: progress > 0
 										? 'var(--accent-text)'
 										: 'var(--text-primary)'};"
 							>
@@ -1431,30 +1599,46 @@
 								{#each sortedEpisodes as ep}
 									{@const isActive = ep.slug === episode?.slug || ep.slug === data.params?.epslug}
 									{@const progress = episodeProgress(ep.id)}
+									{@const isLocked = isEpisodeLocked(ep)}
 									<a
-										href={episodeHref(ep)}
+										href={isLocked ? episodeLoginHref(ep) : episodeHref(ep)}
 										onclick={(event) =>
-											replaceEpisodeNavigation(event, episodeHref(ep), () => (episodeSheetOpen = false))}
-										class="relative flex min-h-12 items-center justify-center rounded-[var(--radius-lg)] border text-[13px] font-black transition-all active:scale-[0.95]"
+											handleEpisodeNavigation(event, ep, () => (episodeSheetOpen = false))}
+										aria-disabled={isLocked}
+										title={isLocked ? 'Masuk untuk membuka episode terbaru' : undefined}
+										class="relative flex min-h-12 items-center justify-center rounded-[var(--radius-lg)] border text-[13px] font-black transition-all active:scale-[0.95] {isLocked
+											? 'cursor-not-allowed opacity-70'
+											: ''}"
 										style="
 											background: {isActive
 												? 'var(--accent)'
-												: progress > 0
+												: isLocked
+													? 'color-mix(in srgb, var(--surface-offset) 72%, black)'
+													: progress > 0
 													? 'var(--accent-surface)'
 													: 'var(--surface-offset)'};
 											border-color: {isActive
 												? 'transparent'
-												: progress > 0
+												: isLocked
+													? 'var(--border-strong)'
+													: progress > 0
 													? 'oklch(from var(--accent) l c h / 0.25)'
 													: 'var(--border-strong)'};
 											color: {isActive
-												? '#fff'
-												: progress > 0
+													? '#fff'
+													: isLocked
+														? 'var(--text-muted)'
+														: progress > 0
 													? 'var(--accent-text)'
 													: 'var(--text-primary)'};
 										"
 									>
 										{episodeNumber(ep)}
+										{#if isLocked}
+											<span class="absolute inset-0 z-30 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/35 backdrop-blur-[1px]">
+												<AppIcon name="lock" class="text-white/90" style="font-size:16px;" />
+											</span>
+										{/if}
 										{#if progress >= 90 && !isActive}
 											<AppIcon name="check_circle" class="absolute right-1 top-1"
 												style="font-size:10px; color: var(--accent);" />

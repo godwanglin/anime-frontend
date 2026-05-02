@@ -53,6 +53,7 @@
 	let summary = $state<HealthSummary | null>(null);
 	let loading = $state(true);
 	let clearing = $state(false);
+	let actingKey = $state('');
 	let error = $state('');
 	let lastRefreshAt = $state<Date | null>(null);
 	let timer: ReturnType<typeof setInterval> | null = null;
@@ -84,6 +85,31 @@
 		} finally {
 			clearing = false;
 		}
+	}
+
+	async function runPm2Action(processName: string, action: 'start' | 'stop' | 'restart') {
+		const label = action === 'start' ? 'start' : action === 'stop' ? 'stop' : 'restart';
+		const confirmed = window.confirm(`Yakin mau ${label} ${processName}?`);
+		if (!confirmed) return;
+
+		const key = `${processName}:${action}`;
+		actingKey = key;
+		error = '';
+		try {
+			await adminApi('/health/pm2/action', {
+				method: 'POST',
+				body: JSON.stringify({ processName, action })
+			});
+			setTimeout(load, processName === 'anime-api' && action === 'restart' ? 2000 : 600);
+		} catch (err) {
+			error = err instanceof Error ? err.message : `Gagal ${label} ${processName}`;
+		} finally {
+			actingKey = '';
+		}
+	}
+
+	function canStop(row: { name: string; status: string }) {
+		return row.name !== 'anime-api' && row.status === 'online';
 	}
 
 	function statusClass(status?: Status) {
@@ -233,7 +259,7 @@
 				<h2 class="text-sm font-black text-zinc-100">PM2 Process</h2>
 			</div>
 			<div class="overflow-x-auto">
-				<table class="w-full min-w-[760px] text-left text-sm">
+				<table class="w-full min-w-[940px] text-left text-sm">
 					<thead class="text-xs uppercase tracking-widest text-zinc-500">
 						<tr>
 							<th class="px-4 py-3">Name</th>
@@ -242,6 +268,7 @@
 							<th class="px-4 py-3">CPU</th>
 							<th class="px-4 py-3">Restart</th>
 							<th class="px-4 py-3">Uptime</th>
+							<th class="px-4 py-3 text-right">Actions</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-zinc-800">
@@ -253,10 +280,45 @@
 								<td class="px-4 py-3 text-zinc-300">{row.cpu}%</td>
 								<td class="px-4 py-3 text-zinc-300">{row.restarts}</td>
 								<td class="px-4 py-3 text-zinc-300">{duration(row.uptimeMs)}</td>
+								<td class="px-4 py-3">
+									<div class="flex justify-end gap-2">
+										{#if row.status !== 'online'}
+											<button
+												type="button"
+												onclick={() => runPm2Action(row.name, 'start')}
+												disabled={actingKey === `${row.name}:start`}
+												class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-500/30 px-3 text-xs font-black text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"
+											>
+												<AppIcon name="play_arrow" class="text-[16px]" />
+												Start
+											</button>
+										{/if}
+										<button
+											type="button"
+											onclick={() => runPm2Action(row.name, 'restart')}
+											disabled={actingKey === `${row.name}:restart`}
+											class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-violet-500/30 px-3 text-xs font-black text-violet-300 hover:bg-violet-500/10 disabled:opacity-50"
+										>
+											<AppIcon name="restart_alt" class="text-[16px]" />
+											Restart
+										</button>
+										{#if canStop(row)}
+											<button
+												type="button"
+												onclick={() => runPm2Action(row.name, 'stop')}
+												disabled={actingKey === `${row.name}:stop`}
+												class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-red-500/30 px-3 text-xs font-black text-red-300 hover:bg-red-500/10 disabled:opacity-50"
+											>
+												<AppIcon name="stop" class="text-[16px]" />
+												Stop
+											</button>
+										{/if}
+									</div>
+								</td>
 							</tr>
 						{:else}
 							<tr>
-								<td colspan="6" class="px-4 py-6 text-center text-zinc-500">
+								<td colspan="7" class="px-4 py-6 text-center text-zinc-500">
 									{summary.pm2.message ?? 'PM2 data belum tersedia'}
 								</td>
 							</tr>
@@ -313,4 +375,3 @@
 		</section>
 	{/if}
 </div>
-

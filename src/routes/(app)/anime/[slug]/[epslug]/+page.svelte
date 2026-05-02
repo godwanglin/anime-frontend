@@ -90,6 +90,7 @@
 	const loginRequired = $derived(data.errorCode === 'LOGIN_REQUIRED' || data.error === 'LOGIN_REQUIRED');
 	const currentWatchPath = $derived(`/anime/${data.params?.slug ?? ''}/${data.params?.epslug ?? ''}`);
 	const loginHref = $derived(`/login?redirect=${encodeURIComponent(currentWatchPath)}`);
+	const premiumHref = $derived(`/premium?redirect=${encodeURIComponent(currentWatchPath)}`);
 	const title = $derived(episode?.title ?? anime?.title ?? 'Episode');
 	const cover = $derived(anime?.bigCover || anime?.thumbnail || '');
 	const streamSources = $derived(loginRequired ? [] : formatProxySources((detail as any)?.servers ?? []));
@@ -245,15 +246,15 @@
 	let reportError = $state('');
 	let loginPromptOpen = $state(false);
 	let loginPromptDismissed = $state(false);
-	let loginPromptKind = $state<'episode' | 'quality'>('episode');
+	let loginPromptKind = $state<'episode' | 'premium'>('episode');
 	const loginPromptTitle = $derived(
-		loginPromptKind === 'quality'
-			? 'Masuk untuk kualitas terbaik'
+		loginPromptKind === 'premium'
+			? 'Upgrade Premium untuk 1080p'
 			: 'Episode terbaru tersedia untuk member'
 	);
 	const loginPromptDescription = $derived(
-		loginPromptKind === 'quality'
-			? 'Kualitas 1080p tersedia untuk akun yang sudah masuk.'
+		loginPromptKind === 'premium'
+			? 'Nikmati kualitas tertinggi tanpa iklan mulai Rp5.000 per bulan.'
 			: 'Masuk untuk lanjut menonton episode terbaru ini.'
 	);
 	const playerConfig = $derived.by<PlayerConfig>(() => ({
@@ -322,8 +323,11 @@
 			showButton: true
 		},
 		access: {
+			hasPremiumAccess: auth.isPremium,
+			maxFreeQuality: 720,
 			loginHref,
-			lockedQualityMessage: 'Masuk untuk membuka kualitas 1080p',
+			lockedQualityMessage: 'Premium diperlukan untuk membuka kualitas 1080p',
+			lockedQualityBadge: 'Premium',
 			onLockedQuality: openQualityLoginPrompt
 		}
 	}));
@@ -480,8 +484,8 @@
 	}
 
 	function openQualityLoginPrompt() {
-		if (auth.isLoggedIn) return;
-		loginPromptKind = 'quality';
+		if (auth.isPremium) return;
+		loginPromptKind = 'premium';
 		loginPromptDismissed = false;
 
 		if (document.fullscreenElement) {
@@ -606,6 +610,17 @@
 			<p class="mt-2 text-[12px] font-semibold leading-relaxed text-white/55">
 				{loginPromptDescription}
 			</p>
+			{#if loginPromptKind === 'premium'}
+				<div class="mt-4 rounded-2xl border border-violet-400/20 bg-violet-500/10 px-4 py-3">
+					<p class="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-200">Premium</p>
+					<p class="mt-1 text-2xl font-black text-white">
+						Rp5.000<span class="text-sm text-white/55">/bulan</span>
+					</p>
+					<p class="mt-1 text-[11px] font-semibold text-white/55">
+						1080p, bebas iklan, dan benefit premium berikutnya.
+					</p>
+				</div>
+			{/if}
 			<div class="mt-5 grid grid-cols-2 gap-2">
 				<button
 					type="button"
@@ -618,11 +633,11 @@
 					Nanti saja
 				</button>
 				<a
-					href={loginHref}
+					href={loginPromptKind === 'premium' && auth.isLoggedIn ? premiumHref : loginHref}
 					class="rounded-full px-4 py-2.5 text-[12px] font-black text-white"
 					style="background: linear-gradient(135deg, #8b5cf6, #ec4899); box-shadow: 0 14px 34px rgba(139,92,246,.35);"
 				>
-					Masuk
+					{loginPromptKind === 'premium' && auth.isLoggedIn ? 'Lihat Premium' : 'Masuk'}
 				</a>
 			</div>
 		</div>
@@ -741,6 +756,7 @@
 					autoNext={preference.pref.autoNextEpisode}
 					episodeList={playerEpisodeList}
 					isLoggedIn={auth.isLoggedIn}
+					hasPremiumAccess={auth.isPremium}
 					config={playerConfig}
 				/>
 				<WatchProgressTracker payload={trackerPayload} enabled={auth.isLoggedIn} />

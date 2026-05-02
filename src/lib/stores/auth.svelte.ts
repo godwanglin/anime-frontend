@@ -90,6 +90,7 @@ let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
 const isLoggedIn = $derived(Boolean(user));
 const hasAccessToken = $derived(Boolean(accessToken));
+const isPremium = $derived(user?.role === 'premium' || user?.role === 'admin');
 
 function bootstrapLazy() {
 	bootstrapped = true;
@@ -289,6 +290,9 @@ export const auth = {
 	},
 	get isLoggedIn() {
 		return isLoggedIn;
+	},
+	get isPremium() {
+		return isPremium;
 	},
 	get bootstrapped() {
 		return bootstrapped;

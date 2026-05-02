@@ -19,6 +19,7 @@
 		nextHref?: string;
 		autoNext?: boolean;
 		episodeList?: PlayerEpisodeList;
+		hasPremiumAccess?: boolean;
 	};
 
 	let {
@@ -33,7 +34,8 @@
 		prevHref,
 		nextHref,
 		autoNext = true,
-		episodeList
+		episodeList,
+		hasPremiumAccess = false
 	}: Props = $props();
 
 	const resolvedConfig = $derived({
@@ -41,10 +43,13 @@
 		access: {
 			...(config.access ?? {}),
 			isLoggedIn,
+			hasPremiumAccess,
 			maxGuestQuality: config.access?.maxGuestQuality ?? 720,
+			maxFreeQuality: config.access?.maxFreeQuality ?? 720,
 			loginHref: config.access?.loginHref ?? '/login',
 			lockedQualityMessage:
-				config.access?.lockedQualityMessage ?? 'Masuk untuk membuka kualitas 1080p'
+				config.access?.lockedQualityMessage ?? 'Premium diperlukan untuk membuka kualitas 1080p',
+			lockedQualityBadge: config.access?.lockedQualityBadge ?? 'Premium'
 		}
 	});
 </script>

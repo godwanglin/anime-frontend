@@ -13,6 +13,10 @@
 		}
 		vp.finishSettingsSelection();
 	}
+
+	function lockedQualityBadge() {
+		return vp.accessCfg.lockedQualityBadge ?? 'Premium';
+	}
 </script>
 
 {#if vp.showSettings}
@@ -206,7 +210,7 @@
 								{@render Check(vp.currentQuality === q.level)}
 								{qualityLabel(q.height).toUpperCase()}
 								{#if locked}
-									<span class="vp-settings-item-sub">Masuk</span>
+									<span class="vp-settings-item-sub">{lockedQualityBadge()}</span>
 								{:else if q.bitrate}
 									<span class="vp-settings-item-sub">{Math.round(q.bitrate / 1000)}k</span>
 								{/if}

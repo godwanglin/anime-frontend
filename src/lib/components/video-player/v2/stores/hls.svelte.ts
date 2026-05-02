@@ -55,8 +55,8 @@ export function createHlsManager(ctx: HlsContext) {
 
 	function maxAllowedDisplayHeight() {
 		const access = ctx.getOptions().config?.access;
-		if (access?.isLoggedIn !== false) return Infinity;
-		return access.maxGuestQuality ?? 720;
+		if (access?.hasPremiumAccess) return Infinity;
+		return access?.maxFreeQuality ?? access?.maxGuestQuality ?? 720;
 	}
 
 	function qualityLocked(level: number) {
@@ -68,7 +68,7 @@ export function createHlsManager(ctx: HlsContext) {
 	function lockedQualityMessage() {
 		return (
 			ctx.getOptions().config?.access?.lockedQualityMessage ??
-			'Masuk untuk membuka kualitas di atas 720p'
+			'Premium diperlukan untuk membuka kualitas di atas 720p'
 		);
 	}
 

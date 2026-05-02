@@ -102,9 +102,12 @@ export interface SkipIntroConfig {
 
 export interface AccessConfig {
 	isLoggedIn?: boolean;
+	hasPremiumAccess?: boolean;
 	maxGuestQuality?: number;
+	maxFreeQuality?: number;
 	loginHref?: string;
 	lockedQualityMessage?: string;
+	lockedQualityBadge?: string;
 	onLockedQuality?: () => void;
 }
 

@@ -96,6 +96,9 @@ export function createPublicApi(ctx: any) {
 		get fullscreenCfg() {
 			return ctx.getFullscreenCfg();
 		},
+		get accessCfg() {
+			return ctx.getAccessCfg();
+		},
 		get srcList() {
 			return ctx.getSrcList();
 		},

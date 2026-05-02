@@ -57,6 +57,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 	const playbackCfg = $derived(options.config?.playback ?? {});
 	const statsCfg = $derived(options.config?.stats ?? {});
 	const fullscreenCfg = $derived(options.config?.fullscreen ?? {});
+	const accessCfg = $derived(options.config?.access ?? {});
 
 	let hls!: ReturnType<typeof createHlsManager>;
 
@@ -296,6 +297,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 		getStatsCfg: () => statsCfg,
 		getStatsVisible: () => statsVisible,
 		getFullscreenCfg: () => fullscreenCfg,
+		getAccessCfg: () => accessCfg,
 		getSrcList: () => srcList,
 		getCurrentSrcIndex: () => currentSrcIndex,
 		getCurrentSrc: () => currentSrc

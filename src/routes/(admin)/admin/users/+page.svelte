@@ -100,7 +100,7 @@
 	<div class="grid gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 md:grid-cols-[1fr_180px]">
 		<AdminSearchBar value={search} placeholder="Search user..." onSearch={(value) => setParams({ search: value, page: 1 })} />
 		<select value={role} onchange={(e) => setParams({ role: e.currentTarget.value, page: 1 })} class="h-10 rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm">
-			<option value="">Semua role</option><option value="user">User</option><option value="admin">Admin</option>
+			<option value="">Semua role</option><option value="user">User</option><option value="premium">Premium</option><option value="admin">Admin</option>
 		</select>
 	</div>
 	<AdminTable columns={[{ key: 'user', label: 'User' }, { key: 'email', label: 'Email' }, { key: 'level', label: 'Level' }, { key: 'exp', label: 'EXP' }, { key: 'role', label: 'Role' }, { key: 'joined', label: 'Bergabung' }, { key: 'actions', label: 'Aksi' }]} data={users as any} {isLoading}>
@@ -130,7 +130,7 @@
 				</h3>
 				<p class="text-sm text-zinc-500">{selectedUser.email}</p>
 			</div>
-			<label class="block"><span class="mb-1.5 block text-xs font-bold text-zinc-500">Role</span><select bind:value={selectedUser.role} class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"><option value="user">user</option><option value="admin">admin</option></select></label>
+			<label class="block"><span class="mb-1.5 block text-xs font-bold text-zinc-500">Role</span><select bind:value={selectedUser.role} class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"><option value="user">user</option><option value="premium">premium</option><option value="admin">admin</option></select></label>
 			<label class="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
 				<span>
 					<span class="block text-sm font-black text-zinc-100">Verified user</span>

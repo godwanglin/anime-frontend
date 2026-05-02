@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { qualityLabel } from '$lib/video-quality';
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
 
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
@@ -199,7 +200,7 @@
 								}}
 							>
 								{@render Check(vp.currentQuality === q.level)}
-								{q.height}p
+								{qualityLabel(q.height).toUpperCase()}
 								{#if q.bitrate}
 									<span class="vp-settings-item-sub">{Math.round(q.bitrate / 1000)}k</span>
 								{/if}

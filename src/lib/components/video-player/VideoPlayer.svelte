@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppIcon from '$lib/components/AppIcon.svelte';
+	import { normalizedQualityHeight, qualityLabel } from '$lib/video-quality';
 	import { onMount } from 'svelte';
 
 	import './vp.css';
@@ -66,6 +67,7 @@
 
 	interface QualityLevel {
 		height: number;
+		displayHeight: number;
 		bitrate: number;
 		level: number;
 	}
@@ -384,13 +386,22 @@
 							// Deduplicate: untuk tiap height, ambil level dengan bitrate tertinggi
 							const seen = new Map<number, QualityLevel>();
 							data.levels.forEach((l, i) => {
-								const existing = seen.get(l.height);
+								const displayHeight = normalizedQualityHeight(l.height);
+								if (!displayHeight) return;
+								const existing = seen.get(displayHeight);
 								if (!existing || l.bitrate > existing.bitrate) {
-									seen.set(l.height, { height: l.height, bitrate: l.bitrate, level: i });
+									seen.set(displayHeight, {
+										height: l.height,
+										displayHeight,
+										bitrate: l.bitrate,
+										level: i
+									});
 								}
 							});
 							// Sort descending by height
-							qualityLevels = Array.from(seen.values()).sort((a, b) => b.height - a.height);
+							qualityLevels = Array.from(seen.values()).sort(
+								(a, b) => b.displayHeight - a.displayHeight
+							);
 						}, 0);
 
 						// Restore persisted quality
@@ -494,7 +505,7 @@
 	function currentQualityLabel(): string {
 		if (currentQuality === -1) return 'Auto';
 		const q = qualityLevels.find((l) => l.level === currentQuality);
-		return q ? `${q.height}p` : 'Auto';
+		return q ? qualityLabel(q.height) : 'Auto';
 	}
 
 	// ─── Subtitle setup ───────────────────────────────────────────────────────────
@@ -1515,7 +1526,7 @@
 															aria-hidden="true"
 															><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg
 														>{:else}<span class="vp-settings-check-placeholder"></span>{/if}
-													{q.height}p
+													{qualityLabel(q.height)}
 													{#if q.bitrate}<span class="vp-settings-item-sub"
 															>{Math.round(q.bitrate / 1000)}k</span
 														>{/if}

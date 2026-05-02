@@ -1,4 +1,5 @@
 import type { QualityLevel, VideoPlayerOptions } from './types';
+import { normalizedQualityHeight, qualityLabel } from '$lib/video-quality';
 import { STORAGE_KEYS } from './types';
 
 interface HlsContext {
@@ -177,12 +178,21 @@ export function createHlsManager(ctx: HlsContext) {
 				setTimeout(() => {
 					const seen = new Map<number, QualityLevel>();
 					data.levels.forEach((level, i) => {
-						const existing = seen.get(level.height);
+						const displayHeight = normalizedQualityHeight(level.height);
+						if (!displayHeight) return;
+						const existing = seen.get(displayHeight);
 						if (!existing || level.bitrate > existing.bitrate) {
-							seen.set(level.height, { height: level.height, bitrate: level.bitrate, level: i });
+							seen.set(displayHeight, {
+								height: level.height,
+								displayHeight,
+								bitrate: level.bitrate,
+								level: i
+							});
 						}
 					});
-					qualityLevels = Array.from(seen.values()).sort((a, b) => b.height - a.height);
+					qualityLevels = Array.from(seen.values()).sort(
+						(a, b) => b.displayHeight - a.displayHeight
+					);
 					const currentLevel = hls.currentLevel >= 0 ? hls.currentLevel : hls.loadLevel;
 					activeQualityHeight = hls.levels?.[currentLevel]?.height ?? qualityLevels[0]?.height ?? 0;
 				}, 0);
@@ -222,7 +232,7 @@ export function createHlsManager(ctx: HlsContext) {
 			const video = ctx.getVideoEl();
 			if (!height || height === lastNotifiedHeight || (video?.currentTime ?? 0) < 1) return;
 			lastNotifiedHeight = height;
-			ctx.notify?.(`Resolusi berubah ke ${height}p`);
+			ctx.notify?.(`Resolusi berubah ke ${qualityLabel(height)}`);
 		});
 
 		hls.on(HlsConstructor.Events.ERROR, (_: unknown, data: { fatal: boolean }) => {
@@ -260,11 +270,12 @@ export function createHlsManager(ctx: HlsContext) {
 	function currentQualityLabel(): string {
 		if (currentQuality === -1) return 'Auto';
 		const q = qualityLevels.find((level) => level.level === currentQuality);
-		return q ? `${q.height}P` : 'Auto';
+		return q ? qualityLabel(q.height).toUpperCase() : 'Auto';
 	}
 
 	function currentResolutionLabel(): string {
-		if (currentQuality === -1) return activeQualityHeight ? `AUTO ${activeQualityHeight}P` : 'AUTO';
+		if (currentQuality === -1)
+			return activeQualityHeight ? `AUTO ${qualityLabel(activeQualityHeight).toUpperCase()}` : 'AUTO';
 		return currentQualityLabel();
 	}
 

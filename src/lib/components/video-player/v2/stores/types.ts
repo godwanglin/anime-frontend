@@ -144,6 +144,7 @@ export interface ThumbnailCue {
 
 export interface QualityLevel {
 	height: number;
+	displayHeight: number;
 	bitrate: number;
 	level: number;
 }

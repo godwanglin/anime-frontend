@@ -105,7 +105,7 @@
 		message: string;
 	};
 
-	const RESOLUTION_OPTIONS = [144, 360, 480, 720, 1080, 2160] as const;
+	const RESOLUTION_OPTIONS = [144, 240, 360, 480, 720, 1080, 2160] as const;
 	const RESOLUTION_LABELS: Record<number, string> = {
 		144: '144p',
 		240: '240p',
@@ -1021,7 +1021,7 @@
 
 	function pickNextResolution(): number {
 		const used = new Set(urlSources.map((s) => s.resolution));
-		for (const r of [1080, 720, 480, 360, 144, 2160]) {
+		for (const r of [1080, 720, 480, 360, 240, 144, 2160]) {
 			if (!used.has(r)) return r;
 		}
 		return 720;

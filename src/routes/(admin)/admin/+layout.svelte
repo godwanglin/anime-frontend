@@ -57,6 +57,7 @@
 	const nav = [
 		{ href: '/admin', icon: 'dashboard', label: 'Dashboard' },
 		{ href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' },
+		{ href: '/admin/health', icon: 'health_metrics', label: 'Health' },
 		{ href: '/admin/activity', icon: 'person_search', label: 'User Activity' },
 		{ href: '/admin/anime', icon: 'movie', label: 'Anime' },
 		{ href: '/admin/episodes', icon: 'video_library', label: 'Episode' },

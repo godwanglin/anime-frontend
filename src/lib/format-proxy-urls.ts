@@ -71,6 +71,31 @@ function extractSbchillId(url: string): string | null {
 	return match ? match[1] : null;
 }
 
+function normalizeDirectVideoUrl(value: string): string | null {
+	if (!/^https?:\/\//i.test(value)) return null;
+
+	try {
+		const parsed = new URL(value);
+		const decodedHref = decodeURIComponent(parsed.href).toLowerCase();
+		const decodedPath = decodeURIComponent(parsed.pathname).toLowerCase();
+		const contentType = (parsed.searchParams.get('r_type') ?? '').toLowerCase();
+		const fileName = (parsed.searchParams.get('r_file') ?? '').toLowerCase();
+
+		const isHls =
+			decodedHref.includes('.m3u8') ||
+			fileName.endsWith('.m3u8') ||
+			contentType.includes('application/vnd.apple.mpegurl') ||
+			contentType.includes('application/x-mpegurl');
+		const isMp4 = decodedPath.endsWith('.mp4') || fileName.endsWith('.mp4');
+
+		if (isHls || isMp4) return value;
+	} catch {
+		return null;
+	}
+
+	return null;
+}
+
 /**
  * Format satu StreamSource → proxy URL string.
  * Return null jika provider tidak didukung.
@@ -116,9 +141,8 @@ export function formatProxyUrl(
 		return `${baseUrl}/api/video-stream/okru-stream/playlist/${id}?host=sbchill.com`;
 	}
 
-	if (/\.m3u8(?:$|[?#])/.test(value)) {
-		return value;
-	}
+	const directVideoUrl = normalizeDirectVideoUrl(value);
+	if (directVideoUrl) return directVideoUrl;
 
 	// Provider tidak didukung (Rumble, short.icu, dll.)
 	return null;

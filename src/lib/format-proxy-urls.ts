@@ -23,11 +23,12 @@ function extractOkruId(url: string): string | null {
 }
 
 /**
- * Ekstrak video ID dari URL anichin.stream
+ * Ekstrak video ID dari URL AC stream compatible host
  * Format: https://anichin.stream/?id=v76hi9o
  *         https://anichin.stream/hls/v76hi9o.m3u8
+ *         https://vip69.mecdn.xyz/k.php?id=v76hi9o
  */
-function extractAnichinId(url: string): string | null {
+function extractAcStreamId(url: string): string | null {
 	// Query param ?id=
 	const qMatch = url.match(/[?&]id=([^&]+)/);
 	if (qMatch) return qMatch[1];
@@ -114,8 +115,8 @@ export function formatProxyUrl(
 		if (!id) return null;
 		return `${baseUrl}/api/video-stream/okru-stream/playlist/${id}`;
 	}
-	if (value.includes('anichin.stream')) {
-		const id = extractAnichinId(value);
+	if (value.includes('anichin.stream') || value.includes('mecdn.xyz')) {
+		const id = extractAcStreamId(value);
 		if (!id) return null;
 		return `${baseUrl}/api/video-stream/ac-stream/playlist/${id}`;
 	}

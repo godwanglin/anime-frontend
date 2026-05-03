@@ -141,11 +141,15 @@ export function createHlsManager(ctx: HlsContext) {
 
 	function isHlsSource(videoSrc: string) {
 		const options = ctx.getOptions();
+		const normalizedSrc = videoSrc.toLowerCase();
+		const isDirectMp4 = /\.mp4(?:$|[?#])/.test(normalizedSrc);
+		if (isDirectMp4) return false;
+
 		return (
 			options.forceHls ||
-			videoSrc.includes('.m3u8') ||
-			videoSrc.includes('application/vnd.apple.mpegurl') ||
-			videoSrc.includes('/playlist/')
+			normalizedSrc.includes('.m3u8') ||
+			normalizedSrc.includes('application/vnd.apple.mpegurl') ||
+			normalizedSrc.includes('/playlist/')
 		);
 	}
 

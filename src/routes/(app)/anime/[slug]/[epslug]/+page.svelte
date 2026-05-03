@@ -11,6 +11,7 @@
 	import VideoReactionBar from '$lib/components/VideoReactionBar.svelte';
 	import { formatRelativeID } from '$lib/format-date';
 	import { formatProxySources } from '$lib/format-proxy-urls';
+	import { isYouTubeUrl, getYouTubePlaylistUrl } from '$lib/youtube-proxy';
 	import { extractEpisodeSubtitles, groupSubtitlesForPlayer } from '$lib/subtitle-studio';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
@@ -97,9 +98,24 @@
 	const title = $derived(episode?.title ?? anime?.title ?? 'Episode');
 	const cover = $derived(anime?.bigCover || anime?.thumbnail || '');
 	const streamSources = $derived(loginRequired ? [] : formatProxySources((detail as any)?.servers ?? []));
-	const streamUrls = $derived(streamSources.map((source) => source.playerUrl));
+	const ytPlaylistUrl = $derived.by(() => {
+		if (loginRequired) return null;
+		const servers: { value: string }[] = (detail as any)?.servers ?? [];
+		const ytServer = servers.find((s) => isYouTubeUrl(s.value));
+		return ytServer ? getYouTubePlaylistUrl(ytServer.value) : null;
+	});
+	const streamUrls = $derived([
+		...(ytPlaylistUrl ? [ytPlaylistUrl] : []),
+		...streamSources.map((s) => s.playerUrl)
+	]);
 	const episodeSubtitles = $derived(extractEpisodeSubtitles(detail));
-	const subtitlesBySrc = $derived(groupSubtitlesForPlayer(streamSources, episodeSubtitles));
+	const subtitlesBySrc = $derived({
+		...groupSubtitlesForPlayer(streamSources, episodeSubtitles),
+		...(((data as any).youtubeSubtitlesBySrc ?? {}) as Record<
+			string,
+			{ label: string; lang: string; src: string }[]
+		>)
+	});
 	// console.log(subtitlesBySrc);
 
 	const defaultEpisodes = $derived(
@@ -425,6 +441,8 @@
 	$effect(() => {
 		preference.syncPlayerStorage();
 	});
+
+
 
 	function episodeProgress(id?: number) {
 		return history.byEpisode(id)?.progressPct ?? 0;
@@ -820,10 +838,6 @@
 				</div>
 			</div>
 		{:else}
-			<!--
-                Empty player state — sama dengan design taste: selalu ada visual,
-                bukan blank. Warm zinc surface, icon besar, pesan yang jelas.
-            -->
 			<div
 				class="w-full aspect-video flex items-center justify-center"
 				style="background: #0a0a09;"

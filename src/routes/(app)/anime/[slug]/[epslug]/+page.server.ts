@@ -25,10 +25,52 @@ type EpisodeDetail = Record<string, unknown> & {
 	episode?: Episode;
 };
 
+type VideoServer = {
+	value?: string;
+};
+
+type PlayerSubtitle = {
+	label: string;
+	lang: string;
+	src: string;
+};
+
 function pickEpisodePayload(payload: unknown) {
 	if (!payload || typeof payload !== 'object') return null;
 	const body = payload as Record<string, unknown>;
 	return (body.data ?? body) as EpisodeDetail;
+}
+
+function isYouTubeUrl(url: string): boolean {
+	return /(?:youtube\.com\/watch|youtu\.be\/)/.test(url);
+}
+
+function getYouTubePlaylistUrl(youtubeUrl: string): string {
+	return `${config.API_BASE_URL}/api/video-stream/ydwn-proxy/playlist?url=${encodeURIComponent(youtubeUrl)}`;
+}
+
+async function loadYouTubeSubtitles(input: {
+	detail: EpisodeDetail | null;
+	fetch: Parameters<PageServerLoad>[0]['fetch'];
+}) {
+	const episode = input.detail?.episode as Record<string, unknown> | undefined;
+	const servers = ((input.detail?.servers ?? episode?.servers ?? []) as VideoServer[]);
+	const youtubeServer = servers.find((server) => server.value && isYouTubeUrl(server.value));
+	if (!youtubeServer?.value) return {};
+
+	const captionsUrl = `${config.API_BASE_URL}/api/video-stream/ydwn-proxy/captions?url=${encodeURIComponent(
+		youtubeServer.value
+	)}`;
+	const response = await input.fetch(captionsUrl);
+	if (!response.ok) return {};
+
+	const payload = await response.json().catch(() => null);
+	const tracks = Array.isArray(payload?.data) ? (payload.data as PlayerSubtitle[]) : [];
+	if (!tracks.length) return {};
+
+	return {
+		[getYouTubePlaylistUrl(youtubeServer.value)]: tracks
+	};
 }
 
 const GUEST_WATCH_COOKIE = 'weebin_guest_watch_id';
@@ -105,6 +147,7 @@ export const load: PageServerLoad = async ({ params, fetch, cookies }) => {
 
 	if (episodeRes.ok) {
 		const detail = pickEpisodePayload(episodeJson);
+		const youtubeSubtitlesBySrc = await loadYouTubeSubtitles({ detail, fetch });
 
 		// console.log(episodeJson);
 
@@ -112,6 +155,7 @@ export const load: PageServerLoad = async ({ params, fetch, cookies }) => {
 			anime: detail?.anime ?? null,
 			episode: detail?.episode ?? detail ?? null,
 			episodeDetail: detail,
+			youtubeSubtitlesBySrc,
 			apiUrl: episodeUrl,
 			params,
 			error: null

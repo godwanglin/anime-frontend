@@ -7,9 +7,11 @@
 	type Props = {
 		commentId: number;
 		replyCount: number;
+		currentTime?: number;
+		onSeekTimestamp?: (seconds: number) => void;
 	};
 
-	const { commentId, replyCount }: Props = $props();
+	const { commentId, replyCount, currentTime = 0, onSeekTimestamp = () => null }: Props = $props();
 
 	let loaded = $state(false);
 	let loading = $state(false);
@@ -38,6 +40,8 @@
 				comment={{ ...reply, content: reply.content ?? undefined }}
 				animeId={0}
 				depth={1}
+				{currentTime}
+				{onSeekTimestamp}
 			/>
 		{/each}
 	</div>

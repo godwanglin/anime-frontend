@@ -3,6 +3,7 @@
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
 	import CustomSelect from '$lib/components/ui/CustomSelect.svelte';
+	import { parseCommentTimestamp } from '$lib/comment-timestamp';
 	import { displayUserName } from '$lib/user-display';
 	import type { EquippedEffect, EquippedFrame, EquippedNameTag } from '$lib/decorations';
 	import { getCultivationBadge, type ExpBadge, type LevelProgress } from '$lib/exp';
@@ -46,9 +47,18 @@
 		animeId: number;
 		episodeId?: number;
 		depth?: number;
+		currentTime?: number;
+		onSeekTimestamp?: (seconds: number) => void;
 	};
 
-	const { comment, animeId, episodeId, depth = 0 }: Props = $props();
+	const {
+		comment,
+		animeId,
+		episodeId,
+		depth = 0,
+		currentTime = 0,
+		onSeekTimestamp = () => null
+	}: Props = $props();
 
 	let replying = $state(false);
 	let editing = $state(false);
@@ -77,6 +87,11 @@
 	const userFrame = $derived(comment.user?.frame ?? null);
 	const userNameTag = $derived(comment.user?.nametag ?? null);
 	const avatarSize = $derived(depth > 0 ? 28 : 36);
+	const timestamp = $derived(parseCommentTimestamp(comment.content));
+	const hasTimestamp = $derived(timestamp.seconds !== null);
+	const isTimestampActive = $derived(
+		hasTimestamp && Math.abs(currentTime - Number(timestamp.seconds)) <= 5
+	);
 
 	function relativeTime(dateStr: string): string {
 		const diff = Date.now() - new Date(dateStr).getTime();
@@ -102,6 +117,11 @@
 		if (!editContent.trim()) return;
 		await comments.editComment(comment.id, editContent);
 		editing = false;
+	}
+
+	function seekTimestamp() {
+		if (timestamp.seconds === null) return;
+		onSeekTimestamp(timestamp.seconds);
 	}
 
 	function openReport() {
@@ -242,6 +262,7 @@
 
 <div
 	class="group flex gap-3 py-3.5 transition-colors"
+	class:is-timestamp-active={isTimestampActive}
 	style="
         padding-inline: 1rem;
         {depth > 0 ? 'margin-left: 1rem; border-left: 2px solid var(--border);' : ''}
@@ -337,6 +358,17 @@
 				</div>
 			</form>
 		{:else}
+			{#if hasTimestamp}
+				<button
+					type="button"
+					onclick={seekTimestamp}
+					class="mb-1.5 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black transition-all active:scale-95"
+					style="background: {isTimestampActive ? 'var(--accent)' : 'var(--accent-surface)'}; color: {isTimestampActive ? 'white' : 'var(--accent)'}; border: 1px solid color-mix(in oklab, var(--accent) 28%, transparent);"
+				>
+					<AppIcon name="play_circle" style="font-size:12px;" />
+					{timestamp.label}
+				</button>
+			{/if}
 			<p
 				class="text-[13px] leading-relaxed mt-0.5"
 				style="
@@ -344,7 +376,7 @@
                     font-style: {comment.isDeleted ? 'italic' : 'normal'};
                 "
 			>
-				{comment.isDeleted ? 'Komentar dihapus.' : (comment.content ?? '')}
+				{comment.isDeleted ? 'Komentar dihapus.' : timestamp.text}
 			</p>
 		{/if}
 
@@ -463,7 +495,12 @@
 		{/if}
 
 		{#if depth === 0}
-			<CommentReplyList commentId={comment.id} replyCount={comment.replyCount ?? 0} />
+			<CommentReplyList
+				commentId={comment.id}
+				replyCount={comment.replyCount ?? 0}
+				{currentTime}
+				{onSeekTimestamp}
+			/>
 		{/if}
 	</div>
 </div>
@@ -476,6 +513,11 @@
 		transform: rotate(18deg);
 		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
 		animation: badge-shine 3.4s ease-in-out infinite;
+	}
+
+	.is-timestamp-active {
+		background: color-mix(in oklab, var(--accent) 9%, transparent);
+		box-shadow: inset 3px 0 0 var(--accent);
 	}
 
 	@keyframes badge-shine {

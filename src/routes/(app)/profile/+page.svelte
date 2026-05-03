@@ -4,6 +4,7 @@
 	import AvatarFrame from '$lib/components/AvatarFrame.svelte';
 	import NameTag from '$lib/components/NameTag.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
+	import appConfig from '$lib/config';
 	// import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import ProfileEffect from '$lib/components/ProfileEffect.svelte';
 	import SEO from '$lib/components/SEO.svelte';
@@ -268,7 +269,7 @@
 			</div>
 		</div>
 
-		{#if !auth.isPremium}
+		{#if appConfig.ENABLE_PREMIUM_FEATURE && !auth.isPremium}
 			<a
 				href="/premium?redirect=/profile"
 				class="mb-6 flex items-center gap-3 rounded-[var(--radius-2xl)] p-4 transition-all active:scale-[0.99]"

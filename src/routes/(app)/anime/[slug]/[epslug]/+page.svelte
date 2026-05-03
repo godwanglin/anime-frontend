@@ -17,7 +17,10 @@
 	import { notifications } from '$lib/stores/notifications.svelte';
 	import { preference } from '$lib/stores/preference.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
-	import type { PlayerConfig } from '$lib/components/video-player/v2/stores/vpstate.svelte';
+	import type {
+		createVideoPlayerState,
+		PlayerConfig
+	} from '$lib/components/video-player/v2/stores/vpstate.svelte';
 	import type { PageData } from './$types';
 
 	type Episode = {
@@ -244,6 +247,8 @@
 	let reportSubmitting = $state(false);
 	let reportMessage = $state('');
 	let reportError = $state('');
+	let playerApi: ReturnType<typeof createVideoPlayerState> | undefined = $state();
+	let playbackCurrentTime = $state(0);
 	let loginPromptOpen = $state(false);
 	let loginPromptDismissed = $state(false);
 	let loginPromptKind = $state<'episode' | 'premium'>('episode');
@@ -495,6 +500,17 @@
 		}
 
 		loginPromptOpen = true;
+	}
+
+	function handlePlayerState(state: { currentTime: number }) {
+		playbackCurrentTime = state.currentTime;
+	}
+
+	function seekCommentTimestamp(seconds: number) {
+		playbackCurrentTime = seconds;
+		playerApi?.seek?.(seconds);
+		playerApi?.play?.();
+		document.querySelector('.watch-player-shell')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 	}
 
 	function formatCount(value?: number) {
@@ -758,6 +774,8 @@
 					isLoggedIn={auth.isLoggedIn}
 					hasPremiumAccess={auth.isPremium}
 					config={playerConfig}
+					bind:playerApi
+					onStateChange={handlePlayerState}
 				/>
 				<WatchProgressTracker payload={trackerPayload} enabled={auth.isLoggedIn} />
 			</div>
@@ -1021,7 +1039,14 @@
                         box-shadow: var(--shadow-sm);
                     "
 				>
-					<DeferredCommentSection animeId={anime.id} episodeId={episode.id} bounded eager />
+					<DeferredCommentSection
+						animeId={anime.id}
+						episodeId={episode.id}
+						bounded
+						eager
+						currentTime={playbackCurrentTime}
+						onSeekTimestamp={seekCommentTimestamp}
+					/>
 				</div>
 			{/if}
 
@@ -1701,7 +1726,12 @@
 
 		<!-- ── COMMENTS MOBILE ──────────── -->
 		{#if !isDesktop && anime?.id && episode?.id}
-			<DeferredCommentSection animeId={anime.id} episodeId={episode.id} />
+			<DeferredCommentSection
+				animeId={anime.id}
+				episodeId={episode.id}
+				currentTime={playbackCurrentTime}
+				onSeekTimestamp={seekCommentTimestamp}
+			/>
 		{/if}
 
 		<!-- ── RELATED VIDEOS MOBILE ──────────── -->

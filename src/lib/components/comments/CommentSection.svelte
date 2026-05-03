@@ -17,9 +17,17 @@
 		 * pane aligned with the episode list.
 		 */
 		bounded?: boolean;
+		currentTime?: number;
+		onSeekTimestamp?: (seconds: number) => void;
 	};
 
-	const { animeId, episodeId, bounded = false }: Props = $props();
+	const {
+		animeId,
+		episodeId,
+		bounded = false,
+		currentTime = 0,
+		onSeekTimestamp = () => null
+	}: Props = $props();
 	let sort = $state<'newest' | 'oldest' | 'top'>('newest');
 
 	onMount(() => {
@@ -91,7 +99,7 @@
 		</div>
 	{:else}
 		<div class="comment-section-head px-4 md:px-0 mb-5">
-			<CommentInput {animeId} {episodeId} />
+			<CommentInput {animeId} {episodeId} {currentTime} />
 		</div>
 	{/if}
 
@@ -116,7 +124,7 @@
 			{/each}
 		{:else}
 			{#each comments.items as comment (comment.id)}
-				<CommentItem {comment} {animeId} {episodeId} depth={0} />
+				<CommentItem {comment} {animeId} {episodeId} depth={0} {currentTime} {onSeekTimestamp} />
 			{:else}
 				<div class="px-4 md:px-0 py-12 flex flex-col items-center gap-3">
 					<div

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import VideoPlayer from '$lib/components/video-player/v2/VideoPlayer.svelte';
+	import appConfig from '$lib/config';
+	import type { createVideoPlayerState } from '$lib/components/video-player/v2/stores/vpstate.svelte';
 	import type {
 		PlayerConfig,
 		PlayerEpisodeList,
@@ -20,6 +22,12 @@
 		autoNext?: boolean;
 		episodeList?: PlayerEpisodeList;
 		hasPremiumAccess?: boolean;
+		playerApi?: ReturnType<typeof createVideoPlayerState>;
+		onStateChange?: (state: {
+			currentTime: number;
+			duration: number;
+			isPlaying: boolean;
+		}) => void;
 	};
 
 	let {
@@ -35,7 +43,9 @@
 		nextHref,
 		autoNext = true,
 		episodeList,
-		hasPremiumAccess = false
+		hasPremiumAccess = false,
+		playerApi = $bindable(),
+		onStateChange = () => null
 	}: Props = $props();
 
 	const resolvedConfig = $derived({
@@ -43,9 +53,13 @@
 		access: {
 			...(config.access ?? {}),
 			isLoggedIn,
-			hasPremiumAccess,
-			maxGuestQuality: config.access?.maxGuestQuality ?? 720,
-			maxFreeQuality: config.access?.maxFreeQuality ?? 720,
+			hasPremiumAccess: appConfig.ENABLE_PREMIUM_FEATURE ? hasPremiumAccess : true,
+			maxGuestQuality: appConfig.ENABLE_PREMIUM_FEATURE
+				? (config.access?.maxGuestQuality ?? 720)
+				: Infinity,
+			maxFreeQuality: appConfig.ENABLE_PREMIUM_FEATURE
+				? (config.access?.maxFreeQuality ?? 720)
+				: Infinity,
 			loginHref: config.access?.loginHref ?? '/login',
 			lockedQualityMessage:
 				config.access?.lockedQualityMessage ?? 'Premium diperlukan untuk membuka kualitas 1080p',
@@ -66,4 +80,6 @@
 	{nextHref}
 	{autoNext}
 	{episodeList}
+	bind:playerApi
+	{onStateChange}
 />

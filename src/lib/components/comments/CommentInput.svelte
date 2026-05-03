@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppIcon from '$lib/components/AppIcon.svelte';
+	import { formatCommentTimestamp, withCommentTimestamp } from '$lib/comment-timestamp';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { comments } from '$lib/stores/comments.svelte';
 	import { userInitial } from '$lib/user-display';
@@ -8,16 +9,20 @@
 		animeId: number;
 		episodeId?: number;
 		parentId?: number;
+		currentTime?: number;
 		onCancel?: () => void;
 	};
 
-	const { animeId, episodeId, parentId, onCancel }: Props = $props();
+	const { animeId, episodeId, parentId, currentTime = 0, onCancel }: Props = $props();
 
 	let content = $state('');
 	let error = $state('');
 	let focused = $state(false);
+	let timestampAttached = $state(false);
 
 	const isReply = $derived(!!parentId);
+	const canAttachTimestamp = $derived(!isReply && Number.isFinite(currentTime) && currentTime >= 1);
+	const timestampLabel = $derived(formatCommentTimestamp(currentTime));
 
 	const cooldownText = $derived(() => {
 		const s = comments.cooldownRemaining;
@@ -28,11 +33,22 @@
 	async function submit() {
 		if (!content.trim()) return;
 		error = '';
-		// Gunakan method asli dari store — postComment
-		await comments.postComment({ animeId, episodeId, parentId, content: content.trim() });
+		await comments.postComment({
+			animeId,
+			episodeId,
+			parentId,
+			content: withCommentTimestamp(content, timestampAttached && !isReply ? currentTime : null)
+		});
 		content = '';
+		timestampAttached = false;
 		// Jika reply, tutup input setelah kirim
 		if (isReply) onCancel?.();
+	}
+
+	function attachTimestamp() {
+		if (!canAttachTimestamp) return;
+		timestampAttached = !timestampAttached;
+		focused = true;
 	}
 </script>
 
@@ -110,6 +126,17 @@
 							{/if}
 						</span>
 						<div class="flex items-center gap-1.5">
+							{#if canAttachTimestamp}
+								<button
+									type="button"
+									onclick={attachTimestamp}
+									class="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-black transition-all active:scale-95"
+									style="background: {timestampAttached ? 'var(--accent-surface)' : 'var(--surface-offset)'}; color: var(--accent); border: 1px solid {timestampAttached ? 'color-mix(in oklab, var(--accent) 28%, transparent)' : 'var(--border-strong)'};"
+								>
+									<AppIcon name="schedule" style="font-size:13px;" />
+									{timestampLabel}
+								</button>
+							{/if}
 							{#if isReply && onCancel}
 								<button
 									type="button"

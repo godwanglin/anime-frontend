@@ -6,9 +6,18 @@
 		episodeId?: number;
 		bounded?: boolean;
 		eager?: boolean;
+		currentTime?: number;
+		onSeekTimestamp?: (seconds: number) => void;
 	};
 
-	let { animeId, episodeId, bounded = false, eager = false }: Props = $props();
+	let {
+		animeId,
+		episodeId,
+		bounded = false,
+		eager = false,
+		currentTime = 0,
+		onSeekTimestamp = () => null
+	}: Props = $props();
 	let host: HTMLDivElement | undefined = $state();
 	let CommentSection: any = $state(null);
 	let observer: IntersectionObserver | undefined;
@@ -45,7 +54,7 @@
 
 <div bind:this={host} class:deferred-comment-bounded={bounded}>
 	{#if CommentSection}
-		<CommentSection {animeId} {episodeId} {bounded} />
+		<CommentSection {animeId} {episodeId} {bounded} {currentTime} {onSeekTimestamp} />
 	{:else}
 		<div class="deferred-comment-skeleton {bounded ? 'is-bounded' : ''}" aria-hidden="true">
 			<div class="h-4 w-24 rounded-full bg-zinc-200 dark:bg-zinc-800"></div>

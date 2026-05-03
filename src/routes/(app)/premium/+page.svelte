@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import AppIcon from '$lib/components/AppIcon.svelte';
+	import appConfig from '$lib/config';
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 
@@ -17,6 +18,24 @@
 
 <section class="min-h-[calc(100vh-80px)] px-4 py-8 text-white md:px-8">
 	<div class="mx-auto max-w-5xl">
+		{#if !appConfig.ENABLE_PREMIUM_FEATURE}
+			<div class="mx-auto flex min-h-[52vh] max-w-md flex-col items-center justify-center text-center">
+				<div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+					<AppIcon name="drafts" class="text-[28px] text-zinc-300" />
+				</div>
+				<p class="text-xs font-black uppercase tracking-[0.28em] text-zinc-500">Draft</p>
+				<h1 class="mt-3 text-2xl font-black">Premium belum dibuka</h1>
+				<p class="mt-3 text-sm font-semibold leading-relaxed text-zinc-500">
+					Fitur premium sedang disimpan dulu dan belum aktif untuk user.
+				</p>
+				<a
+					href={redirectTo}
+					class="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-black text-zinc-950"
+				>
+					Kembali
+				</a>
+			</div>
+		{:else}
 		<div class="grid gap-8 lg:grid-cols-[1fr_380px] lg:items-center">
 			<div>
 				<p class="text-xs font-black uppercase tracking-[0.32em] text-violet-300">Weebin Premium</p>
@@ -93,5 +112,6 @@
 				{/if}
 			</div>
 		</div>
+		{/if}
 	</div>
 </section>

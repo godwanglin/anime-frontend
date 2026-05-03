@@ -36,6 +36,7 @@
 	import HeroSlider from '$lib/components/HeroSlider.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
+	import PersonalRecommendations from '$lib/components/PersonalRecommendations.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
 	import { episodeBadgeLabel, isMovieContent } from '$lib/content-label';
@@ -632,6 +633,8 @@
 		ariaLabel="Anime baru diupdate"
 	/>
 </section>
+
+<PersonalRecommendations />
 
 <!-- CTA BANNER — Random / Browse -->
 <section class="mb-8">

@@ -109,12 +109,29 @@
 		...streamSources.map((s) => s.playerUrl)
 	]);
 	const episodeSubtitles = $derived(extractEpisodeSubtitles(detail));
+	const youtubeDbSubtitlesBySrc = $derived.by(() => {
+		if (!ytPlaylistUrl) return {};
+		const servers: { value: string }[] = (detail as any)?.servers ?? [];
+		const ytServer = servers.find((server) => isYouTubeUrl(server.value));
+		if (!ytServer) return {};
+
+		const tracks = episodeSubtitles
+			.filter((subtitle) => subtitle.serverUrl === ytServer.value)
+			.map((subtitle) => ({
+				label: subtitle.label,
+				lang: subtitle.language,
+				src: subtitle.fileUrl
+			}));
+
+		return tracks.length ? { [ytPlaylistUrl]: tracks } : {};
+	});
 	const subtitlesBySrc = $derived({
 		...groupSubtitlesForPlayer(streamSources, episodeSubtitles),
 		...(((data as any).youtubeSubtitlesBySrc ?? {}) as Record<
 			string,
 			{ label: string; lang: string; src: string }[]
-		>)
+		>),
+		...youtubeDbSubtitlesBySrc
 	});
 	// console.log(subtitlesBySrc);
 

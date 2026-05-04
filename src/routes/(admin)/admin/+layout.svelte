@@ -62,6 +62,7 @@
 		{ href: '/admin/anime', icon: 'movie', label: 'Anime' },
 		{ href: '/admin/episodes', icon: 'video_library', label: 'Episode' },
 		{ href: '/admin/r2-videos', icon: 'storage', label: 'R2 Videos' },
+		{ href: '/admin/youtube-tools', icon: 'smart_display', label: 'YouTube Tools' },
 		{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
 		{ href: '/admin/notifications', icon: 'campaign', label: 'Notifications' },
 		{ href: '/admin/chat', icon: 'forum', label: 'Chat' },

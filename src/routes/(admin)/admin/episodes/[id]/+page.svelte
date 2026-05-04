@@ -1,14 +1,29 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
 	import { adminApi } from '$lib/admin/api';
 	import AdminFormInput from '$lib/components/admin/AdminFormInput.svelte';
 	import AdminModal from '$lib/components/admin/AdminModal.svelte';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
 
+	type EpisodeNavItem = {
+		id: number;
+		number: number;
+		title: string;
+		status?: string | null;
+	};
+
+	type EpisodeNavigation = {
+		currentId: number;
+		episodes: EpisodeNavItem[];
+		previous: EpisodeNavItem | null;
+		next: EpisodeNavItem | null;
+	};
+
 	let id = $derived(Number(page.params.id));
 	let episode: any = $state(null);
+	let navigation = $state<EpisodeNavigation | null>(null);
+	let selectedEpisodeId = $state('');
 	let servers = $state<any[]>([]);
 	let number = $state<number | null>(null);
 	let title = $state('');
@@ -19,8 +34,11 @@
 	let skipOutroSeconds = $state<string | number | null>(null);
 	let label = $state('');
 	let value = $state('');
+	let isPrimary = $state(false);
 	let deleteServerId = $state<number | null>(null);
 	let settingPrimaryId = $state<number | null>(null);
+	let isAddingServer = $state(false);
+	let serverToolMessage = $state('');
 
 	async function load() {
 		episode = (await adminApi<any>(`/episodes/${id}`)).data;
@@ -34,6 +52,14 @@
 			skipOutroSeconds = episode.skipOutroSeconds ?? null;
 		}
 		servers = (await adminApi<any[]>(`/episodes/${id}/servers`)).data;
+		navigation = (await adminApi<EpisodeNavigation>(`/episodes/${id}/navigation`)).data;
+		selectedEpisodeId = String(id);
+	}
+
+	function openEpisode(episodeId: number | string) {
+		const targetId = Number(episodeId);
+		if (!targetId || targetId === id) return;
+		goto(`/admin/episodes/${targetId}`);
 	}
 
 	async function save() {
@@ -46,14 +72,25 @@
 	}
 
 	async function addServer() {
-		await adminApi(`/episodes/${id}/servers`, {
-			method: 'POST',
-			body: JSON.stringify({ label, value })
-		});
-		label = '';
-		value = '';
-		adminToast.success('Server ditambahkan');
-		await load();
+		isAddingServer = true;
+		serverToolMessage = '';
+		try {
+			const result = await adminApi<any>(`/episodes/${id}/servers`, {
+				method: 'POST',
+				body: JSON.stringify({ label, value, isPrimary })
+			});
+			const subtitleImport = result.data?.subtitleImport;
+			label = '';
+			value = '';
+			isPrimary = false;
+			serverToolMessage =
+				subtitleImport?.message ??
+				(subtitleImport?.attempted ? 'Subtitle YouTube diproses' : 'Server ditambahkan');
+			adminToast.success(serverToolMessage);
+			await load();
+		} finally {
+			isAddingServer = false;
+		}
 	}
 
 	async function deleteServer() {
@@ -78,13 +115,47 @@
 		}
 	}
 
-	onMount(load);
+	$effect(() => {
+		id;
+		load();
+	});
 </script>
 
 <div class="mx-auto max-w-5xl space-y-5">
-	<button onclick={() => goto('/admin/episodes')} class="text-sm font-bold text-violet-400"
-		>Kembali ke Episode</button
-	>
+	<div class="flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 lg:flex-row lg:items-center lg:justify-between">
+		<button onclick={() => goto('/admin/episodes')} class="text-left text-sm font-bold text-violet-400"
+			>Kembali ke Episode</button
+		>
+		{#if navigation}
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+				<button
+					type="button"
+					disabled={!navigation.previous}
+					onclick={() => navigation?.previous && openEpisode(navigation.previous.id)}
+					class="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-bold text-zinc-200 disabled:cursor-not-allowed disabled:text-zinc-600"
+					>Sebelumnya</button
+				>
+				<select
+					bind:value={selectedEpisodeId}
+					onchange={(event) => openEpisode(event.currentTarget.value)}
+					class="h-10 min-w-64 rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-bold text-zinc-100"
+				>
+					{#each navigation.episodes as item}
+						<option value={String(item.id)}>
+							Ep {item.number} - {item.title || `Episode ${item.number}`}
+						</option>
+					{/each}
+				</select>
+				<button
+					type="button"
+					disabled={!navigation.next}
+					onclick={() => navigation?.next && openEpisode(navigation.next.id)}
+					class="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-bold text-zinc-200 disabled:cursor-not-allowed disabled:text-zinc-600"
+					>Selanjutnya</button
+				>
+			</div>
+		{/if}
+	</div>
 	<form
 		onsubmit={(e) => {
 			e.preventDefault();
@@ -144,7 +215,7 @@
 				e.preventDefault();
 				addServer();
 			}}
-			class="mb-4 grid gap-3 md:grid-cols-[200px_1fr_auto]"
+			class="mb-4 grid gap-3 md:grid-cols-[200px_1fr_auto_auto]"
 		>
 			<input
 				bind:value={label}
@@ -156,9 +227,25 @@
 				placeholder="URL / iframe src"
 				class="h-10 rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm"
 			/>
-			<button class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white">Tambah</button
+			<label class="flex h-10 items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-bold text-zinc-200">
+				<input
+					type="checkbox"
+					bind:checked={isPrimary}
+					class="h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-violet-600"
+				/>
+				Primary
+			</label>
+			<button
+				disabled={isAddingServer}
+				class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white disabled:cursor-wait disabled:bg-zinc-700"
+				>{isAddingServer ? 'Memproses...' : 'Tambah'}</button
 			>
 		</form>
+		{#if serverToolMessage}
+			<p class="mb-4 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs font-semibold text-zinc-300">
+				{serverToolMessage}
+			</p>
+		{/if}
 		<div class="overflow-x-auto">
 			<table class="min-w-full text-sm">
 				<tbody class="divide-y divide-zinc-800">

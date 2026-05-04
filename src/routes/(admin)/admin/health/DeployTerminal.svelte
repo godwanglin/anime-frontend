@@ -1,7 +1,7 @@
 <script lang="ts">
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { adminApi } from '$lib/admin/api';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, tick } from 'svelte';
 
 	type DeployTarget = 'backend' | 'frontend' | 'go-proxy';
 	type DeployJob = {
@@ -14,10 +14,15 @@
 		log?: string;
 	};
 
-	let { target, jobId }: { target: DeployTarget; jobId?: string } = $props();
+	let {
+		target,
+		jobId,
+		clearSignal = 0
+	}: { target: DeployTarget; jobId?: string; clearSignal?: number } = $props();
 	let job = $state<DeployJob | null>(null);
 	let loading = $state(false);
 	let error = $state('');
+	let logEl: HTMLPreElement | null = null;
 	let timer: ReturnType<typeof setInterval> | null = null;
 	let loadedKey = '';
 
@@ -39,6 +44,7 @@
 		try {
 			const response = await adminApi<DeployJob>(`/health/deploy/${id}`);
 			job = response.data;
+			await scrollBottom();
 			if (job.status !== 'running') stopPolling();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Gagal memuat deploy log';
@@ -54,6 +60,7 @@
 		try {
 			const response = await adminApi<DeployJob | null>(`/health/deploy/latest?target=${target}`);
 			job = response.data;
+			await scrollBottom();
 			if (job?.status === 'running') startPolling(job.id);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Gagal memuat deploy log terakhir';
@@ -68,8 +75,13 @@
 		timer = setInterval(() => loadJob(id), 1500);
 	}
 
+	async function scrollBottom() {
+		await tick();
+		if (logEl) logEl.scrollTop = logEl.scrollHeight;
+	}
+
 	$effect(() => {
-		const key = `${target}:${jobId ?? 'latest'}`;
+		const key = `${target}:${jobId ?? 'latest'}:${clearSignal}`;
 		if (loadedKey === key) return;
 		loadedKey = key;
 		stopPolling();
@@ -124,5 +136,5 @@
 		</div>
 	{/if}
 
-	<pre class="max-h-[360px] min-h-[180px] overflow-auto p-4 font-mono text-[12px] leading-5 text-emerald-100"><code>{job?.log ?? '$ waiting for deploy output...'}</code></pre>
+	<pre bind:this={logEl} class="max-h-[360px] min-h-[180px] overflow-auto p-4 font-mono text-[12px] leading-5 text-emerald-100"><code>{job?.log ?? '$ waiting for deploy output...'}</code></pre>
 </section>

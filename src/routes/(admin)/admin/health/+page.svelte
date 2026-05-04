@@ -3,6 +3,7 @@
 	import { adminApi } from '$lib/admin/api';
 	import { onMount } from 'svelte';
 	import DeployTerminal from './DeployTerminal.svelte';
+	import Pm2LogsTerminal from './Pm2LogsTerminal.svelte';
 
 	type Status = 'online' | 'offline' | 'degraded' | 'ok' | 'unavailable' | string;
 
@@ -35,6 +36,7 @@
 				}[];
 		};
 		deploy?: Record<DeployTarget, DeployInfo | undefined>;
+		deployJobs?: Record<DeployTarget, DeployJob | null>;
 		topEndpoints: {
 			route: string;
 			method: string;
@@ -66,12 +68,23 @@
 		message?: string | null;
 	};
 
+	type DeployJob = {
+		id: string;
+		target: DeployTarget;
+		status: 'running' | 'success' | 'failed';
+		startedAt: string;
+		finishedAt?: string | null;
+	};
+
 	let summary = $state<HealthSummary | null>(null);
 	let loading = $state(true);
 	let clearing = $state(false);
 	let actingKey = $state('');
 	let deployingTarget = $state('');
 	let deployJobs = $state<Partial<Record<DeployTarget, string>>>({});
+	let runningDeployTargets = $state<Partial<Record<DeployTarget, boolean>>>({});
+	let clearSignal = $state(0);
+	let pm2LogProcess = $state('');
 	let deployMessage = $state('');
 	let error = $state('');
 	let lastRefreshAt = $state<Date | null>(null);
@@ -82,6 +95,11 @@
 		try {
 			const response = await adminApi<HealthSummary>('/health/summary');
 			summary = response.data;
+			for (const target of ['backend', 'frontend', 'go-proxy'] as DeployTarget[]) {
+				if (summary.deployJobs?.[target]?.status !== 'running') {
+					runningDeployTargets = { ...runningDeployTargets, [target]: false };
+				}
+			}
 			lastRefreshAt = new Date();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Gagal memuat health dashboard';
@@ -97,7 +115,10 @@
 
 		clearing = true;
 		try {
-			await adminApi<{ cleared: number }>('/health/clear', { method: 'POST' });
+			await adminApi<{ cleared: number; deployLogs: number }>('/health/clear', { method: 'POST' });
+			deployJobs = {};
+			deployMessage = '';
+			clearSignal += 1;
 			await load();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Gagal membersihkan log';
@@ -140,6 +161,7 @@
 		if (!confirmed) return;
 
 		deployingTarget = target;
+		runningDeployTargets = { ...runningDeployTargets, [target]: true };
 		deployMessage = '';
 		error = '';
 		try {
@@ -156,6 +178,7 @@
 				: `${label} deploy selesai.`;
 			setTimeout(load, target === 'backend' ? 7000 : 1000);
 		} catch (err) {
+			runningDeployTargets = { ...runningDeployTargets, [target]: false };
 			error = err instanceof Error ? err.message : `Gagal deploy ${label}`;
 		} finally {
 			deployingTarget = '';
@@ -164,6 +187,15 @@
 
 	function canStop(row: { name: string; status: string }) {
 		return row.name !== 'anime-api' && row.status === 'online';
+	}
+
+	function isDeployRunning(target?: DeployTarget) {
+		if (!target) return false;
+		return (
+			deployingTarget === target ||
+			Boolean(runningDeployTargets[target]) ||
+			summary?.deployJobs?.[target]?.status === 'running'
+		);
 	}
 
 	function statusClass(status?: Status) {
@@ -361,11 +393,11 @@
 						<button
 							type="button"
 							onclick={() => item?.target && runDeploy(item.target)}
-							disabled={!item?.target || deployingTarget === item?.target}
+							disabled={!item?.target || isDeployRunning(item?.target)}
 							class="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-violet-500/30 px-3 text-xs font-black text-violet-200 hover:bg-violet-500/10 disabled:opacity-50"
 						>
 							<AppIcon name="rocket_launch" class="text-[17px]" />
-							{deployingTarget === item?.target ? 'Deploying...' : `Deploy ${item?.target}`}
+							{isDeployRunning(item?.target) ? 'Deploying...' : `Deploy ${item?.target}`}
 						</button>
 					</div>
 				{:else}
@@ -375,9 +407,9 @@
 				{/each}
 			</div>
 			<div class="grid gap-4 border-t border-zinc-800 p-4 xl:grid-cols-3">
-				<DeployTerminal target="backend" jobId={deployJobs.backend} />
-				<DeployTerminal target="frontend" jobId={deployJobs.frontend} />
-				<DeployTerminal target="go-proxy" jobId={deployJobs['go-proxy']} />
+				<DeployTerminal target="backend" jobId={deployJobs.backend} {clearSignal} />
+				<DeployTerminal target="frontend" jobId={deployJobs.frontend} {clearSignal} />
+				<DeployTerminal target="go-proxy" jobId={deployJobs['go-proxy']} {clearSignal} />
 			</div>
 		</section>
 
@@ -429,6 +461,14 @@
 											<AppIcon name="restart_alt" class="text-[16px]" />
 											Restart
 										</button>
+										<button
+											type="button"
+											onclick={() => (pm2LogProcess = row.name)}
+											class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sky-500/30 px-3 text-xs font-black text-sky-300 hover:bg-sky-500/10"
+										>
+											<AppIcon name="terminal" class="text-[16px]" />
+											Logs
+										</button>
 										{#if canStop(row)}
 											<button
 												type="button"
@@ -454,6 +494,10 @@
 				</table>
 			</div>
 		</section>
+
+		{#if pm2LogProcess}
+			<Pm2LogsTerminal processName={pm2LogProcess} onClose={() => (pm2LogProcess = '')} />
+		{/if}
 
 		<section class="grid gap-4 xl:grid-cols-2">
 			<div class="rounded-lg border border-zinc-800 bg-zinc-900/70">

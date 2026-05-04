@@ -18,6 +18,18 @@
 		_count?: { servers?: number };
 		anime?: { id: number; title: string; slug?: string };
 	};
+	type EpisodeNavItem = {
+		id: number;
+		number: number;
+		title: string;
+		status?: string | null;
+	};
+	type EpisodeNavigation = {
+		currentId: number;
+		episodes: EpisodeNavItem[];
+		previous: EpisodeNavItem | null;
+		next: EpisodeNavItem | null;
+	};
 
 	type UrlSourceInput = { resolution: number; url: string };
 	type UrlSubtitleInput = { language: string; label: string; sourceUrl: string };
@@ -127,6 +139,8 @@
 	let id = $derived(Number(page.params.id));
 	let activeTab = $state<Tab>('file');
 	let episode = $state<Episode | null>(null);
+	let navigation = $state<EpisodeNavigation | null>(null);
+	let selectedEpisodeId = $state('');
 	let isLoading = $state(true);
 
 	// ── File-mode state ────────────────────────────────────────────────────
@@ -376,12 +390,28 @@
 	async function loadEpisode() {
 		isLoading = true;
 		try {
-			episode = (await adminApi<Episode>(`/episodes/${id}`)).data;
+			const [episodeResult, navResult] = await Promise.all([
+				adminApi<Episode>(`/episodes/${id}`),
+				adminApi<EpisodeNavigation>(`/episodes/${id}/navigation`).catch(() => null)
+			]);
+			episode = episodeResult.data;
+			navigation = navResult?.data ?? null;
+			selectedEpisodeId = String(id);
 		} catch (error) {
 			adminToast.error(error instanceof Error ? error.message : 'Gagal memuat episode');
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	function openUploadEpisode(episodeId: number | string) {
+		const targetId = Number(episodeId);
+		if (!targetId || targetId === id) return;
+		if (typeof window !== 'undefined') {
+			window.location.assign(`/admin/episodes/${targetId}/upload`);
+			return;
+		}
+		goto(`/admin/episodes/${targetId}/upload`);
 	}
 
 	function adoptStatus(data: StatusResp) {
@@ -1318,6 +1348,37 @@
 			<AppIcon name="arrow_back" class="text-[18px]" />
 			Kembali ke Episode
 		</button>
+		{#if navigation}
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+				<button
+					type="button"
+					disabled={!navigation.previous}
+					onclick={() => navigation?.previous && openUploadEpisode(navigation.previous.id)}
+					class="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-bold text-zinc-200 disabled:cursor-not-allowed disabled:text-zinc-600"
+				>
+					Sebelumnya
+				</button>
+				<select
+					bind:value={selectedEpisodeId}
+					onchange={(event) => openUploadEpisode(event.currentTarget.value)}
+					class="h-10 min-w-64 rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-bold text-zinc-100"
+				>
+					{#each navigation.episodes as item}
+						<option value={String(item.id)}>
+							Ep {item.number} - {item.title || `Episode ${item.number}`}
+						</option>
+					{/each}
+				</select>
+				<button
+					type="button"
+					disabled={!navigation.next}
+					onclick={() => navigation?.next && openUploadEpisode(navigation.next.id)}
+					class="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-bold text-zinc-200 disabled:cursor-not-allowed disabled:text-zinc-600"
+				>
+					Selanjutnya
+				</button>
+			</div>
+		{/if}
 		{#if episode}
 			<a
 				href="/admin/episodes/{episode.id}"

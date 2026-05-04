@@ -2,6 +2,7 @@
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { adminApi } from '$lib/admin/api';
 	import { onMount } from 'svelte';
+	import DeployTerminal from './DeployTerminal.svelte';
 
 	type Status = 'online' | 'offline' | 'degraded' | 'ok' | 'unavailable' | string;
 
@@ -33,10 +34,7 @@
 				uptimeMs: number | null;
 				}[];
 		};
-		deploy?: {
-			backend?: DeployInfo;
-			frontend?: DeployInfo;
-		};
+		deploy?: Record<DeployTarget, DeployInfo | undefined>;
 		topEndpoints: {
 			route: string;
 			method: string;
@@ -54,8 +52,10 @@
 		}[];
 	};
 
+	type DeployTarget = 'backend' | 'frontend' | 'go-proxy';
+
 	type DeployInfo = {
-		target: 'backend' | 'frontend';
+		target: DeployTarget;
 		status: Status;
 		path: string;
 		branch?: string;
@@ -71,6 +71,7 @@
 	let clearing = $state(false);
 	let actingKey = $state('');
 	let deployingTarget = $state('');
+	let deployJobs = $state<Partial<Record<DeployTarget, string>>>({});
 	let deployMessage = $state('');
 	let error = $state('');
 	let lastRefreshAt = $state<Date | null>(null);
@@ -126,8 +127,13 @@
 		}
 	}
 
-	async function runDeploy(target: 'backend' | 'frontend') {
-		const label = target === 'backend' ? 'backend API' : 'frontend app';
+	function deployLabel(target: DeployTarget) {
+		if (target === 'go-proxy') return 'Go video proxy';
+		return target === 'backend' ? 'backend API' : 'frontend app';
+	}
+
+	async function runDeploy(target: DeployTarget) {
+		const label = deployLabel(target);
 		const confirmed = window.confirm(
 			`Deploy ${label} dari GitHub sekarang?${target === 'backend' ? '\n\nAPI akan restart otomatis.' : ''}`
 		);
@@ -137,15 +143,16 @@
 		deployMessage = '';
 		error = '';
 		try {
-			const response = await adminApi<{ scheduled: boolean; output?: string }>(
+			const response = await adminApi<{ id: string; scheduled: boolean }>(
 				'/health/deploy',
 				{
 					method: 'POST',
 					body: JSON.stringify({ target })
 				}
 			);
+			deployJobs = { ...deployJobs, [target]: response.data.id };
 			deployMessage = response.data.scheduled
-				? `${label} deploy sudah dijadwalkan. Refresh beberapa detik lagi.`
+				? `${label} deploy sudah dijadwalkan. Logs akan tampil di bawah.`
 				: `${label} deploy selesai.`;
 			setTimeout(load, target === 'backend' ? 7000 : 1000);
 		} catch (err) {
@@ -327,7 +334,7 @@
 				</div>
 			</div>
 			<div class="grid gap-4 p-4 lg:grid-cols-2">
-				{#each [summary.deploy?.backend, summary.deploy?.frontend].filter(Boolean) as item}
+				{#each [summary.deploy?.backend, summary.deploy?.frontend, summary.deploy?.goProxy].filter(Boolean) as item}
 					<div class="rounded-lg border border-zinc-800 bg-black/20 p-4">
 						<div class="flex items-start justify-between gap-3">
 							<div class="min-w-0">
@@ -366,6 +373,11 @@
 						Deploy version belum tersedia.
 					</div>
 				{/each}
+			</div>
+			<div class="grid gap-4 border-t border-zinc-800 p-4 xl:grid-cols-3">
+				<DeployTerminal target="backend" jobId={deployJobs.backend} />
+				<DeployTerminal target="frontend" jobId={deployJobs.frontend} />
+				<DeployTerminal target="go-proxy" jobId={deployJobs['go-proxy']} />
 			</div>
 		</section>
 

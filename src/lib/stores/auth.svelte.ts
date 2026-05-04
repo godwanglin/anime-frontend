@@ -103,11 +103,9 @@ async function refreshToken() {
 
 	refreshPromise = (async () => {
 		try {
-			const response = await fetch('/creds/refresh', {
-				method: 'GET',
+			const response = await fetch('/api/auth/refresh', {
+				method: 'POST',
 				credentials: 'include'
-				// headers: { 'Content-Type': 'application/json' },
-				// body: JSON.stringify({})
 			});
 			const data = await parseApi<{ accessToken: string }>(response);
 			accessToken = data.accessToken;
@@ -151,8 +149,7 @@ async function authFetch(path: string, init: RequestInit = {}, retry = true) {
 	if (init.body && !headers.has('Content-Type') && !isFormData)
 		headers.set('Content-Type', 'application/json');
 
-	// filter if path with /api prefix, if not prepend API_BASE_URL
-	const url = path.startsWith('/api') ? `${config.API_BASE_URL}${path}` : path;
+	const url = path.startsWith('/api') ? path : path;
 
 	const response = await fetch(url, {
 		...init,
@@ -177,7 +174,7 @@ async function fetchMe() {
 			await logout(false);
 			return null;
 		}
-		const response = await authFetch('/creds/me');
+		const response = await authFetch('/api/auth/me');
 		const data = await parseApi<AuthUser>(response);
 		user = data;
 		rememberUser(data);
@@ -191,7 +188,7 @@ async function fetchMe() {
 async function login(payload: { email: string; password: string }) {
 	isLoading = true;
 	try {
-		const response = await fetch('/creds/login', {
+		const response = await fetch('/api/auth/login', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			credentials: 'include',
@@ -211,9 +208,10 @@ async function login(payload: { email: string; password: string }) {
 async function register(payload: { email: string; username?: string; fullName?: string; password: string }) {
 	isLoading = true;
 	try {
-		const response = await fetch('/creds/register', {
+		const response = await fetch('/api/auth/register', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
 			body: JSON.stringify(payload)
 		});
 		return parseApi<{ user: AuthUser }>(response);
@@ -224,7 +222,7 @@ async function register(payload: { email: string; username?: string; fullName?: 
 
 async function logout(callApi = true) {
 	if (callApi) {
-		await fetch('/creds/logout', {
+		await fetch('/api/auth/logout', {
 			method: 'POST',
 			credentials: 'include'
 		}).catch(() => null);
@@ -235,7 +233,7 @@ async function logout(callApi = true) {
 }
 
 async function updateProfile(payload: { username?: string; fullName?: string }) {
-	const response = await authFetch('/creds/me', {
+	const response = await authFetch('/api/auth/me', {
 		method: 'PUT',
 		body: JSON.stringify(payload)
 	});

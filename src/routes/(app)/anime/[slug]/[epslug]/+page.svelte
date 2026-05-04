@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, preloadData } from '$app/navigation';
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 	import AnimeCard from '$lib/components/AnimeCard.svelte';
@@ -285,6 +285,7 @@
 	let loginPromptOpen = $state(false);
 	let loginPromptDismissed = $state(false);
 	let loginPromptKind = $state<'episode' | 'premium'>('episode');
+	const preloadedEpisodePages = new Set<string>();
 	const loginPromptTitle = $derived(
 		loginPromptKind === 'premium'
 			? 'Upgrade Premium untuk 1080p'
@@ -459,6 +460,13 @@
 		preference.syncPlayerStorage();
 	});
 
+	$effect(() => {
+		const hrefs = [nextEpisodeHref, previousEpisodeHref].filter(Boolean) as string[];
+		if (!hrefs.length) return;
+
+		preloadEpisodePages(hrefs);
+	});
+
 
 
 	function episodeProgress(id?: number) {
@@ -516,6 +524,29 @@
 		event.preventDefault();
 		afterNavigate?.();
 		void goto(href as string, { replaceState: true });
+	}
+
+	function preloadEpisodePages(hrefs: string[]) {
+		if (typeof window === 'undefined') return;
+		const pending = hrefs.filter((href) => href && !preloadedEpisodePages.has(href));
+		if (!pending.length) return;
+
+		for (const href of pending) preloadedEpisodePages.add(href);
+
+		const run = () => {
+			for (const href of pending) {
+				void preloadData(href).catch(() => {
+					preloadedEpisodePages.delete(href);
+				});
+			}
+		};
+
+		if ('requestIdleCallback' in window) {
+			window.requestIdleCallback(run, { timeout: 2500 });
+			return;
+		}
+
+		window.setTimeout(run, 900);
 	}
 
 	function handleEpisodeNavigation(event: MouseEvent, ep: Episode, afterNavigate?: () => void) {

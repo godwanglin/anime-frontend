@@ -119,7 +119,7 @@
 
 	const RESOLUTION_OPTIONS = [144, 240, 360, 480, 720, 1080, 2160] as const;
 	const YOUTUBE_RESOLUTION_OPTIONS = [144, 360, 720, 1080] as const;
-	type YoutubeFlow = 'v1' | 'v2';
+	type YoutubeFlow = 'v1' | 'v2p2' | 'v2p4';
 	const RESOLUTION_LABELS: Record<number, string> = {
 		144: '144p',
 		240: '240p',
@@ -176,7 +176,7 @@
 	let isAnalyzingSubtitles = $state(false);
 	let subtitleAnalyses = $state<SubtitleAnalysis[]>([]);
 	let youtubeUrl = $state('');
-	let youtubeFlow = $state<YoutubeFlow>('v2');
+	let youtubeFlow = $state<YoutubeFlow>('v2p2');
 	let isYoutubeBusy = $state(false);
 	let isStoppingUpload = $state(false);
 
@@ -1226,7 +1226,8 @@
 					sesid: `${id}/upload-youtube`,
 					episodeId: id,
 					youtubeUrl: cleaned,
-					flow: youtubeFlow
+					flow: youtubeFlow === 'v1' ? 'v1' : 'v2',
+					variantConcurrency: youtubeFlow === 'v2p4' ? 4 : 2
 				})
 			});
 			const json = await res.json();
@@ -2086,7 +2087,8 @@
 						class="h-11 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
 					>
 						<option value="v1">V1 Stabil · sequential</option>
-						<option value="v2">V2 Cepat · parallel 2 + master awal</option>
+						<option value="v2p2">V2 Cepat · parallel 2 + master awal</option>
+						<option value="v2p4">V2 Max · parallel 4 + master awal</option>
 					</select>
 				</label>
 

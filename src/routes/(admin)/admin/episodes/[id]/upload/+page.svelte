@@ -77,7 +77,7 @@
 		uploadId: string;
 		episodeId?: number;
 		status: 'idle' | 'uploading' | 'processing' | 'completed' | 'failed' | 'expired';
-		mode?: 'file' | 'url';
+		mode?: 'file' | 'url' | 'youtube';
 		expiresAt: string;
 		totalChunks: number | null;
 		receivedChunks: number;
@@ -106,6 +106,7 @@
 	};
 
 	const RESOLUTION_OPTIONS = [144, 240, 360, 480, 720, 1080, 2160] as const;
+	const YOUTUBE_RESOLUTION_OPTIONS = [144, 360, 720, 1080] as const;
 	const RESOLUTION_LABELS: Record<number, string> = {
 		144: '144p',
 		240: '240p',
@@ -119,8 +120,9 @@
 	const STORAGE_KEY = (episodeId: number) => `upload-session:${episodeId}`;
 	const URL_STORAGE_KEY = (episodeId: number) => `upload-url-session:${episodeId}`;
 	const URL_SUBTITLE_STORAGE_KEY = (episodeId: number) => `upload-url-subtitles:${episodeId}`;
+	const YOUTUBE_STORAGE_KEY = (episodeId: number) => `upload-youtube-url:${episodeId}`;
 
-	type Tab = 'file' | 'url';
+	type Tab = 'file' | 'url' | 'youtube';
 	let id = $derived(Number(page.params.id));
 	let activeTab = $state<Tab>('file');
 	let episode = $state<Episode | null>(null);
@@ -158,6 +160,9 @@
 	let signalAnalyses = $state<SignalAnalysis[]>([]);
 	let isAnalyzingSubtitles = $state(false);
 	let subtitleAnalyses = $state<SubtitleAnalysis[]>([]);
+	let youtubeUrl = $state('');
+	let isYoutubeBusy = $state(false);
+	let isStoppingUpload = $state(false);
 
 	// ── Derived ────────────────────────────────────────────────────────────
 	const fileMeta = $derived(
@@ -182,6 +187,8 @@
 	const isBusy = $derived(
 		isUploading ||
 			isUrlBusy ||
+			isYoutubeBusy ||
+			isStoppingUpload ||
 			status?.status === 'uploading' ||
 			status?.status === 'processing'
 	);
@@ -227,6 +234,28 @@
 	function pushLog(line: string) {
 		const ts = new Date().toLocaleTimeString();
 		logLines = [...logLines.slice(-49), `[${ts}] ${line}`];
+	}
+
+	function youtubeStageLabel(data: StatusResp | null) {
+		if (!data || data.mode !== 'youtube') return 'Menunggu';
+		if (data.currentResolution === 0) return 'Audio';
+		if (typeof data.currentResolution === 'number') return `${data.currentResolution}p`;
+		if (data.status === 'completed') return 'Selesai';
+		return 'Queue';
+	}
+
+	function youtubeR2Counter(data: StatusResp | null) {
+		if (!data || data.mode !== 'youtube') return '-';
+		if (!data.totalChunks || data.totalChunks <= 0) return 'Menunggu file';
+		return `${data.receivedChunks}/${data.totalChunks} file`;
+	}
+
+	function isYoutubeResolutionDone(data: StatusResp | null, resolution: number) {
+		return Boolean(data?.resolutionsCompleted?.includes(resolution));
+	}
+
+	function isYoutubeResolutionActive(data: StatusResp | null, resolution: number) {
+		return data?.mode === 'youtube' && data.currentResolution === resolution;
 	}
 
 	function persistSession(s: SessionResp | null, st?: StatusResp | null) {
@@ -324,6 +353,24 @@
 		}
 	}
 
+	function persistYoutubeUrl(value: string) {
+		if (typeof window === 'undefined') return;
+		try {
+			localStorage.setItem(YOUTUBE_STORAGE_KEY(id), value);
+		} catch {
+			// ignore
+		}
+	}
+
+	function readPersistedYoutubeUrl() {
+		if (typeof window === 'undefined') return '';
+		try {
+			return localStorage.getItem(YOUTUBE_STORAGE_KEY(id)) ?? '';
+		} catch {
+			return '';
+		}
+	}
+
 	async function loadEpisode() {
 		isLoading = true;
 		try {
@@ -350,6 +397,11 @@
 					resolution: src.resolution,
 					url: src.url
 				}));
+			}
+		} else if (data.mode === 'youtube') {
+			activeTab = 'youtube';
+			if (data.fileName && /^https?:\/\//i.test(data.fileName)) {
+				youtubeUrl = data.fileName;
 			}
 		}
 		persistSession(session, data);
@@ -1036,6 +1088,12 @@
 		}
 	});
 
+	$effect(() => {
+		if (!session || status?.mode !== 'youtube') {
+			persistYoutubeUrl(youtubeUrl);
+		}
+	});
+
 	async function startUrlUpload() {
 		if (isUrlBusy) return;
 
@@ -1119,6 +1177,76 @@
 		}
 	}
 
+	async function startYoutubeUpload() {
+		if (isYoutubeBusy) return;
+		const cleaned = youtubeUrl.trim();
+		if (!/(?:youtube\.com\/watch|youtu\.be\/)/i.test(cleaned)) {
+			adminToast.error('URL YouTube tidak valid');
+			return;
+		}
+
+		isYoutubeBusy = true;
+		try {
+			pushLog('Membuat session YDWN R2');
+			const res = await auth.authFetch('/api/upload/youtube-session', {
+				method: 'POST',
+				body: JSON.stringify({
+					sesid: `${id}/upload-youtube`,
+					episodeId: id,
+					youtubeUrl: cleaned
+				})
+			});
+			const json = await res.json();
+			if (!res.ok) throw new Error(json?.message ?? 'Gagal membuat session YDWN');
+			const sessData = json.data as StatusResp;
+			session = buildSessionFromStatus(sessData);
+			adoptStatus(sessData);
+			openEventStream(sessData.uploadId);
+			persistSession(session, sessData);
+			pushLog(`YDWN masuk queue server: ${sessData.uploadId}`);
+			adminToast.success('YDWN masuk queue server');
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : String(error);
+			adminToast.error(msg);
+			pushLog(`ERR ydwn-upload: ${msg}`);
+		} finally {
+			isYoutubeBusy = false;
+		}
+	}
+
+	async function stopUploadSession() {
+		if (!session || isStoppingUpload) return;
+		const ok = window.confirm(
+			'Stop proses upload ini?\n\nSemua session, file temp, dan chunk R2 yang sudah sempat ter-upload akan dihapus.'
+		);
+		if (!ok) return;
+
+		isStoppingUpload = true;
+		try {
+			pushLog('Menghentikan proses dan cleanup R2...');
+			const res = await auth.authFetch(`/api/upload/${session.uploadId}/stop`, {
+				method: 'POST'
+			});
+			const json = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(json?.message ?? 'Gagal stop upload');
+
+			closeEventStream();
+			pushLog(`Stop selesai, R2 deleted: ${json?.data?.r2DeletedCount ?? 0} object`);
+			adminToast.success('Proses dihentikan dan file sementara dibersihkan');
+			session = null;
+			status = null;
+			receivedChunkIndexes = [];
+			serverLogs = [];
+			persistSession(null);
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : String(error);
+			adminToast.error(msg);
+			pushLog(`ERR stop-upload: ${msg}`);
+		} finally {
+			isStoppingUpload = false;
+		}
+	}
+
 	function abortUrlUpload() {
 		abortUrlRequested = true;
 		pushLog('Job sudah jalan di server; tutup/reload halaman tidak menghentikan proses');
@@ -1152,6 +1280,8 @@
 	});
 
 	onMount(async () => {
+		const persistedYoutubeUrl = readPersistedYoutubeUrl();
+		if (persistedYoutubeUrl) youtubeUrl = persistedYoutubeUrl;
 		const persistedUrlSources = readPersistedUrlSources();
 		if (persistedUrlSources && persistedUrlSources.length > 0) {
 			urlSources = persistedUrlSources;
@@ -1243,6 +1373,17 @@
 	</section>
 
 	<div class="flex w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+		<button
+			type="button"
+			onclick={() => (activeTab = 'youtube')}
+			class="flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-black uppercase tracking-wide transition
+				{activeTab === 'youtube'
+				? 'bg-violet-600 text-white'
+				: 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'}"
+		>
+			<AppIcon name="smart_display" class="text-[18px]" />
+			Upload YDWN
+		</button>
 		<button
 			type="button"
 			onclick={() => (activeTab = 'url')}
@@ -1361,7 +1502,7 @@
 							disabled={isUploading}
 							class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm disabled:cursor-not-allowed"
 						>
-							{#each RESOLUTION_OPTIONS as res}
+							{#each YOUTUBE_RESOLUTION_OPTIONS as res}
 								<option value={res}>{RESOLUTION_LABELS[res]}</option>
 							{/each}
 						</select>
@@ -1492,7 +1633,7 @@
 					{/if}
 				</div>
 			</form>
-		{:else}
+		{:else if activeTab === 'url'}
 			<form
 				onsubmit={(event) => {
 					event.preventDefault();
@@ -1855,6 +1996,167 @@
 							Mulai Upload URL
 						</button>
 					{/if}
+				</div>
+			</form>
+		{:else}
+			<form
+				onsubmit={(event) => {
+					event.preventDefault();
+					startYoutubeUpload();
+				}}
+				class="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-5"
+			>
+				<div>
+					<h3 class="text-lg font-black">Upload YDWN ke R2</h3>
+					<p class="text-sm text-zinc-500">
+						Input satu URL YouTube. Server akan ambil video-only asli per resolusi yang tersedia,
+						audio m4a sekali, package HLS tanpa re-encode, upload ke R2, lalu import semua subtitle ke DB.
+					</p>
+				</div>
+
+				<label class="block">
+					<span class="mb-1.5 block text-xs font-bold text-zinc-500">YouTube URL</span>
+					<input
+						type="url"
+						placeholder="https://www.youtube.com/watch?v=Rh8k6AivX1Y"
+						bind:value={youtubeUrl}
+						disabled={isYoutubeBusy || status?.mode === 'youtube' && status.status === 'processing'}
+						class="h-11 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-mono disabled:cursor-not-allowed disabled:opacity-60"
+					/>
+				</label>
+
+				<div class="rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 text-sm text-sky-100">
+					<div class="flex gap-2">
+						<AppIcon name="info" class="mt-0.5 text-[18px] text-sky-300" />
+						<p>
+							Tidak ada resize/transcode. Kalau YouTube menyediakan 1080p/4K dalam codec lain,
+							sistem tetap coba ambil dan package tanpa nurunin resolusi.
+						</p>
+					</div>
+				</div>
+
+				{#if status && status.mode === 'youtube'}
+					<div class="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+						<div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+							<span class="text-zinc-500">Sedang proses</span>
+							<span class="rounded-full border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-violet-200">
+								{youtubeStageLabel(status)}
+							</span>
+							<span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300">
+								R2 {youtubeR2Counter(status)}
+							</span>
+						</div>
+						<div class="mt-3 flex flex-wrap gap-2">
+							<span
+								class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold
+									{status.currentResolution === 0
+										? 'border-violet-500/50 bg-violet-500/10 text-violet-200'
+										: 'border-zinc-700 bg-zinc-900 text-zinc-500'}"
+							>
+								{#if status.currentResolution === 0}<AppIcon name="sync" class="text-[14px]" />{/if}
+								Audio
+							</span>
+							{#each YOUTUBE_RESOLUTION_OPTIONS as res}
+								<span
+									class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold
+										{isYoutubeResolutionDone(status, res)
+											? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+											: isYoutubeResolutionActive(status, res)
+												? 'border-violet-500/50 bg-violet-500/10 text-violet-200'
+												: 'border-zinc-700 bg-zinc-900 text-zinc-500'}"
+								>
+									{#if isYoutubeResolutionDone(status, res)}
+										<AppIcon name="check_circle" class="text-[14px]" />
+									{:else if isYoutubeResolutionActive(status, res)}
+										<AppIcon name="sync" class="text-[14px]" />
+									{/if}
+									{res}p
+								</span>
+							{/each}
+						</div>
+					</div>
+
+					<div class="grid gap-3 md:grid-cols-3">
+						<div class="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+							<p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Download</p>
+							<div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+								<div class="h-full bg-violet-500 transition-all" style="width: {status.uploadProgress}%"></div>
+							</div>
+							<p class="mt-1 text-xs font-bold text-zinc-300">{status.uploadProgress.toFixed(1)}%</p>
+						</div>
+						<div class="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+							<p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Packaging</p>
+							<div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+								<div class="h-full bg-amber-500 transition-all" style="width: {status.encodingProgress}%"></div>
+							</div>
+							<p class="mt-1 text-xs font-bold text-zinc-300">
+								{status.encodingProgress.toFixed(1)}%
+								→ {youtubeStageLabel(status)}
+							</p>
+						</div>
+						<div class="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+							<p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">R2</p>
+							<div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+								<div class="h-full bg-emerald-500 transition-all" style="width: {status.r2UploadProgress}%"></div>
+							</div>
+							<p class="mt-1 text-xs font-bold text-zinc-300">
+								{status.r2UploadProgress.toFixed(1)}% · {youtubeR2Counter(status)}
+							</p>
+						</div>
+					</div>
+
+					{#if status.resolutionsCompleted.length > 0}
+						<div class="flex flex-wrap gap-2">
+							{#each status.resolutionsCompleted as res}
+								<span class="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-300">
+									<AppIcon name="check_circle" class="text-[14px]" />
+									{res}p
+								</span>
+							{/each}
+						</div>
+					{/if}
+
+					{#if status.masterPlaylistUrl}
+						<div class="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm">
+							<p class="font-black text-emerald-200">Master playlist siap</p>
+							<a
+								href={status.masterPlaylistUrl}
+								target="_blank"
+								rel="noopener"
+								class="mt-1 block break-all font-mono text-xs text-emerald-300 hover:underline"
+							>
+								{status.masterPlaylistUrl}
+							</a>
+						</div>
+					{/if}
+
+					{#if status.errorMessage}
+						<div class="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm">
+							<p class="font-black text-red-200">YDWN error</p>
+							<p class="mt-1 text-xs text-red-300">{status.errorMessage}</p>
+						</div>
+					{/if}
+				{/if}
+
+				<div class="flex flex-col gap-2 border-t border-zinc-800 pt-4 sm:flex-row sm:justify-end">
+					{#if status?.mode === 'youtube' && (status.status === 'uploading' || status.status === 'processing')}
+						<button
+							type="button"
+							onclick={stopUploadSession}
+							disabled={isStoppingUpload}
+							class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-bold text-red-300 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							<AppIcon name="stop_circle" class="text-[18px]" />
+							{isStoppingUpload ? 'Stopping...' : 'Stop Proses'}
+						</button>
+					{/if}
+					<button
+						disabled={!youtubeUrl.trim() || isYoutubeBusy || isStoppingUpload || status?.mode === 'youtube' && status.status === 'processing'}
+						class="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						<AppIcon name="cloud_upload" class="text-[18px]" />
+						{isYoutubeBusy ? 'Queueing...' : 'Mulai Upload YDWN'}
+					</button>
 				</div>
 			</form>
 		{/if}

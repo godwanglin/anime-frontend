@@ -204,11 +204,18 @@
 	<section class="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
 		<div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 			<h3 class="text-lg font-black">Server Video</h3>
-			<a
-				href="/admin/subtitle-studio/{id}"
-				class="rounded-lg border border-violet-500 px-3 py-2 text-sm font-bold text-violet-200 hover:bg-violet-500/10"
-				>Subtitle Studio</a
-			>
+			<div class="flex flex-wrap gap-2">
+				<a
+					href="/admin/episodes/{id}/upload"
+					class="rounded-lg bg-violet-600 px-3 py-2 text-sm font-bold text-white hover:bg-violet-700"
+					>Upload Video</a
+				>
+				<a
+					href="/admin/subtitle-studio/{id}"
+					class="rounded-lg border border-violet-500 px-3 py-2 text-sm font-bold text-violet-200 hover:bg-violet-500/10"
+					>Subtitle Studio</a
+				>
+			</div>
 		</div>
 		<form
 			onsubmit={(e) => {

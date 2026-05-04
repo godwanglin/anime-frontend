@@ -31,7 +31,11 @@
 				cpu: number;
 				restarts: number;
 				uptimeMs: number | null;
-			}[];
+				}[];
+		};
+		deploy?: {
+			backend?: DeployInfo;
+			frontend?: DeployInfo;
 		};
 		topEndpoints: {
 			route: string;
@@ -50,10 +54,24 @@
 		}[];
 	};
 
+	type DeployInfo = {
+		target: 'backend' | 'frontend';
+		status: Status;
+		path: string;
+		branch?: string;
+		commit?: string;
+		subject?: string;
+		committedAt?: string;
+		dirty?: boolean;
+		message?: string | null;
+	};
+
 	let summary = $state<HealthSummary | null>(null);
 	let loading = $state(true);
 	let clearing = $state(false);
 	let actingKey = $state('');
+	let deployingTarget = $state('');
+	let deployMessage = $state('');
 	let error = $state('');
 	let lastRefreshAt = $state<Date | null>(null);
 	let timer: ReturnType<typeof setInterval> | null = null;
@@ -108,6 +126,35 @@
 		}
 	}
 
+	async function runDeploy(target: 'backend' | 'frontend') {
+		const label = target === 'backend' ? 'backend API' : 'frontend app';
+		const confirmed = window.confirm(
+			`Deploy ${label} dari GitHub sekarang?${target === 'backend' ? '\n\nAPI akan restart otomatis.' : ''}`
+		);
+		if (!confirmed) return;
+
+		deployingTarget = target;
+		deployMessage = '';
+		error = '';
+		try {
+			const response = await adminApi<{ scheduled: boolean; output?: string }>(
+				'/health/deploy',
+				{
+					method: 'POST',
+					body: JSON.stringify({ target })
+				}
+			);
+			deployMessage = response.data.scheduled
+				? `${label} deploy sudah dijadwalkan. Refresh beberapa detik lagi.`
+				: `${label} deploy selesai.`;
+			setTimeout(load, target === 'backend' ? 7000 : 1000);
+		} catch (err) {
+			error = err instanceof Error ? err.message : `Gagal deploy ${label}`;
+		} finally {
+			deployingTarget = '';
+		}
+	}
+
 	function canStop(row: { name: string; status: string }) {
 		return row.name !== 'anime-api' && row.status === 'online';
 	}
@@ -140,6 +187,16 @@
 	}
 
 	function time(value?: string | null) {
+		if (!value) return '-';
+		return new Date(value).toLocaleString('id-ID', {
+			day: '2-digit',
+			month: 'short',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
+	function shortDeployTime(value?: string | null) {
 		if (!value) return '-';
 		return new Date(value).toLocaleString('id-ID', {
 			day: '2-digit',
@@ -204,6 +261,12 @@
 		</div>
 	{/if}
 
+	{#if deployMessage}
+		<div class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-bold text-emerald-200">
+			{deployMessage}
+		</div>
+	{/if}
+
 	{#if loading && !summary}
 		<div class="rounded-lg border border-zinc-800 bg-zinc-900/70 p-6 text-sm font-bold text-zinc-400">
 			Memuat health dashboard...
@@ -251,6 +314,58 @@
 					{summary.goProxy.latencyMs === null ? '-' : `${summary.goProxy.latencyMs}ms`}
 				</p>
 				<p class="mt-1 truncate text-xs font-bold text-zinc-500">{summary.goProxy.url}</p>
+			</div>
+		</section>
+
+		<section class="rounded-lg border border-zinc-800 bg-zinc-900/70">
+			<div class="flex flex-col gap-2 border-b border-zinc-800 p-4 sm:flex-row sm:items-center sm:justify-between">
+				<div>
+					<h2 class="text-sm font-black text-zinc-100">Deploy Version</h2>
+					<p class="mt-1 text-xs font-bold text-zinc-500">
+						Versi Git terakhir yang sedang jalan di server.
+					</p>
+				</div>
+			</div>
+			<div class="grid gap-4 p-4 lg:grid-cols-2">
+				{#each [summary.deploy?.backend, summary.deploy?.frontend].filter(Boolean) as item}
+					<div class="rounded-lg border border-zinc-800 bg-black/20 p-4">
+						<div class="flex items-start justify-between gap-3">
+							<div class="min-w-0">
+								<p class="text-xs font-black uppercase tracking-[0.24em] text-violet-300">
+									{item?.target}
+								</p>
+								<p class="mt-2 truncate text-lg font-black text-white">
+									{item?.commit ?? 'unavailable'}
+								</p>
+								<p class="mt-1 line-clamp-2 text-xs font-bold text-zinc-400">
+									{item?.subject ?? item?.message ?? 'Git info belum tersedia'}
+								</p>
+							</div>
+							<span class="rounded-full border px-2 py-1 text-xs font-black {statusClass(item?.status)}">
+								<span class="mr-1 inline-block h-2 w-2 rounded-full {statusDot(item?.status)}"></span>
+								{item?.dirty ? 'dirty' : item?.status}
+							</span>
+						</div>
+						<div class="mt-4 grid gap-2 text-xs text-zinc-500">
+							<p class="truncate">Branch: <span class="font-bold text-zinc-300">{item?.branch ?? '-'}</span></p>
+							<p>Commit time: <span class="font-bold text-zinc-300">{shortDeployTime(item?.committedAt)}</span></p>
+							<p class="truncate">Path: <span class="font-bold text-zinc-300">{item?.path}</span></p>
+						</div>
+						<button
+							type="button"
+							onclick={() => item?.target && runDeploy(item.target)}
+							disabled={!item?.target || deployingTarget === item?.target}
+							class="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-violet-500/30 px-3 text-xs font-black text-violet-200 hover:bg-violet-500/10 disabled:opacity-50"
+						>
+							<AppIcon name="rocket_launch" class="text-[17px]" />
+							{deployingTarget === item?.target ? 'Deploying...' : `Deploy ${item?.target}`}
+						</button>
+					</div>
+				{:else}
+					<div class="rounded-lg border border-zinc-800 p-6 text-center text-sm font-bold text-zinc-500 lg:col-span-2">
+						Deploy version belum tersedia.
+					</div>
+				{/each}
 			</div>
 		</section>
 

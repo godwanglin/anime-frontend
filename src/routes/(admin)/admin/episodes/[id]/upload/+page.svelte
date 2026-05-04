@@ -107,6 +107,7 @@
 
 	const RESOLUTION_OPTIONS = [144, 240, 360, 480, 720, 1080, 2160] as const;
 	const YOUTUBE_RESOLUTION_OPTIONS = [144, 360, 720, 1080] as const;
+	type YoutubeFlow = 'v1' | 'v2';
 	const RESOLUTION_LABELS: Record<number, string> = {
 		144: '144p',
 		240: '240p',
@@ -161,6 +162,7 @@
 	let isAnalyzingSubtitles = $state(false);
 	let subtitleAnalyses = $state<SubtitleAnalysis[]>([]);
 	let youtubeUrl = $state('');
+	let youtubeFlow = $state<YoutubeFlow>('v2');
 	let isYoutubeBusy = $state(false);
 	let isStoppingUpload = $state(false);
 
@@ -1193,7 +1195,8 @@
 				body: JSON.stringify({
 					sesid: `${id}/upload-youtube`,
 					episodeId: id,
-					youtubeUrl: cleaned
+					youtubeUrl: cleaned,
+					flow: youtubeFlow
 				})
 			});
 			const json = await res.json();
@@ -1203,7 +1206,7 @@
 			adoptStatus(sessData);
 			openEventStream(sessData.uploadId);
 			persistSession(session, sessData);
-			pushLog(`YDWN masuk queue server: ${sessData.uploadId}`);
+			pushLog(`YDWN ${youtubeFlow.toUpperCase()} masuk queue server: ${sessData.uploadId}`);
 			adminToast.success('YDWN masuk queue server');
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : String(error);
@@ -2010,9 +2013,21 @@
 					<h3 class="text-lg font-black">Upload YDWN ke R2</h3>
 					<p class="text-sm text-zinc-500">
 						Input satu URL YouTube. Server akan ambil video-only asli per resolusi yang tersedia,
-						audio m4a sekali, package HLS tanpa re-encode, upload ke R2, lalu import semua subtitle ke DB.
+						audio m4a sekali, package HLS tanpa re-encode, upload ke R2, lalu import subtitle pilihan ke DB.
 					</p>
 				</div>
+
+				<label class="block">
+					<span class="mb-1.5 block text-xs font-bold text-zinc-500">Flow Upload</span>
+					<select
+						bind:value={youtubeFlow}
+						disabled={isYoutubeBusy || status?.mode === 'youtube' && status.status === 'processing'}
+						class="h-11 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
+					>
+						<option value="v1">V1 Stabil · sequential</option>
+						<option value="v2">V2 Cepat · parallel 2 + master awal</option>
+					</select>
+				</label>
 
 				<label class="block">
 					<span class="mb-1.5 block text-xs font-bold text-zinc-500">YouTube URL</span>

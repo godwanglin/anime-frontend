@@ -74,6 +74,8 @@ async function loadYouTubeSubtitles(input: {
 }
 
 const GUEST_WATCH_COOKIE = 'weebin_guest_watch_id';
+const ACCESS_TOKEN_MAX_AGE = 15 * 60;
+const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7;
 
 function cleanGuestId(value: string | undefined) {
 	if (!value) return null;
@@ -97,7 +99,34 @@ function ensureGuestId(cookies: Parameters<PageServerLoad>[0]['cookies']) {
 	return guestId;
 }
 
-async function accessTokenFromRefresh(input: {
+function authCookieHeader(
+	cookies: Parameters<PageServerLoad>[0]['cookies'],
+	overrides: { accessToken?: string; refreshToken?: string } = {}
+) {
+	const accessToken = overrides.accessToken ?? cookies.get('accessToken');
+	const refreshToken = overrides.refreshToken ?? cookies.get('refreshToken');
+	const parts = [];
+	if (accessToken) parts.push(`accessToken=${accessToken}`);
+	if (refreshToken) parts.push(`refreshToken=${refreshToken}`);
+	return parts.join('; ');
+}
+
+function setAuthCookie(
+	cookies: Parameters<PageServerLoad>[0]['cookies'],
+	name: 'accessToken' | 'refreshToken',
+	value: string,
+	maxAge: number
+) {
+	cookies.set(name, value, {
+		path: '/',
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: !dev,
+		maxAge
+	});
+}
+
+async function refreshAuthSession(input: {
 	fetch: Parameters<PageServerLoad>[0]['fetch'];
 	cookies: Parameters<PageServerLoad>[0]['cookies'];
 }) {
@@ -115,31 +144,34 @@ async function accessTokenFromRefresh(input: {
 
 	const data = payload?.data as { accessToken?: string; refreshToken?: string } | undefined;
 
-	if (data?.refreshToken) {
-		input.cookies.set('refreshToken', data.refreshToken, {
-			path: '/',
-			httpOnly: true,
-			sameSite: 'lax',
-			secure: !dev,
-			maxAge: 60 * 60 * 24 * 7
-		});
+	if (data?.accessToken) {
+		setAuthCookie(input.cookies, 'accessToken', data.accessToken, ACCESS_TOKEN_MAX_AGE);
 	}
 
-	return data?.accessToken ?? null;
+	if (data?.refreshToken) {
+		setAuthCookie(input.cookies, 'refreshToken', data.refreshToken, REFRESH_TOKEN_MAX_AGE);
+	}
+
+	return data ?? null;
 }
 
 export const load: PageServerLoad = async ({ params, fetch, cookies }) => {
 	const episodeUrl = `${config.API_BASE_URL}/api/anime/${params.slug}/${params.epslug}`;
 	const guestId = ensureGuestId(cookies);
 	const headers = new Headers({ 'x-guest-watch-id': guestId });
+	const cookieHeader = authCookieHeader(cookies);
+
+	if (cookieHeader) headers.set('Cookie', cookieHeader);
 
 	let episodeRes = await fetch(episodeUrl, { headers });
 	let episodeJson = await episodeRes.json().catch(() => null);
 
 	if (!episodeRes.ok && episodeJson?.errorCode === 'LOGIN_REQUIRED') {
-		const accessToken = await accessTokenFromRefresh({ fetch, cookies });
-		if (accessToken) {
-			headers.set('Authorization', `Bearer ${accessToken}`);
+		const refreshed = await refreshAuthSession({ fetch, cookies });
+		if (refreshed?.accessToken) {
+			headers.set('Authorization', `Bearer ${refreshed.accessToken}`);
+			const refreshedCookieHeader = authCookieHeader(cookies, refreshed);
+			if (refreshedCookieHeader) headers.set('Cookie', refreshedCookieHeader);
 			episodeRes = await fetch(episodeUrl, { headers });
 			episodeJson = await episodeRes.json().catch(() => null);
 		}

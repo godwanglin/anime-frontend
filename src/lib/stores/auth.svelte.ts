@@ -87,6 +87,7 @@ let isLoading = $state(false);
 let bootstrapped = $state(false);
 let refreshPromise: Promise<string | null> | null = null;
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
+let lastRefreshSessionInvalid = false;
 
 const isLoggedIn = $derived(Boolean(user));
 const hasAccessToken = $derived(Boolean(accessToken));
@@ -102,13 +103,23 @@ async function refreshToken() {
 	if (refreshPromise) return refreshPromise;
 
 	refreshPromise = (async () => {
+		lastRefreshSessionInvalid = false;
 		try {
 			const response = await fetch('/api/auth/refresh', {
 				method: 'POST',
 				credentials: 'include'
 			});
-			const data = await parseApi<{ accessToken: string }>(response);
-			accessToken = data.accessToken;
+			const json = (await response.json().catch(() => null)) as ApiEnvelope<{
+				accessToken?: string;
+			}> | null;
+
+			if (!response.ok) {
+				lastRefreshSessionInvalid = response.status === 401 || response.status === 403;
+				throw new Error(json?.message ?? 'Refresh token gagal');
+			}
+
+			const data = (json?.data ?? json) as { accessToken?: string } | null;
+			accessToken = data?.accessToken ?? null;
 			return accessToken;
 		} catch {
 			accessToken = null;
@@ -129,18 +140,8 @@ async function ensureAccessToken() {
 
 async function authFetch(path: string, init: RequestInit = {}, retry = true) {
 	// console.log('authFetch', path, init);
-	const method = (init.method ?? 'GET').toUpperCase();
 	if (!accessToken && user) {
-		const token = await ensureAccessToken();
-		if (!token) {
-			await logout(false);
-			if (method !== 'GET' && method !== 'HEAD') {
-				return new Response(JSON.stringify({ message: 'Sesi login sudah berakhir' }), {
-					status: 401,
-					headers: { 'Content-Type': 'application/json' }
-				});
-			}
-		}
+		await ensureAccessToken();
 	}
 
 	const headers = new Headers(init.headers);
@@ -160,7 +161,7 @@ async function authFetch(path: string, init: RequestInit = {}, retry = true) {
 	if (response.status === 401 && retry) {
 		const token = await refreshToken();
 		if (token) return authFetch(path, init, false);
-		await logout(false);
+		if (lastRefreshSessionInvalid) await logout(false);
 	}
 
 	return response;
@@ -169,12 +170,12 @@ async function authFetch(path: string, init: RequestInit = {}, retry = true) {
 async function fetchMe() {
 	isLoading = true;
 	try {
-		const token = await ensureAccessToken();
-		if (!token) {
-			await logout(false);
+		await ensureAccessToken();
+		const response = await authFetch('/api/auth/me');
+		if (!response.ok) {
+			if (response.status === 401 && lastRefreshSessionInvalid) await logout(false);
 			return null;
 		}
-		const response = await authFetch('/api/auth/me');
 		const data = await parseApi<AuthUser>(response);
 		user = data;
 		rememberUser(data);
@@ -269,7 +270,7 @@ function startAutoRefresh() {
 	if (!browser || refreshTimer) return;
 	refreshTimer = setInterval(
 		() => {
-			if (user && accessToken) refreshToken();
+			if (user) refreshToken();
 		},
 		12 * 60 * 1000
 	);

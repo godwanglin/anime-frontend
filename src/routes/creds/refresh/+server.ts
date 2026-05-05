@@ -2,7 +2,20 @@ import { dev } from '$app/environment';
 import config from '$lib/config';
 import type { Cookies } from '@sveltejs/kit';
 
-export const GET = async ({ cookies }: { cookies: Cookies }) => {
+const ACCESS_TOKEN_MAX_AGE = 15 * 60;
+const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7;
+
+function setAuthCookie(cookies: Cookies, name: 'accessToken' | 'refreshToken', value: string, maxAge: number) {
+	cookies.set(name, value, {
+		path: '/',
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: !dev,
+		maxAge
+	});
+}
+
+const handleRefresh = async ({ cookies }: { cookies: Cookies }) => {
 	const baseUrl = config.API_BASE_URL;
 	const refreshToken = cookies.get('refreshToken');
 
@@ -25,7 +38,10 @@ export const GET = async ({ cookies }: { cookies: Cookies }) => {
 	const payload = await response.json().catch(() => ({}));
 
 	if (!response.ok) {
-		cookies.delete('refreshToken', { path: '/' });
+		if (response.status === 401 || response.status === 403) {
+			cookies.delete('accessToken', { path: '/' });
+			cookies.delete('refreshToken', { path: '/' });
+		}
 		return new Response(JSON.stringify(payload), {
 			status: response.status,
 			headers: { 'Content-Type': 'application/json' }
@@ -38,14 +54,12 @@ export const GET = async ({ cookies }: { cookies: Cookies }) => {
 	};
 	const { refreshToken: rotated, ...rest } = data;
 
+	if (data.accessToken) {
+		setAuthCookie(cookies, 'accessToken', data.accessToken, ACCESS_TOKEN_MAX_AGE);
+	}
+
 	if (rotated) {
-		cookies.set('refreshToken', rotated, {
-			path: '/',
-			httpOnly: true,
-			sameSite: 'lax',
-			secure: !dev,
-			maxAge: 60 * 60 * 24 * 7
-		});
+		setAuthCookie(cookies, 'refreshToken', rotated, REFRESH_TOKEN_MAX_AGE);
 	}
 
 	return new Response(JSON.stringify({ ...payload, data: rest }), {
@@ -53,3 +67,6 @@ export const GET = async ({ cookies }: { cookies: Cookies }) => {
 		headers: { 'Content-Type': 'application/json' }
 	});
 };
+
+export const GET = handleRefresh;
+export const POST = handleRefresh;

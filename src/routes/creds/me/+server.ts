@@ -1,15 +1,27 @@
 import config from '$lib/config';
+import type { Cookies, RequestHandler } from '@sveltejs/kit';
 
-export const GET = async ({ request }) => {
+function authHeaders(request: Request, cookies: Cookies) {
+	const headers = new Headers({ 'Content-Type': 'application/json' });
+	const authorization = request.headers.get('authorization');
+	const accessToken = cookies.get('accessToken');
+	const refreshToken = cookies.get('refreshToken');
+	const cookieParts: string[] = [];
+
+	if (authorization) headers.set('Authorization', authorization);
+	if (accessToken) cookieParts.push(`accessToken=${accessToken}`);
+	if (refreshToken) cookieParts.push(`refreshToken=${refreshToken}`);
+	if (cookieParts.length) headers.set('Cookie', cookieParts.join('; '));
+
+	return headers;
+}
+
+export const GET: RequestHandler = async ({ request, cookies }) => {
 	const baseUrl = config.API_BASE_URL;
-	const authorization = request.headers.get('authorization') ?? '';
 
 	const response = await fetch(`${baseUrl}/api/auth/me`, {
 		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: authorization
-		}
+		headers: authHeaders(request, cookies)
 	});
 
 	if (!response.ok) {
@@ -28,16 +40,12 @@ export const GET = async ({ request }) => {
 	});
 };
 
-export const PUT = async ({ request }) => {
+export const PUT: RequestHandler = async ({ request, cookies }) => {
 	const baseUrl = config.API_BASE_URL;
-	const authorization = request.headers.get('authorization') ?? '';
 
 	const response = await fetch(`${baseUrl}/api/auth/me`, {
 		method: 'PUT',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: authorization
-		},
+		headers: authHeaders(request, cookies),
 		body: await request.text()
 	});
 

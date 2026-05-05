@@ -51,6 +51,7 @@
 		{ href: '/', icon: 'home', label: 'Beranda' },
 		{ href: '/popular', icon: 'local_fire_department', label: 'Populer' },
 		{ href: '/chat', icon: 'forum', label: 'Chat' },
+		{ href: '/support', icon: 'support_agent', label: 'Support' },
 		{ href: '/browse', icon: 'explore', label: 'Jelajahi' },
 		{ href: '/genre', icon: 'category', label: 'Genre' },
 		{ href: '/episode-baru', icon: 'fiber_new', label: 'Episode Baru' },

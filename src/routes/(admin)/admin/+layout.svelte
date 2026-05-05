@@ -66,6 +66,7 @@
 		{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
 		{ href: '/admin/notifications', icon: 'campaign', label: 'Notifications' },
 		{ href: '/admin/chat', icon: 'forum', label: 'Chat' },
+		{ href: '/admin/support', icon: 'support_agent', label: 'Support' },
 		{ href: '/admin/subtitle-studio', icon: 'subtitles', label: 'Subtitle Studio' },
 		{ href: '/admin/users', icon: 'group', label: 'User' },
 		{ href: '/admin/comments', icon: 'forum', label: 'Komentar' },

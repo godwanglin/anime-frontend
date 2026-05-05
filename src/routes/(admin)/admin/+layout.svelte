@@ -20,10 +20,24 @@
 		role?: string;
 	};
 
+	type NavItem = {
+		href: string;
+		icon: string;
+		label: string;
+	};
+
+	type NavGroup = {
+		id: string;
+		icon: string;
+		label: string;
+		items: NavItem[];
+	};
+
 	let { data, children } = $props();
 	let sidebarOpen = $state(false);
 	let notificationPanelOpen = $state(false);
 	let selectedNotificationCategory = $state('all');
+	let collapsedGroups = $state<Record<string, boolean>>({});
 	const adminUser = $derived((data.adminUser ?? {}) as AdminUser);
 	const adminDisplayName = $derived(displayUserName(adminUser, 'Admin'));
 	const siteConfig = $derived((page.data.siteConfig ?? {}) as Record<string, string>);
@@ -54,31 +68,81 @@
 		})
 	]);
 
-	const nav = [
-		{ href: '/admin', icon: 'dashboard', label: 'Dashboard' },
-		{ href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' },
-		{ href: '/admin/health', icon: 'health_metrics', label: 'Health' },
-		{ href: '/admin/activity', icon: 'person_search', label: 'User Activity' },
-		{ href: '/admin/anime', icon: 'movie', label: 'Anime' },
-		{ href: '/admin/episodes', icon: 'video_library', label: 'Episode' },
-		{ href: '/admin/r2-videos', icon: 'storage', label: 'R2 Videos' },
-		{ href: '/admin/youtube-tools', icon: 'smart_display', label: 'YouTube Tools' },
-		{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
-		{ href: '/admin/notifications', icon: 'campaign', label: 'Notifications' },
-		{ href: '/admin/chat', icon: 'forum', label: 'Chat' },
-		{ href: '/admin/support', icon: 'support_agent', label: 'Support' },
-		{ href: '/admin/subtitle-studio', icon: 'subtitles', label: 'Subtitle Studio' },
-		{ href: '/admin/users', icon: 'group', label: 'User' },
-		{ href: '/admin/comments', icon: 'forum', label: 'Komentar' },
-		{ href: '/admin/comment-reports', icon: 'flag', label: 'Laporan' },
-		{ href: '/admin/episode-reports', icon: 'report', label: 'Episode Reports' },
-		{ href: '/admin/decorations', icon: 'auto_awesome', label: 'Decorations' },
-		{ href: '/admin/site-config', icon: 'settings', label: 'Site Config' }
+	const navGroups: NavGroup[] = [
+		{
+			id: 'overview',
+			icon: 'dashboard',
+			label: 'Overview',
+			items: [{ href: '/admin', icon: 'dashboard', label: 'Dashboard' }]
+		},
+		{
+			id: 'ops',
+			icon: 'tune',
+			label: 'Operasional',
+			items: [
+				{ href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' },
+				{ href: '/admin/health', icon: 'health_metrics', label: 'Health' },
+				{ href: '/admin/jobs', icon: 'manufacturing', label: 'Jobs' },
+				{ href: '/admin/activity', icon: 'person_search', label: 'User Activity' }
+			]
+		},
+		{
+			id: 'content',
+			icon: 'movie',
+			label: 'Konten',
+			items: [
+				{ href: '/admin/anime', icon: 'movie', label: 'Anime' },
+				{ href: '/admin/episodes', icon: 'video_library', label: 'Episode' },
+				{ href: '/admin/r2-videos', icon: 'storage', label: 'R2 Videos' },
+				{ href: '/admin/youtube-tools', icon: 'smart_display', label: 'YouTube Tools' },
+				{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
+				{ href: '/admin/subtitle-studio', icon: 'subtitles', label: 'Subtitle Studio' }
+			]
+		},
+		{
+			id: 'community',
+			icon: 'groups',
+			label: 'Komunitas',
+			items: [
+				{ href: '/admin/users', icon: 'group', label: 'User' },
+				{ href: '/admin/notifications', icon: 'campaign', label: 'Notifications' },
+				{ href: '/admin/chat', icon: 'forum', label: 'Chat' },
+				{ href: '/admin/support', icon: 'support_agent', label: 'Support' },
+				{ href: '/admin/comments', icon: 'forum', label: 'Komentar' },
+				{ href: '/admin/comment-reports', icon: 'flag', label: 'Laporan Komentar' },
+				{ href: '/admin/episode-reports', icon: 'report', label: 'Laporan Episode' }
+			]
+		},
+		{
+			id: 'settings',
+			icon: 'settings',
+			label: 'Settings',
+			items: [
+				{ href: '/admin/decorations', icon: 'auto_awesome', label: 'Decorations' },
+				{ href: '/admin/site-config', icon: 'settings', label: 'Site Config' }
+			]
+		}
 	];
 
 	async function logout() {
 		await auth.logout();
 		goto('/login');
+	}
+
+	function isNavActive(item: NavItem) {
+		return currentPath === item.href || (item.href !== '/admin' && currentPath.startsWith(item.href));
+	}
+
+	function isGroupActive(group: NavGroup) {
+		return group.items.some(isNavActive);
+	}
+
+	function isGroupOpen(group: NavGroup) {
+		return collapsedGroups[group.id] ?? isGroupActive(group);
+	}
+
+	function toggleGroup(group: NavGroup) {
+		collapsedGroups = { ...collapsedGroups, [group.id]: !isGroupOpen(group) };
 	}
 
 	function notificationCategoryLabel(value: string) {
@@ -175,19 +239,62 @@
 				</div>
 			</a>
 
-			<nav class="flex-1 space-y-1 overflow-y-auto p-3">
-				{#each nav as item}
-					<a
-						href={item.href}
-						onclick={() => (sidebarOpen = false)}
-						class="flex items-center gap-3 rounded-lg border-r-2 px-3 py-2.5 text-sm font-bold transition
-							{currentPath === item.href || (item.href !== '/admin' && currentPath.startsWith(item.href))
-							? 'border-violet-500 bg-violet-600/20 text-violet-300'
-							: 'border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
-					>
-						<AppIcon name={item.icon} class="text-[20px]" />
-						{item.label}
-					</a>
+			<nav class="flex-1 space-y-2 overflow-y-auto p-3">
+				{#each navGroups as group}
+					{#if group.items.length === 1}
+						{@const item = group.items[0]}
+						<a
+							href={item.href}
+							onclick={() => (sidebarOpen = false)}
+							class="flex items-center gap-3 rounded-lg border-r-2 px-3 py-2.5 text-sm font-bold transition
+								{isNavActive(item)
+								? 'border-violet-500 bg-violet-600/20 text-violet-300'
+								: 'border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
+						>
+							<AppIcon name={item.icon} class="text-[20px]" />
+							{item.label}
+						</a>
+					{:else}
+						<div class="rounded-xl border border-zinc-800/80 bg-zinc-950/35">
+							<button
+								type="button"
+								onclick={() => toggleGroup(group)}
+								class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-black transition
+									{isGroupActive(group)
+									? 'text-violet-300'
+									: 'text-zinc-400 hover:bg-zinc-800/70 hover:text-zinc-100'}"
+								aria-expanded={isGroupOpen(group)}
+							>
+								<AppIcon name={group.icon} class="text-[20px]" />
+								<span class="min-w-0 flex-1 truncate">{group.label}</span>
+								<span class="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">
+									{group.items.length}
+								</span>
+								<AppIcon
+									name="expand_more"
+									class="text-[18px] transition {isGroupOpen(group) ? 'rotate-180' : ''}"
+								/>
+							</button>
+
+							{#if isGroupOpen(group)}
+								<div class="space-y-1 border-t border-zinc-800/80 p-1.5">
+									{#each group.items as item}
+										<a
+											href={item.href}
+											onclick={() => (sidebarOpen = false)}
+											class="flex items-center gap-2 rounded-lg border-r-2 px-2.5 py-2 text-[13px] font-bold transition
+												{isNavActive(item)
+												? 'border-violet-500 bg-violet-600/20 text-violet-200'
+												: 'border-transparent text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200'}"
+										>
+											<AppIcon name={item.icon} class="text-[18px]" />
+											<span class="truncate">{item.label}</span>
+										</a>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/if}
 				{/each}
 			</nav>
 

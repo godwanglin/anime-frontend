@@ -1,0 +1,5 @@
+.schedule-card {
+	content-visibility: auto;
+	contain: layout paint style;
+	contain-intrinsic-size: 96px 112px;
+}

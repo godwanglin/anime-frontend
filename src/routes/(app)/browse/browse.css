@@ -1,0 +1,233 @@
+.browse-page {
+	padding-top: 62px;
+}
+
+.browse-search-form {
+	display: flex;
+	width: 100%;
+	gap: 8px;
+}
+
+.browse-search-shell {
+	position: fixed;
+	inset-inline: 0;
+	top: var(--browse-sticky-top, 56px);
+	z-index: 29;
+	padding: 8px 1rem 10px;
+	background: color-mix(in oklch, var(--background) 88%, transparent);
+	border-bottom: 1px solid color-mix(in oklch, var(--border) 78%, transparent);
+	backdrop-filter: blur(18px) saturate(160%);
+	-webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+.browse-search-submit,
+.browse-filter-toggle {
+	display: inline-flex;
+	height: 44px;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-radius: 16px;
+	font-size: 14px;
+	font-weight: 900;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.browse-search-submit {
+	background: oklch(0.55 0.24 300);
+	box-shadow: 0 14px 32px oklch(0.55 0.24 300 / 0.2);
+	color: white;
+	padding-inline: 16px;
+}
+
+.browse-search-submit:hover {
+	background: oklch(0.61 0.24 300);
+}
+
+.browse-filter-toggle {
+	position: relative;
+	gap: 6px;
+	border: 1px solid var(--border);
+	background: var(--surface);
+	color: var(--text-muted);
+	padding-inline: 12px;
+}
+
+.browse-filter-toggle.is-active {
+	border-color: color-mix(in oklch, var(--accent) 46%, var(--border));
+	background: var(--accent-surface);
+	color: var(--accent-text);
+}
+
+.browse-filter-toggle b {
+	display: inline-flex;
+	min-width: 18px;
+	height: 18px;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	background: var(--accent);
+	color: var(--accent-foreground);
+	font-size: 10px;
+	line-height: 1;
+}
+
+.browse-filter {
+	display: none;
+	margin-inline: -1rem;
+	max-width: calc(100% + 2rem);
+	border-block: 1px solid var(--border);
+	background: color-mix(in oklch, var(--surface) 88%, transparent);
+	padding: 12px 1rem;
+	box-shadow: var(--shadow-sm);
+}
+
+.browse-filter.is-open {
+	display: block;
+}
+
+.filter-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.filter-kicker {
+	font-size: 10px;
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-faint);
+}
+
+.filter-count {
+	margin-top: 2px;
+	font-size: 12px;
+	font-weight: 850;
+	color: var(--text-primary);
+}
+
+.filter-reset {
+	display: inline-flex;
+	height: 34px;
+	align-items: center;
+	gap: 6px;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	background: var(--surface-offset);
+	padding: 0 10px;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 850;
+	transition:
+		border-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.filter-reset:hover {
+	border-color: oklch(0.64 0.22 25 / 0.55);
+	color: oklch(0.64 0.22 25);
+}
+
+.filter-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+}
+
+.filter-field {
+	display: grid;
+	min-width: 0;
+	gap: 6px;
+}
+
+.filter-field > span {
+	padding-left: 2px;
+	font-size: 10px;
+	font-weight: 850;
+	color: var(--text-faint);
+}
+
+.sort-field,
+.studio-field {
+	grid-column: span 2;
+}
+
+.active-filter-row {
+	display: flex;
+	max-width: 100%;
+	gap: 8px;
+	overflow-x: auto;
+	padding-top: 12px;
+	scrollbar-width: none;
+}
+
+.active-filter-row::-webkit-scrollbar {
+	display: none;
+}
+
+.active-filter-chip {
+	display: inline-flex;
+	height: 30px;
+	max-width: 220px;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 6px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--accent-surface);
+	padding: 0 9px;
+	color: var(--accent-text);
+	font-size: 11px;
+	font-weight: 850;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+	.browse-page {
+		padding-top: 0;
+	}
+
+	.browse-search-shell {
+		position: static;
+		padding: 0;
+		background: transparent;
+		border-bottom: 0;
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+	}
+
+	.browse-search-form {
+		width: auto;
+	}
+
+	.browse-filter-toggle {
+		display: none;
+	}
+
+	.browse-filter {
+		display: block;
+		margin-inline: 0;
+		max-width: 100%;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-2xl);
+		padding: 14px;
+	}
+
+	.filter-grid {
+		grid-template-columns: 1.05fr 0.9fr 1fr 1fr 1.1fr;
+		align-items: end;
+	}
+
+	.sort-field,
+	.studio-field {
+		grid-column: auto;
+	}
+}

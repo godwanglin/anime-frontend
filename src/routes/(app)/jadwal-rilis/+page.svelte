@@ -5,6 +5,7 @@
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import type { PageData } from './$types';
+	import './jadwal-rilis.css';
 
 	type ScheduleEpisode = {
 		id: number;
@@ -135,10 +136,10 @@
 	}
 
 	function sourceLabel(source: string) {
-		if (source === 'anichin.schedule') return 'Anichin Schedule';
-		if (source === 'manual') return 'Jadwal resmi';
-		if (source === 'episode' || source === 'published') return 'Episode';
-		return 'Data rilis';
+		if (source === 'anichin.schedule') return 'Jadwal Weebin';
+		if (source === 'manual') return 'Catatan Weebin';
+		if (source === 'episode' || source === 'published') return 'Sudah tersedia';
+		return 'Info Weebin';
 	}
 </script>
 
@@ -174,8 +175,8 @@
 						Jadwal rilis episode per hari
 					</h1>
 					<p class="mt-2 max-w-xl text-sm leading-relaxed text-white/68 md:text-[15px]">
-						Lihat episode yang akan tayang dan yang sudah rilis. Jadwal sekarang punya sumber
-						schedule sendiri, dengan fallback aman dari episode yang sudah terbit.
+						Cek anime yang sebentar lagi tayang dan episode yang sudah bisa ditonton. Jadwal
+						diambil dari pantauan Weebin dan ikut diperbarui saat episode baru masuk.
 					</p>
 				</div>
 
@@ -242,8 +243,8 @@
 				Notifikasi
 			</p>
 			<p class="mt-1 text-[13px] font-bold" style="color: var(--text-primary);">
-				{totalUpcoming} akan tayang dari jadwal Anichin, {totalReleased} sudah rilis. Notifikasi episode
-				baru dikirim sekali ke user terkait.
+				{totalUpcoming} episode akan tayang dari jadwal Weebin, dan {totalReleased} episode sudah
+				rilis. Kalau ada episode baru, notifikasi dikirim sekali ke user yang relevan.
 			</p>
 		</div>
 		<a
@@ -388,11 +389,3 @@
 </div>
 
 <NavigationBottom />
-
-<style>
-	.schedule-card {
-		content-visibility: auto;
-		contain: layout paint style;
-		contain-intrinsic-size: 96px 112px;
-	}
-</style>

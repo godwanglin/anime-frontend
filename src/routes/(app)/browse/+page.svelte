@@ -1,9 +1,13 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import CustomSelect, { type CustomSelectOption } from '$lib/components/ui/CustomSelect.svelte';
 	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
+	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
+	import './browse.css';
 
 	type Anime = {
 		id: number;
@@ -40,13 +44,72 @@
 	const studios = $derived((data.studios ?? []) as OptionItem[]);
 	const filters = $derived(data.filters);
 
-	const sortOptions = [
-		{ value: 'updatedAt', label: 'Terbaru' },
-		{ value: 'trending', label: 'Trending' },
-		{ value: 'rating', label: 'Rating' },
-		{ value: 'followed', label: 'Populer' },
-		{ value: 'title', label: 'A-Z' }
+	const sortOptions: CustomSelectOption[] = [
+		{ value: 'updatedAt', label: 'Terbaru', icon: 'auto_awesome' },
+		{ value: 'trending', label: 'Trending', icon: 'local_fire_department' },
+		{ value: 'rating', label: 'Rating', icon: 'star' },
+		{ value: 'followed', label: 'Populer', icon: 'favorite' },
+		{ value: 'title', label: 'A-Z', icon: 'sort_by_alpha' }
 	];
+
+	const statusOptions: CustomSelectOption[] = [
+		{ value: '', label: 'Semua status', icon: 'apps' },
+		{ value: 'ongoing', label: 'Tayang', icon: 'play_circle' },
+		{ value: 'completed', label: 'Tamat', icon: 'check_circle' }
+	];
+
+	const genreOptions = $derived<CustomSelectOption[]>([
+		{ value: '', label: 'Semua genre', icon: 'category' },
+		...genres.map((genre) => ({
+			value: genre.name ?? '',
+			label: genre.name ?? 'Genre',
+			description: genre.animeCount ? `${genre.animeCount} anime` : undefined,
+			icon: 'label'
+		}))
+	]);
+
+	const tagOptions = $derived<CustomSelectOption[]>([
+		{ value: '', label: 'Semua tag', icon: 'sell' },
+		...tags.map((tag) => ({
+			value: tag.slug ?? '',
+			label: tag.label ?? tag.slug ?? 'Tag',
+			icon: 'sell'
+		}))
+	]);
+
+	const studioOptions = $derived<CustomSelectOption[]>([
+		{ value: '', label: 'Semua studio', icon: 'apartment' },
+		...studios.map((studio) => ({
+			value: studio.name ?? '',
+			label: studio.name ?? 'Studio',
+			icon: 'apartment'
+		}))
+	]);
+
+	const activeFilterCount = $derived(
+		[filters.q, filters.genre, filters.status, filters.tag, filters.studio].filter(Boolean).length
+	);
+	const advancedFilterCount = $derived(
+		[filters.genre, filters.status, filters.tag, filters.studio].filter(Boolean).length
+	);
+	let filterOpen = $state(false);
+	let filterTouched = $state(false);
+	let stickyTop = $state(56);
+	const filterPanelOpen = $derived(filterTouched ? filterOpen : advancedFilterCount > 0);
+
+	onMount(() => {
+		const header = document.querySelector('header');
+		if (!header) return;
+
+		const syncStickyTop = () => {
+			stickyTop = Math.ceil(header.getBoundingClientRect().height);
+		};
+		const observer = new ResizeObserver(syncStickyTop);
+		observer.observe(header);
+		syncStickyTop();
+
+		return () => observer.disconnect();
+	});
 
 	function browseUrl(next: Record<string, string | number | null | undefined>) {
 		const params = new URLSearchParams();
@@ -59,12 +122,40 @@
 
 		return `/browse?${params.toString()}`;
 	}
+
+	function goToBrowse(url: string) {
+		return goto(url, { replaceState: true, keepFocus: true });
+	}
+
+	function goToFilter(next: Record<string, string | number | null | undefined>) {
+		return goToBrowse(browseUrl({ ...next, page: 1 }));
+	}
+
+	function handleSearchSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		const form = event.currentTarget as HTMLFormElement;
+		const query = String(new FormData(form).get('q') ?? '').trim();
+		goToFilter({ q: query || null });
+	}
+
+	function toggleFilterPanel() {
+		filterTouched = true;
+		filterOpen = !filterPanelOpen;
+	}
+
+	function filterLabel(type: 'status' | 'genre' | 'tag' | 'studio', value: string) {
+		if (!value) return '';
+		if (type === 'status') return statusOptions.find((option) => option.value === value)?.label ?? value;
+		if (type === 'genre') return value;
+		if (type === 'tag') return tags.find((tag) => tag.slug === value)?.label ?? value;
+		return value;
+	}
 </script>
 
 <SEO title="Jelajahi Anime" description="Cari dan jelajahi katalog anime subtitle Indonesia." />
 
-<div class="max-w-6xl mx-auto">
-	<section class="mb-4 md:mb-5">
+<div class="browse-page max-w-6xl mx-auto" style:--browse-sticky-top={`${stickyTop}px`}>
+	<section class="browse-search-shell mb-4 md:mb-5">
 		<div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
 			<div class="hidden md:block">
 				<div class="flex items-center gap-2 mb-2">
@@ -78,7 +169,7 @@
 				</h1>
 			</div>
 
-			<form action="/browse" method="GET" class="flex gap-2 w-full md:w-auto">
+			<form action="/browse" method="GET" class="browse-search-form" onsubmit={handleSearchSubmit}>
 				<div class="relative flex-1 md:w-72">
 					<AppIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-400" />
 					<input
@@ -89,93 +180,165 @@
 					/>
 				</div>
 				<button
-					class="h-11 px-4 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-black shadow-lg shadow-violet-500/20 transition"
+					type="submit"
+					class="browse-search-submit"
 				>
 					Cari
+				</button>
+				<button
+					type="button"
+					class="browse-filter-toggle"
+					class:is-active={filterPanelOpen}
+					aria-expanded={filterPanelOpen}
+					aria-controls="browse-advanced-filter"
+					onclick={toggleFilterPanel}
+				>
+					<AppIcon name="tune" class="text-[18px]" />
+					<span class="hidden min-[380px]:inline">Filter</span>
+					{#if advancedFilterCount}
+						<b>{advancedFilterCount}</b>
+					{/if}
 				</button>
 			</form>
 		</div>
 	</section>
 
 	<section
-		class="mb-5 -mx-4 max-w-[calc(100%+2rem)] overflow-x-clip px-4 py-3 bg-white/85 border-y border-zinc-200 shadow-sm dark:bg-zinc-950 dark:border-zinc-800 md:mx-0 md:max-w-full md:rounded-3xl md:border md:px-4"
+		id="browse-advanced-filter"
+		class="browse-filter mb-5"
+		class:is-open={filterPanelOpen}
+		aria-hidden={!filterPanelOpen}
 	>
-		<div class="flex max-w-full gap-2 overflow-x-auto pb-2 scrollbar-hide">
-			{#each sortOptions as opt}
-				<a
-					href={browseUrl({ sortBy: opt.value, page: 1 })}
-					class="shrink-0 px-3 py-2 rounded-xl text-[12px] font-bold border transition
-						{filters.sortBy === opt.value
-						? 'bg-violet-600 border-violet-600 text-white'
-						: 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-violet-400 hover:text-violet-500'}"
-				>
-					{opt.label}
-				</a>
-			{/each}
-			<a
-				href="/browse"
-				class="shrink-0 px-3 py-2 rounded-xl text-[12px] font-bold border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-red-500 hover:border-red-300 transition"
-			>
+		<div class="filter-head">
+			<div>
+				<p class="filter-kicker">Filter katalog</p>
+				<p class="filter-count">
+					{activeFilterCount ? `${activeFilterCount} filter aktif` : 'Semua koleksi'}
+				</p>
+			</div>
+			<button type="button" class="filter-reset" aria-label="Reset filter" onclick={() => goToBrowse('/browse')}>
+				<AppIcon name="restart_alt" class="text-[16px]" />
 				Reset
-			</a>
+			</button>
 		</div>
 
-		<div class="flex max-w-full gap-2 overflow-x-auto pb-2 scrollbar-hide">
-			{#each genres.slice(0, 18) as genre}
-				<a
-					href={browseUrl({ genre: genre.name, page: 1 })}
-					class="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition
-						{filters.genre === genre.name
-						? 'bg-emerald-600 border-emerald-600 text-white'
-						: 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:border-emerald-400 hover:text-emerald-500'}"
-				>
-					{genre.name}
-				</a>
-			{/each}
+		<div class="filter-grid">
+			<div class="filter-field sort-field">
+				<span>Urutkan</span>
+				<CustomSelect
+					value={filters.sortBy}
+					options={sortOptions}
+					fullWidth
+					align="left"
+					minWidth={190}
+					onChange={(value) => goToFilter({ sortBy: value })}
+				/>
+			</div>
+			<div class="filter-field">
+				<span>Status</span>
+				<CustomSelect
+					value={filters.status}
+					options={statusOptions}
+					fullWidth
+					align="left"
+					minWidth={170}
+					onChange={(value) => goToFilter({ status: value || null })}
+				/>
+			</div>
+			<div class="filter-field">
+				<span>Genre</span>
+				<CustomSelect
+					value={filters.genre}
+					options={genreOptions}
+					fullWidth
+					align="left"
+					minWidth={220}
+					onChange={(value) => goToFilter({ genre: value || null })}
+				/>
+			</div>
+			<div class="filter-field">
+				<span>Tag</span>
+				<CustomSelect
+					value={filters.tag}
+					options={tagOptions}
+					fullWidth
+					align="left"
+					minWidth={220}
+					onChange={(value) => goToFilter({ tag: value || null })}
+				/>
+			</div>
+			<div class="filter-field studio-field">
+				<span>Studio</span>
+				<CustomSelect
+					value={filters.studio}
+					options={studioOptions}
+					fullWidth
+					align="left"
+					minWidth={240}
+					onChange={(value) => goToFilter({ studio: value || null })}
+				/>
+			</div>
 		</div>
 
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-			<select
-				onchange={(event) =>
-					(location.href = browseUrl({
-						status: (event.currentTarget as HTMLSelectElement).value,
-						page: 1
-					}))}
-				class="h-11 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 text-sm text-zinc-700 dark:text-zinc-200"
-			>
-				<option value="">Semua status</option>
-				<option value="ongoing" selected={filters.status === 'ongoing'}>Tayang</option>
-				<option value="completed" selected={filters.status === 'completed'}>Tamat</option>
-			</select>
-			<select
-				onchange={(event) =>
-					(location.href = browseUrl({
-						tag: (event.currentTarget as HTMLSelectElement).value,
-						page: 1
-					}))}
-				class="h-11 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 text-sm text-zinc-700 dark:text-zinc-200"
-			>
-				<option value="">Semua tag</option>
-				{#each tags as tag}
-					<option value={tag.slug} selected={filters.tag === tag.slug}>{tag.label}</option>
-				{/each}
-			</select>
-			<select
-				onchange={(event) =>
-					(location.href = browseUrl({
-						studio: (event.currentTarget as HTMLSelectElement).value,
-						page: 1
-					}))}
-				class="h-11 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 text-sm text-zinc-700 dark:text-zinc-200"
-			>
-				<option value="">Semua studio</option>
-				{#each studios as studio}
-					<option value={studio.name} selected={filters.studio === studio.name}
-						>{studio.name}</option
+		{#if activeFilterCount}
+			<div class="active-filter-row" aria-label="Filter aktif">
+				{#if filters.q}
+					<button
+						type="button"
+						onclick={() => goToFilter({ q: null })}
+						class="active-filter-chip"
 					>
-				{/each}
-			</select>
-		</div>
+						<AppIcon name="search" class="text-[13px]" />
+						{filters.q}
+						<AppIcon name="close" class="text-[13px]" />
+					</button>
+				{/if}
+				{#if filters.genre}
+					<button
+						type="button"
+						onclick={() => goToFilter({ genre: null })}
+						class="active-filter-chip"
+					>
+						<AppIcon name="category" class="text-[13px]" />
+						{filterLabel('genre', filters.genre)}
+						<AppIcon name="close" class="text-[13px]" />
+					</button>
+				{/if}
+				{#if filters.status}
+					<button
+						type="button"
+						onclick={() => goToFilter({ status: null })}
+						class="active-filter-chip"
+					>
+						<AppIcon name="play_circle" class="text-[13px]" />
+						{filterLabel('status', filters.status)}
+						<AppIcon name="close" class="text-[13px]" />
+					</button>
+				{/if}
+				{#if filters.tag}
+					<button
+						type="button"
+						onclick={() => goToFilter({ tag: null })}
+						class="active-filter-chip"
+					>
+						<AppIcon name="sell" class="text-[13px]" />
+						{filterLabel('tag', filters.tag)}
+						<AppIcon name="close" class="text-[13px]" />
+					</button>
+				{/if}
+				{#if filters.studio}
+					<button
+						type="button"
+						onclick={() => goToFilter({ studio: null })}
+						class="active-filter-chip"
+					>
+						<AppIcon name="apartment" class="text-[13px]" />
+						{filterLabel('studio', filters.studio)}
+						<AppIcon name="close" class="text-[13px]" />
+					</button>
+				{/if}
+			</div>
+		{/if}
 	</section>
 
 	<div class="flex items-center justify-between mb-4">
@@ -190,7 +353,7 @@
 	{#if animes.length > 0}
 		<VirtualizedAnimeGrid
 			items={animes}
-			columns={{ base: 2, sm: 4, md: 5, lg: 6 }}
+			columns={{ base: 3, sm: 4, md: 5, lg: 6 }}
 			ariaLabel="Hasil jelajah anime"
 		/>
 

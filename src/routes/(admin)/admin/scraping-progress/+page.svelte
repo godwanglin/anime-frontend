@@ -17,6 +17,21 @@
 		startedAt?: string | null;
 		finishedAt?: string | null;
 		logs?: LogEntry[];
+		summary?: {
+			recentEpisodeLimit?: number;
+			newAnimeCount?: number;
+			animeWithNewEpisodesCount?: number;
+			newEpisodesTotal?: number;
+			animeUpdates?: Array<{
+				animeTitle: string;
+				animeSlug: string;
+				isNewAnime: boolean;
+				totalEpisodesDetected: number;
+				scannedEpisodes: number;
+				newEpisodesAdded: number;
+				newEpisodeNumbers: number[];
+			}>;
+		};
 	};
 
 	type QueueItem = {
@@ -26,7 +41,6 @@
 
 	const BASE_SCRAPE_URL = 'https://anichin.cafe/seri/';
 	const SCRAPE_ORDER = 'update';
-	const REFRESH_MS = 500;
 	const TOTAL_PAGES = 30;
 	const pageNumbers = Array.from({ length: TOTAL_PAGES }, (_, index) => index + 1);
 
@@ -34,7 +48,7 @@
 	let singlePage = $state(1);
 	let rangeFrom = $state(1);
 	let rangeTo = $state(5);
-	let intervalId = $state<ReturnType<typeof setInterval> | null>(null);
+	let monitorSource = $state<EventSource | null>(null);
 	let paused = $state(false);
 	let isMonitoring = $state(false);
 	let isLoading = $state(false);
@@ -134,64 +148,68 @@
 		return payload;
 	}
 
-	async function fetchProgress() {
-		if (!currentUrl) return;
-		isLoading = true;
+	function consumeProgress(data: ProgressData | null) {
+		progress = data;
+		lastUpdate = new Date().toLocaleTimeString('id-ID');
+		footerStatus =
+			progress?.status === 'running'
+				? 'Monitoring aktif'
+				: progress?.status === 'done'
+					? 'Selesai'
+					: progress?.status === 'error'
+						? 'Error'
+						: paused
+							? 'Paused'
+							: 'Idle';
+		emptyMessage = 'Belum ada log untuk URL ini.';
+		stopIfDone(progress);
+		queueMicrotask(scrollToBottom);
+	}
+
+	function parseProgressEvent(data: string) {
 		try {
-			const payload = await requestJson(
-				`/api/scraping/progress?url=${encodeURIComponent(currentUrl)}`
-			);
-			progress = payload.data;
-			lastUpdate = new Date().toLocaleTimeString('id-ID');
-			footerStatus =
-				progress?.status === 'running'
-					? 'Monitoring aktif'
-					: progress?.status === 'done'
-						? 'Selesai'
-						: progress?.status === 'error'
-							? 'Error'
-							: paused
-								? 'Paused'
-								: 'Idle';
-			emptyMessage = 'Belum ada log untuk URL ini.';
-			stopIfDone(progress);
-			queueMicrotask(scrollToBottom);
-		} catch (error) {
-			progress = null;
-			if (error instanceof Error && error.message.includes('No progress found')) {
-				emptyMessage = 'Belum ada progress untuk URL ini.';
-			} else {
-				appendSystemLog(error instanceof Error ? error.message : 'Gagal mengambil progress');
-				footerStatus = 'Gagal fetch';
-			}
-		} finally {
-			isLoading = false;
+			return JSON.parse(data) as ProgressData | null;
+		} catch {
+			return null;
 		}
 	}
 
 	function startMonitor() {
 		if (!currentUrl.trim()) return;
+		stopMonitor();
 		paused = false;
 		isMonitoring = true;
+		isLoading = false;
 		footerStatus = 'Monitoring aktif';
-		if (intervalId) clearInterval(intervalId);
-		fetchProgress();
-		intervalId = setInterval(() => {
-			if (!paused) fetchProgress();
-		}, REFRESH_MS);
+		const streamUrl = endpoint(
+			`/api/scraping/progress/stream?url=${encodeURIComponent(currentUrl)}`
+		);
+		monitorSource = new EventSource(streamUrl, { withCredentials: true });
+		monitorSource.addEventListener('progress', (event) => {
+			const payload = parseProgressEvent((event as MessageEvent).data);
+			consumeProgress(payload);
+		});
+		monitorSource.onerror = () => {
+			footerStatus = 'Koneksi stream putus';
+		};
 	}
 
 	function stopMonitor() {
-		if (intervalId) {
-			clearInterval(intervalId);
-			intervalId = null;
+		if (monitorSource) {
+			monitorSource.close();
+			monitorSource = null;
 		}
 		isMonitoring = false;
 	}
 
 	function togglePause() {
 		paused = !paused;
-		footerStatus = paused ? 'Paused' : 'Monitoring aktif';
+		if (paused) {
+			stopMonitor();
+			footerStatus = 'Paused';
+			return;
+		}
+		startMonitor();
 	}
 
 	function stopIfDone(data: ProgressData | null) {
@@ -218,32 +236,33 @@
 	}
 
 	async function triggerScrape(url: string) {
-		await requestJson(`/api/scraping?url=${encodeURIComponent(url)}`);
+		await requestJson(`/api/scraping?url=${encodeURIComponent(url)}&episodeLimit=2`);
 	}
 
 	async function waitUntilDone(url: string) {
 		return new Promise<void>((resolve) => {
-			const poll = setInterval(async () => {
+			const streamUrl = endpoint(`/api/scraping/progress/stream?url=${encodeURIComponent(url)}`);
+			const queueSource = new EventSource(streamUrl, { withCredentials: true });
+			const done = () => {
+				queueSource.close();
+				resolve();
+			};
+
+			queueSource.addEventListener('progress', (event) => {
 				if (queueCancelled) {
-					clearInterval(poll);
-					resolve();
+					done();
 					return;
 				}
-
-				try {
-					const payload = await requestJson(
-						`/api/scraping/progress?url=${encodeURIComponent(url)}`
-					);
-					const status = payload.data?.status;
-					if (status === 'done' || status === 'error') {
-						clearInterval(poll);
-						resolve();
-					}
-				} catch {
-					clearInterval(poll);
-					resolve();
+				const payload = parseProgressEvent((event as MessageEvent).data);
+				const status = payload?.status;
+				if (status === 'done' || status === 'error') {
+					done();
 				}
-			}, 3000);
+			});
+			queueSource.onerror = () => {
+				appendSystemLog('Stream progress queue terputus.');
+				done();
+			};
 		});
 	}
 
@@ -590,14 +609,14 @@
 				</div>
 			</div>
 
-			<div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-				<div class="flex items-center justify-between gap-3">
-					<div>
-						<h3 class="text-sm font-black uppercase tracking-[0.22em] text-zinc-400">Live Progress</h3>
-						<p class="mt-2 text-sm text-zinc-500">Progress bar auto refresh tiap {REFRESH_MS}ms selama monitor aktif.</p>
+				<div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+					<div class="flex items-center justify-between gap-3">
+						<div>
+							<h3 class="text-sm font-black uppercase tracking-[0.22em] text-zinc-400">Live Progress</h3>
+							<p class="mt-2 text-sm text-zinc-500">Progress live via SSE selama monitor aktif.</p>
+						</div>
+						<p class="text-sm font-black text-violet-300">{progressPercent}%</p>
 					</div>
-					<p class="text-sm font-black text-violet-300">{progressPercent}%</p>
-				</div>
 				<div class="mt-4 h-4 overflow-hidden rounded-full bg-zinc-950">
 					<div
 						class="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-sky-500 transition-all duration-500"
@@ -607,6 +626,56 @@
 				<div class="mt-3 flex items-center justify-between text-xs text-zinc-500">
 					<span>{progress?.processed ?? 0} series diproses</span>
 					<span>{progress?.total ?? 0} total series</span>
+				</div>
+			</div>
+
+			<div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+				<div class="flex items-center justify-between gap-3">
+					<div>
+						<h3 class="text-sm font-black uppercase tracking-[0.22em] text-zinc-400">Update Anime & Episode</h3>
+						<p class="mt-2 text-sm text-zinc-500">
+							Scan full page, cek full jumlah episode, lalu proses {progress?.summary?.recentEpisodeLimit ?? 2} episode terbaru.
+						</p>
+					</div>
+					<div class="text-right text-xs text-zinc-400">
+						<div>Anime baru: {progress?.summary?.newAnimeCount ?? 0}</div>
+						<div>Anime update eps: {progress?.summary?.animeWithNewEpisodesCount ?? 0}</div>
+						<div>Total eps baru: {progress?.summary?.newEpisodesTotal ?? 0}</div>
+					</div>
+				</div>
+				<div class="mt-4 overflow-x-auto rounded-xl border border-zinc-800">
+					<table class="min-w-full text-left text-xs text-zinc-200">
+						<thead class="bg-zinc-950 text-zinc-400">
+							<tr>
+								<th class="px-3 py-2">Anime</th>
+								<th class="px-3 py-2">Status</th>
+								<th class="px-3 py-2">Total Eps</th>
+								<th class="px-3 py-2">Discanned</th>
+								<th class="px-3 py-2">Eps Baru</th>
+								<th class="px-3 py-2">Nomor Eps Baru</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each progress?.summary?.animeUpdates ?? [] as row}
+								<tr class="border-t border-zinc-800">
+									<td class="px-3 py-2 font-semibold text-zinc-100">{row.animeTitle}</td>
+									<td class="px-3 py-2">{row.isNewAnime ? 'Anime Baru' : 'Existing Anime'}</td>
+									<td class="px-3 py-2">{row.totalEpisodesDetected}</td>
+									<td class="px-3 py-2">{row.scannedEpisodes}</td>
+									<td class="px-3 py-2">{row.newEpisodesAdded}</td>
+									<td class="px-3 py-2">
+										{row.newEpisodeNumbers.length ? row.newEpisodeNumbers.join(', ') : '—'}
+									</td>
+								</tr>
+							{:else}
+								<tr>
+									<td colspan="6" class="px-3 py-4 text-center text-zinc-500">
+										Belum ada update anime/episode di run ini.
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
 				</div>
 			</div>
 

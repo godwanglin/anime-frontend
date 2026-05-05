@@ -13,7 +13,7 @@ function normalizeRange(value: string | null) {
 }
 
 function normalizeStatus(value: string | null) {
-	if (value === 'upcoming' || value === 'released' || value === 'delayed') return value;
+	if (value === 'upcoming' || value === 'released') return value;
 	return 'all';
 }
 

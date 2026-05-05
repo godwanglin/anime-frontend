@@ -19,7 +19,7 @@
 		scheduledAt: string;
 		releasedAt: string;
 		releaseTime: string;
-		scheduleStatus: 'upcoming' | 'released' | 'delayed' | 'cancelled';
+		scheduleStatus: 'upcoming' | 'released' | 'cancelled';
 		scheduleSource: string;
 		notificationSent: boolean;
 		animeStatus: string | null;
@@ -33,7 +33,7 @@
 	};
 
 	type RangeFilter = 'rolling' | 'today' | 'week';
-	type StatusFilter = 'all' | 'upcoming' | 'released' | 'delayed';
+	type StatusFilter = 'all' | 'upcoming' | 'released';
 
 	const { data }: { data: PageData } = $props();
 
@@ -79,8 +79,7 @@
 	const statusOptions = [
 		{ value: 'all', label: 'Semua' },
 		{ value: 'upcoming', label: 'Akan tayang' },
-		{ value: 'released', label: 'Sudah rilis' },
-		{ value: 'delayed', label: 'Delay' }
+		{ value: 'released', label: 'Sudah rilis' }
 	];
 
 	function formatDateLabel(value: string) {
@@ -125,20 +124,18 @@
 
 	function statusLabel(status: ScheduleEpisode['scheduleStatus']) {
 		if (status === 'upcoming') return 'Akan tayang';
-		if (status === 'delayed') return 'Delay';
 		if (status === 'cancelled') return 'Batal';
 		return 'Sudah rilis';
 	}
 
 	function statusStyle(status: ScheduleEpisode['scheduleStatus']) {
 		if (status === 'upcoming') return 'background: rgba(59,130,246,.14); color: rgb(147,197,253);';
-		if (status === 'delayed') return 'background: rgba(245,158,11,.14); color: rgb(251,191,36);';
 		if (status === 'cancelled') return 'background: rgba(239,68,68,.14); color: rgb(248,113,113);';
 		return 'background: var(--accent-surface); color: var(--accent-text);';
 	}
 
 	function sourceLabel(source: string) {
-		if (source === 'prediction') return 'Estimasi';
+		if (source === 'anichin.schedule') return 'Anichin Schedule';
 		if (source === 'manual') return 'Jadwal resmi';
 		if (source === 'episode' || source === 'published') return 'Episode';
 		return 'Data rilis';
@@ -245,8 +242,8 @@
 				Notifikasi
 			</p>
 			<p class="mt-1 text-[13px] font-bold" style="color: var(--text-primary);">
-				{totalUpcoming} akan tayang, {totalReleased} sudah rilis. Notifikasi episode baru dikirim sekali
-				ke user yang menyimpan anime terkait.
+				{totalUpcoming} akan tayang dari jadwal Anichin, {totalReleased} sudah rilis. Notifikasi episode
+				baru dikirim sekali ke user terkait.
 			</p>
 		</div>
 		<a

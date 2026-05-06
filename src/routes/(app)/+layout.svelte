@@ -183,6 +183,7 @@
 		const saved = localStorage.getItem('theme');
 		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 		applyTheme(saved ? saved === 'dark' : prefersDark);
+		auth.consumeGoogleLoginHandoff();
 		auth.bootstrapLazy();
 		auth.startAutoRefresh();
 		preference.applyTheme();

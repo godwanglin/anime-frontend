@@ -73,6 +73,34 @@ function rememberUser(user: AuthUser | null) {
 	else localStorage.removeItem('auth_user');
 }
 
+function setSession(nextUser: AuthUser, nextAccessToken?: string | null) {
+	user = nextUser;
+	accessToken = nextAccessToken ?? accessToken;
+	rememberUser(nextUser);
+	bootstrapped = true;
+}
+
+function consumeGoogleLoginHandoff() {
+	if (!browser) return null;
+	const match = document.cookie.match(/(?:^|;\s*)google_login_user=([^;]+)/);
+	if (!match?.[1]) return null;
+
+	document.cookie = 'google_login_user=; Max-Age=0; path=/; SameSite=Lax';
+
+	try {
+		const bytes = Uint8Array.from(atob(decodeURIComponent(match[1])), (char) =>
+			char.charCodeAt(0)
+		);
+		const json = new TextDecoder().decode(bytes);
+		const nextUser = JSON.parse(json) as AuthUser;
+		setSession(nextUser);
+		refreshToken().catch(() => null);
+		return nextUser;
+	} catch {
+		return null;
+	}
+}
+
 async function parseApi<T>(response: Response) {
 	const json = (await response.json().catch(() => null)) as ApiEnvelope<T> | null;
 	if (!response.ok) {
@@ -321,6 +349,8 @@ export const auth = {
 	login,
 	register,
 	logout,
+	setSession,
+	consumeGoogleLoginHandoff,
 	refreshToken,
 	ensureAccessToken,
 	fetchMe,

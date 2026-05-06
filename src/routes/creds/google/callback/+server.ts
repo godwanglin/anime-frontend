@@ -47,5 +47,15 @@ export const GET: RequestHandler = async ({ cookies, fetch, url }) => {
 		});
 	}
 
+	if (data.user) {
+		cookies.set('google_login_user', Buffer.from(JSON.stringify(data.user), 'utf8').toString('base64'), {
+			path: '/',
+			httpOnly: false,
+			sameSite: 'lax',
+			secure: !dev,
+			maxAge: 60
+		});
+	}
+
 	throw redirect(302, '/');
 };

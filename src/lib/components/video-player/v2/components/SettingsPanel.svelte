@@ -191,14 +191,16 @@
 							</button>
 						{/each}
 					{:else if vp.settingsSubPanel === 'quality'}
-						<button
-							class="vp-settings-item"
-							class:vp-settings-item-active={vp.currentQuality === -1}
-							onclick={() => selectQuality(-1)}
-						>
-							{@render Check(vp.currentQuality === -1)}
-							Auto
-						</button>
+						{#if vp.hasAutoQuality()}
+							<button
+								class="vp-settings-item"
+								class:vp-settings-item-active={vp.currentQuality === -1}
+								onclick={() => selectQuality(-1)}
+							>
+								{@render Check(vp.currentQuality === -1)}
+								Auto
+							</button>
+						{/if}
 						{#each vp.qualityLevels as q}
 							{@const locked = vp.qualityLocked(q.level)}
 							<button

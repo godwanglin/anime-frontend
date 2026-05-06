@@ -10,6 +10,7 @@
 
 	type Props = {
 		src: string[];
+		sourceLabels?: string[];
 		poster: string;
 		title: string;
 		autoPlay?: boolean;
@@ -32,6 +33,7 @@
 
 	let {
 		src,
+		sourceLabels = [],
 		poster,
 		title,
 		autoPlay = false,
@@ -70,6 +72,7 @@
 
 <VideoPlayer
 	{src}
+	{sourceLabels}
 	{poster}
 	{title}
 	{autoPlay}

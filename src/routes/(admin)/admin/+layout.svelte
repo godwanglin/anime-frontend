@@ -97,6 +97,7 @@
 				{ href: '/admin/r2-videos', icon: 'storage', label: 'R2 Videos' },
 				{ href: '/admin/youtube-tools', icon: 'smart_display', label: 'YouTube Tools' },
 				{ href: '/admin/scraping-progress', icon: 'monitor_heart', label: 'Scraping Monitor' },
+				{ href: '/admin/sokuja-scraper', icon: 'travel_explore', label: 'Sokuja Scraper' },
 				{ href: '/admin/subtitle-studio', icon: 'subtitles', label: 'Subtitle Studio' }
 			]
 		},

@@ -153,6 +153,40 @@ export function createHlsManager(ctx: HlsContext) {
 		);
 	}
 
+	function directQualityHeight(src: string, index: number) {
+		const label = ctx.getOptions().sourceLabels?.[index] ?? '';
+		const source = `${label} ${src}`;
+		const match = source.match(/(\d{3,4})\s*p/i);
+		if (!match) return 0;
+
+		const height = Number.parseInt(match[1], 10);
+		return Number.isFinite(height) ? height : 0;
+	}
+
+	function refreshDirectQualityLevels(videoSrc: string) {
+		const srcList = ctx.getSrcList();
+		if (isHlsSource(videoSrc) || srcList.length <= 1) {
+			if (!isHlsSource(videoSrc)) qualityLevels = [];
+			return;
+		}
+
+		qualityLevels = srcList
+			.map((src, index) => {
+				const height = directQualityHeight(src, index);
+				if (!height) return null;
+				return {
+					height,
+					displayHeight: normalizedQualityHeight(height),
+					bitrate: 0,
+					level: index
+				};
+			})
+			.filter((level): level is QualityLevel => Boolean(level))
+			.sort((a, b) => b.displayHeight - a.displayHeight);
+		currentQuality = ctx.getCurrentSrcIndex();
+		activeQualityHeight = directQualityHeight(videoSrc, ctx.getCurrentSrcIndex());
+	}
+
 	function resumePlayback(resumeTime?: number) {
 		const videoEl = ctx.getVideoEl();
 		if (!videoEl || resumeTime === undefined) return;
@@ -183,6 +217,7 @@ export function createHlsManager(ctx: HlsContext) {
 		await ctx.buildSubtitleList();
 
 		if (!isHlsSource(videoSrc)) {
+			refreshDirectQualityLevels(videoSrc);
 			videoEl.src = videoSrc;
 			resumePlayback(resumeTime);
 			if (ctx.getOptions().autoPlay) videoEl.play().catch(() => {});
@@ -311,6 +346,19 @@ export function createHlsManager(ctx: HlsContext) {
 			return false;
 		}
 
+		if (!hlsInstance && qualityLevels.length > 0) {
+			const nextSrc = ctx.getSrcList()[level];
+			const video = ctx.getVideoEl();
+			if (!nextSrc || !video) return false;
+
+			currentQuality = level;
+			ctx.setCurrentSrcIndex(level);
+			setupHls(nextSrc, video.currentTime);
+			ctx.notify?.(`Quality: ${currentQualityLabel()}`);
+			persistQuality();
+			return true;
+		}
+
 		currentQuality = level;
 		if (hlsInstance) {
 			applyAutoLevelCap();
@@ -340,6 +388,10 @@ export function createHlsManager(ctx: HlsContext) {
 		return currentQualityLabel();
 	}
 
+	function hasAutoQuality() {
+		return Boolean(hlsInstance);
+	}
+
 	return {
 		loadPersistedQuality,
 		setupHls,
@@ -348,6 +400,7 @@ export function createHlsManager(ctx: HlsContext) {
 		refreshQualityAccess,
 		currentQualityLabel,
 		currentResolutionLabel,
+		hasAutoQuality,
 		qualityLocked,
 		get hlsInstance() {
 			return hlsInstance;

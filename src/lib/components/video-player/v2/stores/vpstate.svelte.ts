@@ -29,6 +29,7 @@ export type {
 export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 	let options = $state<VideoPlayerOptions>({
 		src: initialOptions.src,
+		sourceLabels: initialOptions.sourceLabels ?? [],
 		autoPlay: initialOptions.autoPlay ?? false,
 		subtitles: initialOptions.subtitles ?? [],
 		subtitlesBySrc: initialOptions.subtitlesBySrc ?? {},
@@ -131,6 +132,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 	function updateOptions(next: VideoPlayerOptions) {
 		options = {
 			src: next.src,
+			sourceLabels: next.sourceLabels ?? [],
 			autoPlay: next.autoPlay ?? false,
 			subtitles: next.subtitles ?? [],
 			subtitlesBySrc: next.subtitlesBySrc ?? {},

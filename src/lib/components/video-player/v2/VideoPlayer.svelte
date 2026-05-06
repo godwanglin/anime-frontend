@@ -18,6 +18,7 @@
 
 	let {
 		src,
+		sourceLabels = [],
 		poster = '',
 		title = 'Video player',
 		autoPlay = false,
@@ -38,6 +39,7 @@
 		onStateChange = () => null
 	}: {
 		src: string | string[];
+		sourceLabels?: string[];
 		poster?: string;
 		title?: string;
 		autoPlay?: boolean;
@@ -69,7 +71,17 @@
 	let showEpisodeDrawer = $state(false);
 
 	function getOptions() {
-		return { src, autoPlay, subtitles, subtitlesBySrc, subtitleUrl, thumbnailUrl, forceHls, config };
+		return {
+			src,
+			sourceLabels,
+			autoPlay,
+			subtitles,
+			subtitlesBySrc,
+			subtitleUrl,
+			thumbnailUrl,
+			forceHls,
+			config
+		};
 	}
 
 	const vp = createVideoPlayerState(getOptions());

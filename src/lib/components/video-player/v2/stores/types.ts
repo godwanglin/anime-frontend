@@ -135,6 +135,7 @@ export interface PlaybackStats {
 
 export interface VideoPlayerOptions {
 	src: string | string[];
+	sourceLabels?: string[];
 	autoPlay?: boolean;
 	subtitles?: SubtitleTrack[];
 	subtitlesBySrc?: Record<string, SubtitleTrack[]>;

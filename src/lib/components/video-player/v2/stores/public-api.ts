@@ -40,6 +40,7 @@ export function createPublicApi(ctx: any) {
 		setQuality: hls.setQuality,
 		currentQualityLabel: hls.currentQualityLabel,
 		currentResolutionLabel: hls.currentResolutionLabel,
+		hasAutoQuality: hls.hasAutoQuality,
 		applySubtitle: subtitle.applySubtitle,
 		preferredSubtitleIndex: subtitle.preferredSubtitleIndex,
 		loadThumbnails: thumbnail.loadThumbnails,

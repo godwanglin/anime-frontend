@@ -97,6 +97,21 @@ function normalizeDirectVideoUrl(value: string): string | null {
 	return null;
 }
 
+function shouldProxyDirectVideo(value: string) {
+	try {
+		const parsed = new URL(value);
+		return parsed.hostname === 'storages.sokuja.id' || parsed.hostname.endsWith('.sokuja.id');
+	} catch {
+		return false;
+	}
+}
+
+function encodeHex(value: string) {
+	return Array.from(new TextEncoder().encode(value))
+		.map((byte) => byte.toString(16).padStart(2, '0'))
+		.join('');
+}
+
 /**
  * Format satu StreamSource → proxy URL string.
  * Return null jika provider tidak didukung.
@@ -143,7 +158,12 @@ export function formatProxyUrl(
 	}
 
 	const directVideoUrl = normalizeDirectVideoUrl(value);
-	if (directVideoUrl) return directVideoUrl;
+	if (directVideoUrl) {
+		if (shouldProxyDirectVideo(directVideoUrl)) {
+			return `${baseUrl}/api/video-stream/skj/stream/${encodeHex(directVideoUrl)}.mp4`;
+		}
+		return directVideoUrl;
+	}
 
 	// Provider tidak didukung (Rumble, short.icu, dll.)
 	return null;

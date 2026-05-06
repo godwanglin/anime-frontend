@@ -3,6 +3,7 @@
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
 	import AnimeCard from '$lib/components/AnimeCard.svelte';
+	import config from '$lib/config';
 	import DeferredCommentSection from '$lib/components/DeferredCommentSection.svelte';
 	import LazyVideoPlayer from '$lib/components/LazyVideoPlayer.svelte';
 	import SEO from '$lib/components/SEO.svelte';
@@ -36,8 +37,17 @@
 		views?: number;
 		skipIntroSeconds?: number | null;
 		skipOutroSeconds?: number | null;
+		sourceProvider?: string | null;
+		sourceVideoId?: string | null;
 		animeSlug?: string;
 		animeTitle?: string;
+	};
+
+	type StreamServer = {
+		id?: number;
+		label: string;
+		value: string;
+		isPrimary?: boolean;
 	};
 
 	type Anime = {
@@ -97,22 +107,30 @@
 	const premiumHref = $derived(`/premium?redirect=${encodeURIComponent(currentWatchPath)}`);
 	const title = $derived(episode?.title ?? anime?.title ?? 'Episode');
 	const cover = $derived(anime?.bigCover || anime?.thumbnail || '');
-	const streamSources = $derived(loginRequired ? [] : formatProxySources((detail as any)?.servers ?? []));
+	let hydratedServers = $state<StreamServer[] | null>(null);
+	let isHydratingSokujaServers = $state(false);
+	let sokujaHydrationAttempted = $state(false);
+	const activeServers = $derived(
+		(hydratedServers ?? ((detail as any)?.servers ?? [])) as StreamServer[]
+	);
+	const streamSources = $derived(loginRequired ? [] : formatProxySources(activeServers));
 	const ytPlaylistUrl = $derived.by(() => {
 		if (loginRequired) return null;
-		const servers: { value: string }[] = (detail as any)?.servers ?? [];
-		const ytServer = servers.find((s) => isYouTubeUrl(s.value));
+		const ytServer = activeServers.find((s) => isYouTubeUrl(s.value));
 		return ytServer ? getYouTubePlaylistUrl(ytServer.value) : null;
 	});
 	const streamUrls = $derived([
 		...(ytPlaylistUrl ? [ytPlaylistUrl] : []),
 		...streamSources.map((s) => s.playerUrl)
 	]);
+	const streamLabels = $derived([
+		...(ytPlaylistUrl ? ['YouTube'] : []),
+		...streamSources.map((s) => s.label)
+	]);
 	const episodeSubtitles = $derived(extractEpisodeSubtitles(detail));
 	const youtubeDbSubtitlesBySrc = $derived.by(() => {
 		if (!ytPlaylistUrl) return {};
-		const servers: { value: string }[] = (detail as any)?.servers ?? [];
-		const ytServer = servers.find((server) => isYouTubeUrl(server.value));
+		const ytServer = activeServers.find((server) => isYouTubeUrl(server.value));
 		if (!ytServer) return {};
 
 		const tracks = episodeSubtitles
@@ -409,7 +427,40 @@
 		}
 	];
 
+	function shouldHydrateSokujaServers() {
+		if (loginRequired || sokujaHydrationAttempted || isHydratingSokujaServers) return false;
+		if (!episode?.id || episode.sourceProvider !== 'sokuja' || !episode.sourceVideoId) return false;
+		return activeServers.length < 3;
+	}
+
+	async function hydrateSokujaServers() {
+		if (!shouldHydrateSokujaServers()) return;
+
+		sokujaHydrationAttempted = true;
+		isHydratingSokujaServers = true;
+
+		try {
+			const response = await fetch(`${config.API_BASE_URL}/api/skj/video-mirrors`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ episodeId: episode?.id })
+			});
+			const payload = await response.json().catch(() => null);
+			const servers = payload?.data?.servers;
+
+			if (response.ok && Array.isArray(servers) && servers.length) {
+				hydratedServers = servers;
+			}
+		} catch (error) {
+			console.warn('Sokuja video mirrors hydrate failed', error);
+		} finally {
+			isHydratingSokujaServers = false;
+		}
+	}
+
 	onMount(() => {
+		void hydrateSokujaServers();
+
 		const mq = window.matchMedia('(min-width: 768px)');
 		const update = () => (isDesktop = mq.matches);
 		update();
@@ -828,6 +879,7 @@
 			<div class="relative w-full aspect-video">
 				<LazyVideoPlayer
 					src={streamUrls}
+					sourceLabels={streamLabels}
 					poster={cover}
 					{title}
 					autoPlay={preference.pref.autoPlay}

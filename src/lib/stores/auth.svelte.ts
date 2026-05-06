@@ -266,6 +266,26 @@ async function updatePassword(payload: { currentPassword: string; newPassword: s
 	return parseApi<{ message: string }>(response);
 }
 
+async function requestPasswordReset(payload: { email: string }) {
+	const response = await fetch('/api/auth/password-reset/request', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		credentials: 'include',
+		body: JSON.stringify(payload)
+	});
+	return parseApi<{ sent: boolean }>(response);
+}
+
+async function confirmPasswordReset(payload: { token: string; password: string }) {
+	const response = await fetch('/api/auth/password-reset/confirm', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		credentials: 'include',
+		body: JSON.stringify(payload)
+	});
+	return parseApi<{ reset: boolean }>(response);
+}
+
 function startAutoRefresh() {
 	if (!browser || refreshTimer) return;
 	refreshTimer = setInterval(
@@ -308,6 +328,8 @@ export const auth = {
 	updateProfile,
 	uploadAvatar,
 	updatePassword,
+	requestPasswordReset,
+	confirmPasswordReset,
 	authFetch,
 	parseApi,
 	startAutoRefresh

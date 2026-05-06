@@ -15,6 +15,14 @@
 		provider: 'mailcow';
 		installPath: string;
 		status: MailStatus;
+		smtpHost: string;
+		smtpPort: number;
+		smtpSecure: boolean;
+		smtpUser: string;
+		smtpPassword?: string;
+		smtpPasswordSet: boolean;
+		smtpFromName: string;
+		smtpFromEmail: string;
 	};
 
 	type MailPayload = {
@@ -31,7 +39,15 @@
 		adminUrl: '',
 		provider: 'mailcow',
 		installPath: '/opt/mailcow-dockerized',
-		status: 'planned'
+		status: 'planned',
+		smtpHost: '',
+		smtpPort: 587,
+		smtpSecure: false,
+		smtpUser: '',
+		smtpPassword: '',
+		smtpPasswordSet: false,
+		smtpFromName: 'Weebin',
+		smtpFromEmail: ''
 	};
 
 	let config = $state<MailConfig>({ ...emptyConfig });
@@ -75,6 +91,7 @@
 			const hostname = String(value).replace(/\/+$/, '');
 			if (!config.webmailUrl) config = { ...config, webmailUrl: `https://${hostname}/SOGo` };
 			if (!config.adminUrl) config = { ...config, adminUrl: `https://${hostname}` };
+			if (!config.smtpHost) config = { ...config, smtpHost: hostname };
 		}
 	}
 
@@ -236,6 +253,88 @@
 							class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
 						/>
 					</label>
+				</div>
+
+				<div class="mt-6 border-t border-zinc-800 pt-5">
+					<div class="mb-4">
+						<h4 class="font-black text-zinc-100">SMTP Aplikasi</h4>
+						<p class="mt-1 text-sm text-zinc-500">
+							Dipakai untuk reset password dan email sistem dari Weebin.
+						</p>
+					</div>
+					<div class="grid gap-4 md:grid-cols-2">
+						<label>
+							<span class="mb-1.5 block text-xs font-bold text-zinc-500">SMTP host</span>
+							<input
+								value={config.smtpHost}
+								oninput={(e) => update('smtpHost', e.currentTarget.value)}
+								placeholder="mail.weebin.site"
+								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
+							/>
+						</label>
+						<label>
+							<span class="mb-1.5 block text-xs font-bold text-zinc-500">SMTP port</span>
+							<input
+								value={config.smtpPort}
+								type="number"
+								min="1"
+								max="65535"
+								oninput={(e) => update('smtpPort', Number(e.currentTarget.value))}
+								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
+							/>
+						</label>
+						<label>
+							<span class="mb-1.5 block text-xs font-bold text-zinc-500">SMTP user</span>
+							<input
+								value={config.smtpUser}
+								oninput={(e) => update('smtpUser', e.currentTarget.value)}
+								placeholder="noreply@weebin.site"
+								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
+							/>
+						</label>
+						<label>
+							<span class="mb-1.5 block text-xs font-bold text-zinc-500">
+								SMTP password {config.smtpPasswordSet ? '(tersimpan)' : ''}
+							</span>
+							<input
+								value={config.smtpPassword ?? ''}
+								type="password"
+								autocomplete="new-password"
+								oninput={(e) => update('smtpPassword', e.currentTarget.value)}
+								placeholder={config.smtpPasswordSet ? 'Isi hanya kalau ingin mengganti' : 'Password mailbox'}
+								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
+							/>
+						</label>
+						<label>
+							<span class="mb-1.5 block text-xs font-bold text-zinc-500">From name</span>
+							<input
+								value={config.smtpFromName}
+								oninput={(e) => update('smtpFromName', e.currentTarget.value)}
+								placeholder="Weebin"
+								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
+							/>
+						</label>
+						<label>
+							<span class="mb-1.5 block text-xs font-bold text-zinc-500">From email</span>
+							<input
+								value={config.smtpFromEmail}
+								oninput={(e) => update('smtpFromEmail', e.currentTarget.value)}
+								placeholder="noreply@weebin.site"
+								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
+							/>
+						</label>
+						<label class="flex items-center gap-3 md:col-span-2">
+							<input
+								checked={config.smtpSecure}
+								type="checkbox"
+								onchange={(e) => update('smtpSecure', e.currentTarget.checked)}
+								class="h-4 w-4 rounded border-zinc-700 bg-zinc-800"
+							/>
+							<span class="text-sm font-bold text-zinc-300">
+								Gunakan SSL langsung. Untuk port 587 STARTTLS, biarkan tidak dicentang.
+							</span>
+						</label>
+					</div>
 				</div>
 			</section>
 

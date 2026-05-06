@@ -122,6 +122,15 @@
 					</label>
 				</div>
 
+				<div class="relative z-10 mt-3 flex justify-end">
+					<a
+						href="/forgot-password"
+						class="text-sm font-black text-violet-700 hover:text-violet-600 dark:text-violet-300 dark:hover:text-violet-200"
+					>
+						Lupa password?
+					</a>
+				</div>
+
 				{#if visibleError}
 					<p class="relative z-10 mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-200">
 						{visibleError}

@@ -18,6 +18,7 @@
 		smtpHost: string;
 		smtpPort: number;
 		smtpSecure: boolean;
+		smtpTlsRejectUnauthorized: boolean;
 		smtpUser: string;
 		smtpPassword?: string;
 		smtpPasswordSet: boolean;
@@ -43,6 +44,7 @@
 		smtpHost: '',
 		smtpPort: 587,
 		smtpSecure: false,
+		smtpTlsRejectUnauthorized: true,
 		smtpUser: '',
 		smtpPassword: '',
 		smtpPasswordSet: false,
@@ -332,6 +334,17 @@
 							/>
 							<span class="text-sm font-bold text-zinc-300">
 								Gunakan SSL langsung. Untuk port 587 STARTTLS, biarkan tidak dicentang.
+							</span>
+						</label>
+						<label class="flex items-center gap-3 md:col-span-2">
+							<input
+								checked={config.smtpTlsRejectUnauthorized}
+								type="checkbox"
+								onchange={(e) => update('smtpTlsRejectUnauthorized', e.currentTarget.checked)}
+								class="h-4 w-4 rounded border-zinc-700 bg-zinc-800"
+							/>
+							<span class="text-sm font-bold text-zinc-300">
+								Validasi sertifikat TLS SMTP. Matikan kalau mailserver pakai sertifikat lokal.
 							</span>
 						</label>
 					</div>

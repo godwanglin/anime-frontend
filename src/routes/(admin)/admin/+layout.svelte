@@ -83,7 +83,8 @@
 				{ href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' },
 				{ href: '/admin/health', icon: 'health_metrics', label: 'Health' },
 				{ href: '/admin/jobs', icon: 'manufacturing', label: 'Jobs' },
-				{ href: '/admin/activity', icon: 'person_search', label: 'User Activity' }
+				{ href: '/admin/activity', icon: 'person_search', label: 'User Activity' },
+				{ href: '/admin/mailserver', icon: 'alternate_email', label: 'Mail Server' }
 			]
 		},
 		{
@@ -130,7 +131,9 @@
 	}
 
 	function isNavActive(item: NavItem) {
-		return currentPath === item.href || (item.href !== '/admin' && currentPath.startsWith(item.href));
+		return (
+			currentPath === item.href || (item.href !== '/admin' && currentPath.startsWith(item.href))
+		);
 	}
 
 	function isGroupActive(group: NavGroup) {

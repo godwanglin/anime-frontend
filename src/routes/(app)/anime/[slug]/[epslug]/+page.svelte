@@ -107,9 +107,11 @@
 	const premiumHref = $derived(`/premium?redirect=${encodeURIComponent(currentWatchPath)}`);
 	const title = $derived(episode?.title ?? anime?.title ?? 'Episode');
 	const cover = $derived(anime?.bigCover || anime?.thumbnail || '');
+	const episodeDataKey = $derived(`${episode?.id ?? ''}:${episode?.slug ?? data.params?.epslug ?? ''}`);
 	let hydratedServers = $state<StreamServer[] | null>(null);
 	let isHydratingSokujaServers = $state(false);
 	let sokujaHydrationAttempted = $state(false);
+	let lastEpisodeDataKey = $state('');
 	const activeServers = $derived(
 		(hydratedServers ?? ((detail as any)?.servers ?? [])) as StreamServer[]
 	);
@@ -436,6 +438,7 @@
 	async function hydrateSokujaServers() {
 		if (!shouldHydrateSokujaServers()) return;
 
+		const requestEpisodeKey = episodeDataKey;
 		sokujaHydrationAttempted = true;
 		isHydratingSokujaServers = true;
 
@@ -448,15 +451,35 @@
 			const payload = await response.json().catch(() => null);
 			const servers = payload?.data?.servers;
 
+			if (requestEpisodeKey !== episodeDataKey) return;
+
 			if (response.ok && Array.isArray(servers) && servers.length) {
 				hydratedServers = servers;
 			}
 		} catch (error) {
 			console.warn('Sokuja video mirrors hydrate failed', error);
 		} finally {
-			isHydratingSokujaServers = false;
+			if (requestEpisodeKey === episodeDataKey) {
+				isHydratingSokujaServers = false;
+			}
 		}
 	}
+
+	$effect(() => {
+		const key = episodeDataKey;
+		if (!key || key === lastEpisodeDataKey) return;
+
+		lastEpisodeDataKey = key;
+		hydratedServers = null;
+		sokujaHydrationAttempted = false;
+		isHydratingSokujaServers = false;
+		playbackCurrentTime = 0;
+	});
+
+	$effect(() => {
+		episodeDataKey;
+		void hydrateSokujaServers();
+	});
 
 	onMount(() => {
 		void hydrateSokujaServers();

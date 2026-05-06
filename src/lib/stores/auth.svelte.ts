@@ -116,6 +116,25 @@ let bootstrapped = $state(false);
 let refreshPromise: Promise<string | null> | null = null;
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 let lastRefreshSessionInvalid = false;
+const refreshOwnerId =
+	browser && globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}`;
+const REFRESH_LOCK_KEY = 'auth_refresh_lock';
+const REFRESH_RESULT_KEY = 'auth_refresh_result';
+const REFRESH_LOCK_TTL_MS = 12_000;
+const REFRESH_WAIT_MS = 10_000;
+const REFRESH_RESULT_STALE_TOLERANCE_MS = 1_000;
+let authChannel: BroadcastChannel | null = null;
+
+type RefreshLock = {
+	owner: string;
+	expiresAt: number;
+};
+
+type RefreshResult = {
+	token: string | null;
+	sessionInvalid: boolean;
+	at: number;
+};
 
 const isLoggedIn = $derived(Boolean(user));
 const hasAccessToken = $derived(Boolean(accessToken));
@@ -127,32 +146,152 @@ function bootstrapLazy() {
 	bootstrapped = true;
 }
 
+function getAuthChannel() {
+	if (!browser || typeof BroadcastChannel === 'undefined') return null;
+	if (!authChannel) {
+		authChannel = new BroadcastChannel('weebin-auth');
+		authChannel.onmessage = (event: MessageEvent<{ type?: string; result?: RefreshResult }>) => {
+			if (event.data?.type !== 'refresh:done') return;
+			applyRefreshResult(event.data.result ?? null);
+		};
+	}
+	return authChannel;
+}
+
+function readJson<T>(key: string) {
+	if (!browser) return null;
+	try {
+		const raw = localStorage.getItem(key);
+		return raw ? (JSON.parse(raw) as T) : null;
+	} catch {
+		return null;
+	}
+}
+
+function writeRefreshResult(result: RefreshResult) {
+	if (!browser) return;
+	localStorage.setItem(REFRESH_RESULT_KEY, JSON.stringify(result));
+	getAuthChannel()?.postMessage({ type: 'refresh:done', result });
+}
+
+function applyRefreshResult(result: RefreshResult | null) {
+	if (!result) return;
+	lastRefreshSessionInvalid = result.sessionInvalid;
+	if (result.token) accessToken = result.token;
+	else accessToken = null;
+}
+
+function acquireRefreshLock() {
+	if (!browser) return true;
+
+	const now = Date.now();
+	const lock = readJson<RefreshLock>(REFRESH_LOCK_KEY);
+	if (lock && lock.expiresAt > now && lock.owner !== refreshOwnerId) return false;
+
+	const nextLock = {
+		owner: refreshOwnerId,
+		expiresAt: now + REFRESH_LOCK_TTL_MS
+	};
+	localStorage.setItem(REFRESH_LOCK_KEY, JSON.stringify(nextLock));
+	return readJson<RefreshLock>(REFRESH_LOCK_KEY)?.owner === refreshOwnerId;
+}
+
+function releaseRefreshLock() {
+	if (!browser) return;
+	const lock = readJson<RefreshLock>(REFRESH_LOCK_KEY);
+	if (lock?.owner === refreshOwnerId) localStorage.removeItem(REFRESH_LOCK_KEY);
+}
+
+function waitForRefreshResult(startedAt: number) {
+	if (!browser) return Promise.resolve(null);
+
+	return new Promise<string | null>((resolve) => {
+		let settled = false;
+		const finish = (result: RefreshResult | null) => {
+			if (settled || !result || result.at < startedAt) return;
+			settled = true;
+			cleanup();
+			applyRefreshResult(result);
+			resolve(result.token);
+		};
+		const cleanup = () => {
+			window.removeEventListener('storage', onStorage);
+			clearInterval(poll);
+			clearTimeout(timeout);
+		};
+		const onStorage = (event: StorageEvent) => {
+			if (event.key !== REFRESH_RESULT_KEY || !event.newValue) return;
+			try {
+				finish(JSON.parse(event.newValue) as RefreshResult);
+			} catch {
+				// ignore malformed refresh result
+			}
+		};
+		const poll = setInterval(() => finish(readJson<RefreshResult>(REFRESH_RESULT_KEY)), 150);
+		const timeout = setTimeout(() => {
+			if (settled) return;
+			settled = true;
+			cleanup();
+			resolve(null);
+		}, REFRESH_WAIT_MS);
+
+		window.addEventListener('storage', onStorage);
+		getAuthChannel();
+		finish(readJson<RefreshResult>(REFRESH_RESULT_KEY));
+	});
+}
+
+async function requestRefreshToken() {
+	lastRefreshSessionInvalid = false;
+	try {
+		const response = await fetch('/api/auth/refresh', {
+			method: 'POST',
+			credentials: 'include'
+		});
+		const json = (await response.json().catch(() => null)) as ApiEnvelope<{
+			accessToken?: string;
+		}> | null;
+
+		if (!response.ok) {
+			lastRefreshSessionInvalid =
+				(response.status === 401 || response.status === 403) && json?.errorCode === 'UNAUTHORIZED';
+			return null;
+		}
+
+		const data = (json?.data ?? json) as { accessToken?: string } | null;
+		accessToken = data?.accessToken ?? null;
+		return accessToken;
+	} catch {
+		accessToken = null;
+		lastRefreshSessionInvalid = false;
+		return null;
+	}
+}
+
 async function refreshToken() {
 	if (refreshPromise) return refreshPromise;
 
 	refreshPromise = (async () => {
-		lastRefreshSessionInvalid = false;
+		const startedAt = Date.now();
+		let ownsLock = acquireRefreshLock();
+		if (!ownsLock) {
+			const sharedToken = await waitForRefreshResult(
+				startedAt - REFRESH_RESULT_STALE_TOLERANCE_MS
+			);
+			if (sharedToken || lastRefreshSessionInvalid) return sharedToken;
+			ownsLock = acquireRefreshLock();
+		}
+
 		try {
-			const response = await fetch('/api/auth/refresh', {
-				method: 'POST',
-				credentials: 'include'
+			const token = await requestRefreshToken();
+			writeRefreshResult({
+				token,
+				sessionInvalid: lastRefreshSessionInvalid,
+				at: Date.now()
 			});
-			const json = (await response.json().catch(() => null)) as ApiEnvelope<{
-				accessToken?: string;
-			}> | null;
-
-			if (!response.ok) {
-				lastRefreshSessionInvalid = response.status === 401 || response.status === 403;
-				throw new Error(json?.message ?? 'Refresh token gagal');
-			}
-
-			const data = (json?.data ?? json) as { accessToken?: string } | null;
-			accessToken = data?.accessToken ?? null;
-			return accessToken;
-		} catch {
-			accessToken = null;
-			return null;
+			return token;
 		} finally {
+			if (ownsLock) releaseRefreshLock();
 			refreshPromise = null;
 		}
 	})();
@@ -320,7 +459,7 @@ function startAutoRefresh() {
 		() => {
 			if (user) refreshToken();
 		},
-		12 * 60 * 1000
+		50 * 60 * 1000
 	);
 }
 

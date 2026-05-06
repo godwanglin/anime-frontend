@@ -60,6 +60,13 @@
 			0
 		)
 	);
+	const totalSokuja = $derived(
+		groups.reduce(
+			(sum, group) =>
+				sum + group.episodes.filter((item) => item.scheduleSource === 'sokuja.schedule').length,
+			0
+		)
+	);
 	const todayKey = new Intl.DateTimeFormat('en-CA', {
 		timeZone: 'Asia/Jakarta',
 		year: 'numeric',
@@ -136,6 +143,7 @@
 	}
 
 	function sourceLabel(source: string) {
+		if (source === 'sokuja.schedule') return 'Jadwal Sokuja';
 		if (source === 'anichin.schedule') return 'Jadwal Weebin';
 		if (source === 'manual') return 'Catatan Weebin';
 		if (source === 'episode' || source === 'published') return 'Sudah tersedia';
@@ -243,8 +251,9 @@
 				Notifikasi
 			</p>
 			<p class="mt-1 text-[13px] font-bold" style="color: var(--text-primary);">
-				{totalUpcoming} episode akan tayang dari jadwal Weebin, dan {totalReleased} episode sudah
-				rilis. Kalau ada episode baru, notifikasi dikirim sekali ke user yang relevan.
+				{totalUpcoming} jadwal akan tayang, {totalReleased} episode sudah rilis, dan {totalSokuja}
+				data aktif bersumber dari Sokuja. Kalau ada episode baru, notifikasi dikirim sekali ke
+				user yang relevan.
 			</p>
 		</div>
 		<a
@@ -334,7 +343,7 @@
 									<span
 										class="absolute bottom-1.5 left-1.5 rounded-lg bg-black/65 px-2 py-0.5 text-[9px] font-black text-white ring-1 ring-white/10"
 									>
-										{item.episode}
+										{item.episodeNumber > 0 ? item.episode : (item.animeType ?? 'Anime')}
 									</span>
 								</div>
 
@@ -359,7 +368,7 @@
 										{item.animeTitle}
 									</p>
 									<p class="mt-1 line-clamp-1 text-[11px] font-semibold" style="color: var(--text-muted);">
-										{item.title || `${item.episode} tersedia`}
+										{item.episodeNumber > 0 ? item.title || `${item.episode} tersedia` : 'Jadwal tayang terbaru'}
 									</p>
 									<div class="mt-2 flex items-center gap-2 text-[9px] font-bold" style="color: var(--text-faint);">
 										{#if item.animeType}

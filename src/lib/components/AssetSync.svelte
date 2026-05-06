@@ -66,7 +66,7 @@
 		const assets = collectAssets();
 		if (assets.length === 0) return;
 
-		fetch(`${config.API_BASE_URL}/sync-assets`, {
+		fetch(`${config.API_BASE_URL}/api/sync-assets`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ assets }),

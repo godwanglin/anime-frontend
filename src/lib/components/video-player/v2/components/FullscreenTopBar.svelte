@@ -41,6 +41,20 @@
 		};
 	});
 
+	let currentTime = $state('');
+
+	$effect(() => {
+		function tick() {
+			const now = new Date();
+			const h = now.getHours().toString().padStart(2, '0');
+			const m = now.getMinutes().toString().padStart(2, '0');
+			currentTime = `${h}:${m}`;
+		}
+		tick();
+		const id = setInterval(tick, 1000);
+		return () => clearInterval(id);
+	});
+
 	const batteryPercent = $derived(batteryLevel !== null ? Math.round(batteryLevel * 100) : null);
 	const batteryColor = $derived(
 		batteryCharging
@@ -68,7 +82,12 @@
 			{/if}
 		</div>
 
-		{#if batterySupported && batteryPercent !== null}
+		<div class="vp-topbar-right">
+			{#if currentTime}
+				<span class="vp-clock" aria-label="Jam {currentTime}">{currentTime}</span>
+			{/if}
+
+			{#if batterySupported && batteryPercent !== null}
 			<div class="vp-battery" aria-label="Baterai {batteryPercent}%{batteryCharging ? ', sedang mengisi daya' : ''}" style:color={batteryColor}>
 				{#if batteryCharging}
 					<svg class="vp-battery-bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -90,6 +109,7 @@
 				<span class="vp-battery-label">{batteryPercent}%</span>
 			</div>
 		{/if}
+		</div>
 	</div>
 {/if}
 
@@ -131,5 +151,21 @@
 
 	.vp-battery-label {
 		letter-spacing: 0.02em;
+	}
+
+	.vp-topbar-right {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex-shrink: 0;
+	}
+
+	.vp-clock {
+		font-size: 13px;
+		font-weight: 600;
+		color: white;
+		opacity: 0.9;
+		letter-spacing: 0.04em;
+		font-variant-numeric: tabular-nums;
 	}
 </style>

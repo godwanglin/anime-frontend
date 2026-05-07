@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import SearchDropdown from '$lib/components/SearchDropdown.svelte';
+	import PreloadCodeViewport from '$lib/components/PreloadCodeViewport.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
 	import { imageUploader } from '$lib/stores/image-uploader.svelte';
@@ -35,6 +36,7 @@
 
 	let isHomePage = $derived($page.url.pathname === '/');
 	let isAnimePage = $derived($page.url.pathname.startsWith('/anime/'));
+	let shouldPreloadCodeViewport = $derived(usesViewportCodePreload($page.url.pathname));
 	let canUploadAssets = $derived(auth.user?.role === 'admin');
 
 	let animeAppBarTitle = $derived(
@@ -61,10 +63,23 @@
 		{ href: '/profile/history', icon: 'history', label: 'Riwayat' },
 		{ href: '/profile/saved', icon: 'bookmark', label: 'Tersimpan' }
 	];
+	const viewportCodePreloadPaths = new Set([
+		'/',
+		'/popular',
+		'/browse',
+		'/genre',
+		'/episode-baru',
+		'/jadwal-rilis',
+		'/search'
+	]);
 
 	function isActive(href: string) {
 		if (href === '/') return $page.url.pathname === '/';
 		return $page.url.pathname.startsWith(href);
+	}
+
+	function usesViewportCodePreload(pathname: string) {
+		return viewportCodePreloadPaths.has(pathname) || pathname.startsWith('/anime/');
 	}
 
 	function applyTheme(dark: boolean) {
@@ -768,7 +783,13 @@
 
 		<!-- ── MAIN CONTENT ── -->
 		<main class="flex-1 min-w-0 max-w-full overflow-x-clip px-4 py-5 pb-28 md:pb-8">
-			{@render children()}
+			{#if shouldPreloadCodeViewport}
+				<PreloadCodeViewport>
+					{@render children()}
+				</PreloadCodeViewport>
+			{:else}
+				{@render children()}
+			{/if}
 		</main>
 	</div>
 </div>

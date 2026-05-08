@@ -781,7 +781,7 @@
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	padding: 14px 60px 46px 16px;
+	padding: 14px 16px 46px;
 	color: var(--vp-control-text-color);
 	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.72), transparent);
 	pointer-events: none;
@@ -1489,6 +1489,16 @@
 	z-index: 60;
 	opacity: 1;
 	transition: opacity 0.22s ease;
+}
+
+.vp-cast-wrap-inline {
+	position: relative;
+	top: auto;
+	right: auto;
+	display: inline-flex;
+	align-items: center;
+	pointer-events: auto;
+	z-index: auto;
 }
 
 .vp-cast-wrap-hidden {

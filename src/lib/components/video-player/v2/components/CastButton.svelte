@@ -3,7 +3,7 @@
 
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
 
-	let { vp }: { vp: VideoPlayerState } = $props();
+	let { vp, inline = false }: { vp: VideoPlayerState; inline?: boolean } = $props();
 
 	let open = $state(false);
 	let panelEl = $state<HTMLDivElement>();
@@ -64,7 +64,12 @@
 	});
 </script>
 
-<div class="vp-cast-wrap" class:vp-cast-wrap-hidden={!visible} aria-hidden={!visible}>
+<div
+	class="vp-cast-wrap"
+	class:vp-cast-wrap-inline={inline}
+	class:vp-cast-wrap-hidden={!inline && !visible}
+	aria-hidden={!inline && !visible}
+>
 	<button
 		bind:this={buttonEl}
 		type="button"

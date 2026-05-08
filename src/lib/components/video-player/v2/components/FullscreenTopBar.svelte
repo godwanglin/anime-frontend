@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
+	import CastButton from './CastButton.svelte';
 
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
 
@@ -109,6 +110,7 @@
 				<span class="vp-battery-label">{batteryPercent}%</span>
 			</div>
 		{/if}
+			<CastButton {vp} inline />
 		</div>
 	</div>
 {/if}

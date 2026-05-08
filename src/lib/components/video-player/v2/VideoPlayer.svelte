@@ -277,6 +277,8 @@
 			{episodeList}
 			onClose={closeEpisodeDrawer}
 		/>
-		<CastButton {vp} />
+		{#if !vp.isFullscreen}
+			<CastButton {vp} />
+		{/if}
 	</div>
 </div>

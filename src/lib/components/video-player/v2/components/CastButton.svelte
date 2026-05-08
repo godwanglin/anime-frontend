@@ -50,6 +50,10 @@
 		};
 	});
 
+	const visible = $derived(
+		!vp.controlsLocked && (vp.showControls || !vp.isPlaying || open)
+	);
+
 	const statusLabel = $derived.by(() => {
 		if (!vp.castSupported) return 'Tidak tersedia';
 		if (vp.castIsCasting)
@@ -60,7 +64,7 @@
 	});
 </script>
 
-<div class="vp-cast-wrap">
+<div class="vp-cast-wrap" class:vp-cast-wrap-hidden={!visible} aria-hidden={!visible}>
 	<button
 		bind:this={buttonEl}
 		type="button"

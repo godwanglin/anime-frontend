@@ -18,40 +18,38 @@ type HomeResponse = {
 };
 
 async function loadLegacyHomeSections(fetcher: typeof fetch, response: HomeResponse) {
-	const [trendRequest, bannerRequest, epsReq, newRelReq, popularReq, genresReq] = await Promise.all(
-		[
-			cachedApiJson<ApiResponse<unknown[]>>(
-				fetcher,
-				`${config.API_BASE_URL}/api/anime/trending?limit=13`,
-				API_CACHE_TTL.thirtyMinutes
-			),
-			cachedApiJson<ApiResponse<unknown[]>>(
-				fetcher,
-				`${config.API_BASE_URL}/api/banners?sortBy=trending,updatedAt&limit=5`,
-				API_CACHE_TTL.twelveHours
-			),
-			cachedApiJson<ApiResponse<unknown[]>>(
-				fetcher,
-				`${config.API_BASE_URL}/api/episodes/latest`,
-				API_CACHE_TTL.thirtyMinutes
-			),
-			cachedApiJson<ApiResponse<unknown[]>>(
-				fetcher,
-				`${config.API_BASE_URL}/api/anime/new-release`,
-				API_CACHE_TTL.thirtyMinutes
-			),
-			cachedApiJson<ApiResponse<unknown[]>>(
-				fetcher,
-				`${config.API_BASE_URL}/api/anime/popular?limit=12`,
-				API_CACHE_TTL.thirtyMinutes
-			),
-			cachedApiJson<ApiResponse<unknown[]>>(
-				fetcher,
-				`${config.API_BASE_URL}/api/anime/genres`,
-				API_CACHE_TTL.oneDay
-			)
-		]
-	);
+	const [trendRequest, bannerRequest, epsReq, newRelReq, popularReq, genresReq] = await Promise.all([
+		cachedApiJson<ApiResponse<unknown[]>>(
+			fetcher,
+			`${config.API_BASE_URL}/api/anime/trending`,
+			API_CACHE_TTL.thirtyMinutes
+		),
+		cachedApiJson<ApiResponse<unknown[]>>(
+			fetcher,
+			`${config.API_BASE_URL}/api/banners?sortBy=trending,updatedAt&limit=5`,
+			API_CACHE_TTL.twelveHours
+		),
+		cachedApiJson<ApiResponse<unknown[]>>(
+			fetcher,
+			`${config.API_BASE_URL}/api/episodes/latest`,
+			API_CACHE_TTL.thirtyMinutes
+		),
+		cachedApiJson<ApiResponse<unknown[]>>(
+			fetcher,
+			`${config.API_BASE_URL}/api/anime/new-release`,
+			API_CACHE_TTL.thirtyMinutes
+		),
+		cachedApiJson<ApiResponse<unknown[]>>(
+			fetcher,
+			`${config.API_BASE_URL}/api/anime/popular?limit=12`,
+			API_CACHE_TTL.thirtyMinutes
+		),
+		cachedApiJson<ApiResponse<unknown[]>>(
+			fetcher,
+			`${config.API_BASE_URL}/api/anime/genres`,
+			API_CACHE_TTL.oneDay
+		)
+	]);
 
 	if (trendRequest.ok) response.trending.weekly = trendRequest.data?.data ?? [];
 	if (bannerRequest.ok) response.banners = bannerRequest.data?.data ?? [];

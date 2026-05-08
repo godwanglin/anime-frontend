@@ -205,7 +205,7 @@
 
 		<!-- Smaller rail for items 6-10 -->
 		{#if railItems.length > 0}
-			<div class="flex max-w-[calc(100%+2rem)] gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+			<div class="ts-rail-track flex max-w-[calc(100%+2rem)] gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
 				{#each railItems as item, i (item.slug)}
 					<a href="/anime/{item.slug}" class="ts-rail group">
 						<div class="ts-rail-image">
@@ -723,7 +723,7 @@
 		}
 	}
 
-	/* Mobile perf */
+	/* Mobile perf — kill compositor pressure aggressively */
 	@media (max-width: 768px) {
 		.ts-rating-pill,
 		.ts-feature-meta,
@@ -733,6 +733,44 @@
 			backdrop-filter: none;
 			-webkit-backdrop-filter: none;
 		}
+
+		/* Stop infinite animations that force constant repaints */
+		.ts-live-dot,
+		.ts-side-chip-dot-live {
+			animation: none;
+		}
+
+		/* Simpler shadows on mobile (single layer instead of compounding) */
+		.ts-feature {
+			box-shadow: 0 6px 20px oklch(0 0 0 / 0.22);
+		}
+		.ts-side {
+			box-shadow: 0 4px 14px oklch(0 0 0 / 0.18);
+		}
+		.ts-rail-image {
+			box-shadow: none;
+		}
+
+		/* Disable image transition during scroll — only matters on hover */
+		.ts-feature .ts-feature-image :global(img),
+		.ts-side .ts-side-image :global(img) {
+			transition: none !important;
+		}
+	}
+
+	/* Isolate paint per card so scrolling one doesn't re-paint others */
+	.ts-feature,
+	.ts-side,
+	.ts-rail {
+		contain: layout paint;
+	}
+
+	/* Promote horizontal scroll rail to its own compositor layer for smooth swipe */
+	.ts-rail-track {
+		transform: translateZ(0);
+		will-change: scroll-position;
+		-webkit-overflow-scrolling: touch;
+		overscroll-behavior-x: contain;
 	}
 
 	.ts-section {

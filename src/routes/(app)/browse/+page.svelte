@@ -1,13 +1,27 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import AlphabetRail, { DEFAULT_ALPHABET } from '$lib/components/AlphabetRail.svelte';
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import NavigationBottom from '$lib/components/NavigationBottom.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import CustomSelect, { type CustomSelectOption } from '$lib/components/ui/CustomSelect.svelte';
 	import VirtualizedAnimeGrid from '$lib/components/VirtualizedAnimeGrid.svelte';
+	import config from '$lib/config';
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 	import './browse.css';
+
+	type IndexItem = {
+		slug: string;
+		title: string;
+		type: string | null;
+		status: 'Ongoing' | 'Completed' | null;
+		year: number | null;
+		totalEpisodes: number | null;
+	};
+
+	type ViewMode = 'grid' | 'index';
+	const VIEW_KEY = 'browse:view';
 
 	type Anime = {
 		id: number;
@@ -95,18 +109,136 @@
 	let filterOpen = $state(false);
 	let filterTouched = $state(false);
 	let stickyTop = $state(56);
+	let shellBottom = $state(120);
 	const filterPanelOpen = $derived(filterTouched ? filterOpen : advancedFilterCount > 0);
+
+	let viewMode = $state<ViewMode>('grid');
+	let indexItems = $state<IndexItem[]>([]);
+	let indexLoading = $state(false);
+	let indexError = $state<string | null>(null);
+	let indexQuery = $state('');
+	let activeLetter = $state('');
 
 	onMount(() => {
 		const header = document.querySelector('header');
-		if (!header) return;
+		const cleanups: Array<() => void> = [];
 
-		const syncStickyTop = () => {
-			stickyTop = Math.ceil(header.getBoundingClientRect().height);
-		};
-		const observer = new ResizeObserver(syncStickyTop);
-		observer.observe(header);
-		syncStickyTop();
+		if (header) {
+			const syncStickyTop = () => {
+				stickyTop = Math.ceil(header.getBoundingClientRect().height);
+			};
+			const observer = new ResizeObserver(syncStickyTop);
+			observer.observe(header);
+			syncStickyTop();
+			cleanups.push(() => observer.disconnect());
+		}
+
+		const shellEl = document.querySelector('.browse-search-shell');
+		if (shellEl) {
+			const syncShellBottom = () => {
+				shellBottom = Math.ceil(shellEl.getBoundingClientRect().bottom);
+			};
+			const shellObserver = new ResizeObserver(syncShellBottom);
+			shellObserver.observe(shellEl);
+			syncShellBottom();
+			cleanups.push(() => shellObserver.disconnect());
+		}
+
+		try {
+			const saved = localStorage.getItem(VIEW_KEY);
+			if (saved === 'index' || saved === 'grid') {
+				viewMode = saved;
+				if (saved === 'index') void loadIndex();
+			}
+		} catch {
+			/* ignore */
+		}
+
+		return () => cleanups.forEach((fn) => fn());
+	});
+
+	async function loadIndex() {
+		if (indexItems.length > 0 || indexLoading) return;
+		indexLoading = true;
+		indexError = null;
+		try {
+			const res = await fetch(`${config.API_BASE_URL}/api/anime/index`);
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const json = await res.json();
+			indexItems = (json?.data ?? []) as IndexItem[];
+		} catch (err) {
+			indexError = (err as Error).message ?? 'Gagal memuat indeks';
+		} finally {
+			indexLoading = false;
+		}
+	}
+
+	function setView(mode: ViewMode) {
+		viewMode = mode;
+		try {
+			localStorage.setItem(VIEW_KEY, mode);
+		} catch {
+			/* ignore */
+		}
+		if (mode === 'index') void loadIndex();
+	}
+
+	const filteredIndex = $derived.by(() => {
+		const q = indexQuery.trim().toLowerCase();
+		if (!q) return indexItems;
+		return indexItems.filter((i) => i.title.toLowerCase().includes(q));
+	});
+
+	const indexGroups = $derived.by(() => {
+		const map: Record<string, IndexItem[]> = {};
+		for (const item of filteredIndex) {
+			const first = (item.title?.charAt(0) ?? '').toUpperCase();
+			const key = /[A-Z]/.test(first) ? first : '#';
+			if (!map[key]) map[key] = [];
+			map[key].push(item);
+		}
+		return DEFAULT_ALPHABET.filter((k) => map[k]?.length).map((letter) => ({
+			letter,
+			items: map[letter] ?? []
+		}));
+	});
+
+	const indexEnabledLetters = $derived(new Set(indexGroups.map((g) => g.letter)));
+
+	$effect(() => {
+		if (!activeLetter && indexGroups.length > 0) activeLetter = indexGroups[0].letter;
+	});
+
+	function jumpTo(letter: string) {
+		const el = document.getElementById(`browse-section-${letter}`);
+		if (el) {
+			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			activeLetter = letter;
+		}
+	}
+
+	$effect(() => {
+		if (viewMode !== 'index' || indexGroups.length === 0) return;
+		if (typeof IntersectionObserver === 'undefined') return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const intersecting = entries.filter((e) => e.isIntersecting);
+				if (intersecting.length === 0) return;
+				const top = intersecting.sort(
+					(a, b) => a.boundingClientRect.top - b.boundingClientRect.top
+				)[0];
+				const letter = top.target.getAttribute('data-letter');
+				if (letter) activeLetter = letter;
+			},
+			{ rootMargin: '-20% 0px -60% 0px', threshold: 0 }
+		);
+
+		queueMicrotask(() => {
+			document
+				.querySelectorAll('[data-browse-section]')
+				.forEach((el) => observer.observe(el));
+		});
 
 		return () => observer.disconnect();
 	});
@@ -154,23 +286,66 @@
 
 <SEO title="Jelajahi Anime" description="Cari dan jelajahi katalog anime subtitle Indonesia." />
 
-<div class="browse-page max-w-6xl mx-auto" style:--browse-sticky-top={`${stickyTop}px`}>
+<div
+	class="browse-page max-w-6xl mx-auto"
+	style:--browse-sticky-top={`${stickyTop}px`}
+	style:--browse-shell-bottom={`${shellBottom}px`}
+>
 	<section class="browse-search-shell mb-4 md:mb-5">
-		<div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-			<div class="hidden md:block">
-				<div class="flex items-center gap-2 mb-2">
+		<div class="browse-header-row">
+			<div class="browse-title-block">
+				<div class="browse-title-icon-row">
 					<div class="h-8 w-8 rounded-xl bg-violet-500/15 flex items-center justify-center">
 						<AppIcon name="explore" class="text-violet-500 text-[20px]" />
 					</div>
 					<p class="text-[11px] font-black uppercase tracking-widest text-zinc-400">Katalog</p>
 				</div>
-				<h1 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">
+				<h1 class="text-xl sm:text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">
 					Jelajahi Anime
 				</h1>
 			</div>
 
+			<div class="view-toggle" role="group" aria-label="Pilih tampilan">
+				<button
+					type="button"
+					class="view-btn"
+					class:view-btn-active={viewMode === 'grid'}
+					onclick={() => setView('grid')}
+					aria-pressed={viewMode === 'grid'}
+					aria-label="Tampilan grid"
+				>
+					<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+						<rect x="3" y="3" width="8" height="8" rx="1.5" />
+						<rect x="13" y="3" width="8" height="8" rx="1.5" />
+						<rect x="3" y="13" width="8" height="8" rx="1.5" />
+						<rect x="13" y="13" width="8" height="8" rx="1.5" />
+					</svg>
+					<span class="view-btn-label">Grid</span>
+				</button>
+				<button
+					type="button"
+					class="view-btn"
+					class:view-btn-active={viewMode === 'index'}
+					onclick={() => setView('index')}
+					aria-pressed={viewMode === 'index'}
+					aria-label="Tampilan indeks A-Z"
+				>
+					<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+						<rect x="3" y="5" width="14" height="2" rx="1" />
+						<rect x="3" y="11" width="14" height="2" rx="1" />
+						<rect x="3" y="17" width="14" height="2" rx="1" />
+						<circle cx="20" cy="6" r="1.4" />
+						<circle cx="20" cy="12" r="1.4" />
+						<circle cx="20" cy="18" r="1.4" />
+					</svg>
+					<span class="view-btn-label">A-Z</span>
+				</button>
+			</div>
+		</div>
+
+		{#if viewMode === 'grid'}
 			<form action="/browse" method="GET" class="browse-search-form" onsubmit={handleSearchSubmit}>
-				<div class="relative flex-1 md:w-72">
+				<div class="relative flex-1">
 					<AppIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-400" />
 					<input
 						name="q"
@@ -179,12 +354,7 @@
 						class="w-full h-11 pl-10 pr-3 rounded-2xl bg-white text-zinc-900 placeholder:text-zinc-400 shadow-sm ring-1 ring-zinc-200 border-0 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800 text-sm focus:outline-none focus:ring-violet-500"
 					/>
 				</div>
-				<button
-					type="submit"
-					class="browse-search-submit"
-				>
-					Cari
-				</button>
+				<button type="submit" class="browse-search-submit">Cari</button>
 				<button
 					type="button"
 					class="browse-filter-toggle"
@@ -200,9 +370,27 @@
 					{/if}
 				</button>
 			</form>
-		</div>
+		{:else}
+			<div class="browse-search-form">
+				<div class="relative flex-1">
+					<AppIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-400" />
+					<input
+						type="search"
+						bind:value={indexQuery}
+						placeholder="Saring judul..."
+						aria-label="Saring judul"
+						class="w-full h-11 pl-10 pr-3 rounded-2xl bg-white text-zinc-900 placeholder:text-zinc-400 shadow-sm ring-1 ring-zinc-200 border-0 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800 text-sm focus:outline-none focus:ring-violet-500"
+					/>
+				</div>
+				<span class="browse-index-count-pill">
+					{filteredIndex.length}
+					{#if !indexLoading && indexItems.length > 0}<small>/ {indexItems.length}</small>{/if}
+				</span>
+			</div>
+		{/if}
 	</section>
 
+	{#if viewMode === 'grid'}
 	<section
 		id="browse-advanced-filter"
 		class="browse-filter mb-5"
@@ -385,6 +573,64 @@
 			<a href="/browse" class="mt-3 inline-flex text-sm font-bold text-violet-500">Reset filter</a>
 		</div>
 	{/if}
+	{:else}
+		<!-- Index (A-Z directory) mode -->
+		<section class="browse-index">
+			{#if indexLoading && indexItems.length === 0}
+				<div class="browse-index-state">Memuat indeks A-Z…</div>
+			{:else if indexError}
+				<div class="browse-index-state browse-index-state-error">
+					Gagal memuat indeks: {indexError}
+					<button type="button" onclick={() => loadIndex()} class="browse-index-retry">Coba lagi</button>
+				</div>
+			{:else if filteredIndex.length === 0}
+				<div class="browse-index-state">
+					{indexQuery ? 'Tidak ada judul yang cocok.' : 'Belum ada data.'}
+				</div>
+			{:else}
+				<div class="browse-index-list">
+					{#each indexGroups as group (group.letter)}
+						<section
+							id="browse-section-{group.letter}"
+							data-browse-section
+							data-letter={group.letter}
+							class="browse-index-group"
+						>
+							<header class="browse-index-group-header">
+								<span class="browse-index-letter">{group.letter}</span>
+								<span class="browse-index-rule" aria-hidden="true"></span>
+								<span class="browse-index-letter-count">{group.items.length}</span>
+							</header>
+							<ul class="browse-index-rows">
+								{#each group.items as item (item.slug)}
+									<li>
+										<a class="browse-index-row" href="/anime/{item.slug}">
+											<span class="browse-index-name">{item.title}</span>
+											<span class="browse-index-meta">
+												{#if item.type}<span class="browse-index-pill">{item.type}</span>{/if}
+												{#if item.year}<span class="browse-index-year">{item.year}</span>{/if}
+												{#if item.totalEpisodes}<span class="browse-index-eps">{item.totalEpisodes} ep</span>{/if}
+											</span>
+											<span class="browse-index-arrow" aria-hidden="true">→</span>
+										</a>
+									</li>
+								{/each}
+							</ul>
+						</section>
+					{/each}
+				</div>
+			{/if}
+		</section>
+	{/if}
 </div>
+
+{#if viewMode === 'index' && indexGroups.length > 0}
+	<AlphabetRail
+		letters={DEFAULT_ALPHABET}
+		enabled={indexEnabledLetters}
+		active={activeLetter}
+		onJump={jumpTo}
+	/>
+{/if}
 
 <NavigationBottom />

@@ -69,10 +69,10 @@
 						src={cover(featured)}
 						alt={featured.title}
 						className="h-full w-full"
-						imageClass="h-full w-full object-cover transition duration-700 md:group-hover:scale-[1.04]"
+						imageClass="h-full w-full object-cover transition-transform duration-700 md:group-hover:scale-[1.04]"
 						sizes="(max-width: 1024px) 100vw, 720px"
-						loading="lazy"
-						fetchpriority="low"
+						loading="eager"
+						fetchpriority="high"
 					/>
 				</div>
 				<div class="ts-feature-shade"></div>
@@ -140,10 +140,10 @@
 								src={cover(item)}
 								alt={item.title}
 								className="h-full w-full"
-								imageClass="h-full w-full object-cover transition duration-700 md:group-hover:scale-[1.08]"
+								imageClass="h-full w-full object-cover transition-transform duration-700 md:group-hover:scale-[1.08]"
 								sizes="(max-width: 768px) 50vw, 240px"
-								loading="lazy"
-								fetchpriority="low"
+								loading={i < 2 ? 'eager' : 'lazy'}
+								fetchpriority={i < 2 ? 'auto' : 'low'}
 							/>
 						</div>
 						<!-- Layered shade for depth -->
@@ -213,7 +213,7 @@
 								src={item.thumbnail}
 								alt={item.title}
 								className="h-full w-full"
-								imageClass="h-full w-full object-cover transition duration-500 md:group-hover:scale-[1.06]"
+								imageClass="h-full w-full object-cover transition-transform duration-500 md:group-hover:scale-[1.06]"
 								sizes="120px"
 								loading="lazy"
 								fetchpriority="low"

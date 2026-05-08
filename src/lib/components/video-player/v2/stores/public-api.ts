@@ -300,6 +300,17 @@ export function createPublicApi(ctx: any) {
 			return stats.stats;
 		},
 		castStart: cast.prompt,
+		castStop: cast.disconnect,
+		castStartScan: cast.startScan,
+		get castSupported() {
+			return cast.supported;
+		},
+		get castUnsupportedReason() {
+			return cast.unsupportedReason;
+		},
+		get castScanning() {
+			return cast.scanning;
+		},
 		get castAvailable() {
 			return cast.available;
 		},

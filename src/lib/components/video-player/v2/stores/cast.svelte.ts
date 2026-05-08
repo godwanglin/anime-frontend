@@ -13,17 +13,34 @@ type RemoteVideoEl = HTMLVideoElement & {
 	webkitShowPlaybackTargetPicker?: () => void;
 };
 
+function detectUnsupportedReason(): string | null {
+	if (typeof window === 'undefined') return 'Lingkungan ini tidak punya akses ke window.';
+	if (typeof navigator === 'undefined') return 'Lingkungan tidak mendukung pendeteksian browser.';
+	if (!window.isSecureContext) {
+		return 'Halaman tidak dimuat lewat HTTPS. Cast hanya aktif di koneksi aman (HTTPS) atau localhost.';
+	}
+	const ua = navigator.userAgent || '';
+	if (/Firefox\//.test(ua)) {
+		return 'Firefox belum mendukung Remote Playback API. Pakai Chrome, Edge, atau Safari.';
+	}
+	return null;
+}
+
 export function createCastManager(opts: { getVideoEl: () => HTMLVideoElement | undefined }) {
 	let available = $state(false);
 	let state = $state<RemoteState>('disconnected');
 	let airplayAvailable = $state(false);
 	let lastError = $state<string | null>(null);
+	let apiSupported = $state(false);
+	let scanning = $state(false);
+	let unsupportedReason = $state<string | null>(null);
 
 	let watchId: number | null = null;
 	let attachedEl: RemoteVideoEl | null = null;
 	let airplayHandler: ((e: Event) => void) | null = null;
+	let scanTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const supported = $derived(available || airplayAvailable);
+	const deviceAvailable = $derived(available || airplayAvailable);
 	const isCasting = $derived(state === 'connected' || state === 'connecting');
 
 	function onConnecting() {
@@ -56,6 +73,12 @@ export function createCastManager(opts: { getVideoEl: () => HTMLVideoElement | u
 		}
 
 		const remote = el.remote;
+		const hasRemoteApi = !!remote;
+		const hasAirplayEvent =
+			typeof window !== 'undefined' && 'WebKitPlaybackTargetAvailabilityEvent' in window;
+		apiSupported = hasRemoteApi || hasAirplayEvent;
+		unsupportedReason = apiSupported ? null : detectUnsupportedReason();
+
 		if (remote) {
 			state = remote.state ?? 'disconnected';
 			remote.addEventListener('connecting', onConnecting);
@@ -116,6 +139,22 @@ export function createCastManager(opts: { getVideoEl: () => HTMLVideoElement | u
 		available = false;
 		airplayAvailable = false;
 		state = 'disconnected';
+		apiSupported = false;
+		scanning = false;
+		if (scanTimer) {
+			clearTimeout(scanTimer);
+			scanTimer = null;
+		}
+	}
+
+	function startScan() {
+		if (!apiSupported) return;
+		scanning = true;
+		if (scanTimer) clearTimeout(scanTimer);
+		scanTimer = setTimeout(() => {
+			scanning = false;
+			scanTimer = null;
+		}, 4000);
 	}
 
 	function setVideoEl(el: HTMLVideoElement | undefined) {
@@ -156,12 +195,33 @@ export function createCastManager(opts: { getVideoEl: () => HTMLVideoElement | u
 		detach();
 	}
 
+	async function disconnect() {
+		const el = opts.getVideoEl();
+		if (!el) return;
+		try {
+			el.pause();
+		} catch {
+			/* noop */
+		}
+	}
+
 	return {
 		setVideoEl,
 		prompt,
+		startScan,
+		disconnect,
 		destroy,
+		get supported() {
+			return apiSupported;
+		},
+		get unsupportedReason() {
+			return unsupportedReason;
+		},
+		get scanning() {
+			return scanning;
+		},
 		get available() {
-			return supported;
+			return deviceAvailable;
 		},
 		get state() {
 			return state;

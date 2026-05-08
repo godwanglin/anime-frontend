@@ -2,6 +2,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 
 	import '../vp.css';
+	import CastButton from './components/CastButton.svelte';
 	import CenterControls from './components/CenterControls.svelte';
 	import ControlsOverlay from './components/ControlsOverlay.svelte';
 	import EpisodeDrawer from './components/EpisodeDrawer.svelte';
@@ -276,5 +277,6 @@
 			{episodeList}
 			onClose={closeEpisodeDrawer}
 		/>
+		<CastButton {vp} />
 	</div>
 </div>

@@ -1,5 +1,6 @@
 import { createAmbientManager } from './ambient.svelte';
 import { createAudioWaveformManager } from './audio-waveform.svelte';
+import { createCastManager } from './cast.svelte';
 import { createHlsManager } from './hls.svelte';
 import { createNotificationManager } from './notifications.svelte';
 import { createPlaybackUiManager } from './playback-ui.svelte';
@@ -103,6 +104,9 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 		getPreloadEnabled: () => controlsCfg.preloadAudioWaveform !== false,
 		getMaxPreloadBytes: () => controlsCfg.maxAudioWaveformBytes ?? 30 * 1024 * 1024
 	});
+	const cast = createCastManager({
+		getVideoEl: () => videoEl
+	});
 	const skipIntro = createSkipIntroManager({
 		getVideoEl: () => videoEl,
 		getCurrentTime: () => playback.currentTime,
@@ -147,6 +151,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 	function setVideoEl(el: HTMLVideoElement | undefined) {
 		videoEl = el;
 		playback.syncVideoPrefs();
+		cast.setVideoEl(el);
 	}
 
 	function setContainerEl(el: HTMLElement | undefined) {
@@ -184,6 +189,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 		playback.destroy();
 		ambient.destroy();
 		stats.destroy();
+		cast.destroy();
 		skipIntro.destroy();
 		waveform.destroy();
 		notifications.destroy();
@@ -293,6 +299,7 @@ export function createVideoPlayerState(initialOptions: VideoPlayerOptions) {
 		waveform,
 		skipIntro,
 		notifications,
+		cast,
 		getSubCfg: () => subCfg,
 		getThemeCfg: () => themeCfg,
 		getControlsCfg: () => controlsCfg,

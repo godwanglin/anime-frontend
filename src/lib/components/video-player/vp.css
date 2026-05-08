@@ -1481,6 +1481,34 @@
 	white-space: nowrap;
 }
 
+/* ── Cast button (Beta) ──────────────────────────────────────────────────── */
+.vp-cast-btn {
+	position: relative;
+}
+
+.vp-cast-btn-active {
+	color: var(--vp-accent-color, #4ea1ff);
+}
+
+.vp-cast-btn-active svg {
+	filter: drop-shadow(0 0 6px currentColor);
+}
+
+.vp-cast-badge {
+	position: absolute;
+	bottom: 2px;
+	right: 0;
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	background: var(--vp-accent-color, #4ea1ff);
+	color: #000;
+	padding: 1px 3px;
+	border-radius: 3px;
+	line-height: 1;
+	pointer-events: none;
+}
+
 /* ── Episode drawer panel ────────────────────────────────────────────────── */
 .vp-ep-drawer-backdrop {
 	position: absolute;

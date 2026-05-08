@@ -11,7 +11,8 @@ export function createPublicApi(ctx: any) {
 		stats,
 		waveform,
 		skipIntro,
-		notifications
+		notifications,
+		cast
 	} = ctx;
 
 	return {
@@ -297,6 +298,19 @@ export function createPublicApi(ctx: any) {
 		},
 		get stats() {
 			return stats.stats;
+		},
+		castStart: cast.prompt,
+		get castAvailable() {
+			return cast.available;
+		},
+		get castIsCasting() {
+			return cast.isCasting;
+		},
+		get castState() {
+			return cast.state;
+		},
+		get castError() {
+			return cast.lastError;
 		}
 	};
 }

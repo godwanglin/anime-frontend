@@ -23,7 +23,7 @@
 	];
 </script>
 
-<section class="mb-9" aria-label="Aksi cepat">
+<section class="qa-section mb-9" aria-label="Aksi cepat">
 	<div
 		class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3"
 	>
@@ -144,5 +144,10 @@
 		.quick-action:hover {
 			transform: none;
 		}
+	}
+
+	.qa-section {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 180px;
 	}
 </style>

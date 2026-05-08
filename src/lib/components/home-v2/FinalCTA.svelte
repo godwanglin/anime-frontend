@@ -267,4 +267,24 @@
 			transform: none;
 		}
 	}
+
+	/* Mobile perf — drop heavy GPU effects */
+	@media (max-width: 768px) {
+		.cta-orb {
+			display: none;
+		}
+		.cta-grid {
+			display: none;
+		}
+		.cta-eyebrow,
+		.cta-btn-secondary {
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+		}
+	}
+
+	.cta-shell {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 320px;
+	}
 </style>

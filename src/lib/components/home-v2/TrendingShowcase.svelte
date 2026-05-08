@@ -32,7 +32,7 @@
 </script>
 
 {#if featured}
-	<section class="mb-10" aria-label="Sedang trending">
+	<section class="ts-section mb-10" aria-label="Sedang trending">
 		<header class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-2.5">
 				<span class="ts-icon-badge">
@@ -721,5 +721,22 @@
 		.ts-side:hover {
 			transform: none;
 		}
+	}
+
+	/* Mobile perf */
+	@media (max-width: 768px) {
+		.ts-rating-pill,
+		.ts-feature-meta,
+		.ts-side-rank,
+		.ts-side-rating,
+		.ts-side-chip {
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+		}
+	}
+
+	.ts-section {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 720px;
 	}
 </style>

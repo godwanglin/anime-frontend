@@ -10,7 +10,7 @@
 </script>
 
 {#if items.length > 0 || auth.isLoggedIn}
-	<section class="mb-9" aria-label="Lanjutkan menonton">
+	<section class="cw-section mb-9" aria-label="Lanjutkan menonton">
 		<header class="flex items-center justify-between mb-3">
 			<div class="flex items-center gap-2.5">
 				<span class="cw-icon-badge">
@@ -235,5 +235,10 @@
 
 	.cw-meta-sep {
 		opacity: 0.5;
+	}
+
+	.cw-section {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 280px;
 	}
 </style>

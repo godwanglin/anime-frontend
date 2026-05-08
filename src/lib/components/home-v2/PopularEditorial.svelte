@@ -34,7 +34,7 @@
 </script>
 
 {#if items.length > 0}
-	<section class="mb-10" aria-label="Paling populer">
+	<section class="pe-section mb-10" aria-label="Paling populer">
 		<header class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-2.5">
 				<span class="pe-icon-badge">
@@ -313,5 +313,22 @@
 		.pe-card:hover .pe-thumb {
 			transform: none;
 		}
+	}
+
+	/* Mobile perf — backdrop-filter blur(14px) is the worst offender here */
+	@media (max-width: 768px) {
+		.pe-info,
+		.pe-type-pill {
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+		}
+		.pe-info {
+			background: oklch(from #000000 l c h / 0.62);
+		}
+	}
+
+	.pe-section {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 380px;
 	}
 </style>

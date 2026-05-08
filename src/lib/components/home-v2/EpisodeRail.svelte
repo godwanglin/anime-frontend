@@ -24,7 +24,7 @@
 </script>
 
 {#if items.length > 0}
-	<section class="mb-10" aria-label="Episode terbaru">
+	<section class="er-section mb-10" aria-label="Episode terbaru">
 		<header class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-2.5">
 				<span class="er-icon-badge">
@@ -252,5 +252,18 @@
 		.er-card:hover .er-thumb {
 			transform: none;
 		}
+	}
+
+	@media (max-width: 768px) {
+		.er-ep-movie,
+		.er-time-badge {
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+		}
+	}
+
+	.er-section {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 360px;
 	}
 </style>

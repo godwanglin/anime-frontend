@@ -30,7 +30,7 @@
 </script>
 
 {#if top.length > 0}
-	<section class="mb-10" aria-label="Jelajahi genre">
+	<section class="gm-section mb-10" aria-label="Jelajahi genre">
 		<header class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-2.5">
 				<span class="gm-icon-badge">
@@ -244,5 +244,21 @@
 		.gm-tile:hover .gm-orb-2 {
 			transform: none;
 		}
+	}
+
+	/* Mobile/touch perf: disable expensive filter blurs that tank scroll */
+	@media (max-width: 768px) {
+		.gm-tile-orb {
+			display: none;
+		}
+		.gm-tile-arrow {
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+		}
+	}
+
+	.gm-section {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 540px;
 	}
 </style>

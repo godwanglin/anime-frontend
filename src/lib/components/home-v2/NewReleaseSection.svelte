@@ -19,7 +19,7 @@
 </script>
 
 {#if items.length > 0}
-	<section class="mb-9" aria-label="Baru diupdate">
+	<section class="nr-section mb-9" aria-label="Baru diupdate">
 		<header class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-2.5">
 				<span class="nr-icon-badge">
@@ -71,5 +71,10 @@
 
 	.nr-link:hover {
 		color: var(--accent-hover);
+	}
+
+	.nr-section {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 600px;
 	}
 </style>

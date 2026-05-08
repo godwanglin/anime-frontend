@@ -441,4 +441,27 @@
 			transition: none !important;
 		}
 	}
+
+	/* Mobile perf: backdrop-filter is one of the most expensive operations
+	   for scroll. Disable on mobile — gradient overlays still give depth. */
+	@media (max-width: 768px) {
+		.hero-meta-pill,
+		.hero-cta-secondary,
+		.hero-cta-secondary-icon,
+		.hero-preview-card {
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+		}
+		.hero-meta-pill {
+			background: rgba(255, 255, 255, 0.14);
+		}
+		.hero-cta-secondary {
+			background: rgba(255, 255, 255, 0.14);
+		}
+	}
+
+	.hero-v2 {
+		content-visibility: auto;
+		contain-intrinsic-size: 0 480px;
+	}
 </style>

@@ -1,4 +1,5 @@
 import config from './config';
+import { normalizedQualityHeight } from './video-quality';
 
 interface StreamSource {
 	id: number;
@@ -11,6 +12,12 @@ export interface FormattedStreamSource extends StreamSource {
 	playerUrl: string;
 	serverUrl: string;
 }
+
+type RawQuality = {
+	label: string;
+	height: number;
+	url: string;
+};
 
 /**
  * Ekstrak video ID dari URL ok.ru
@@ -112,6 +119,91 @@ function encodeHex(value: string) {
 		.join('');
 }
 
+function parseQualityHeight(value: string) {
+	const match = value.match(/(\d{3,4})\s*p?/i);
+	if (!match) return 0;
+	const height = Number.parseInt(match[1], 10);
+	return Number.isFinite(height) ? normalizedQualityHeight(height) : 0;
+}
+
+function qualityResolution(height: number) {
+	const widthByHeight: Record<number, number> = {
+		1080: 1920,
+		720: 1280,
+		540: 960,
+		480: 854,
+		360: 640,
+		240: 426,
+		144: 256
+	};
+	return {
+		width: widthByHeight[height] ?? Math.round((height * 16) / 9),
+		height
+	};
+}
+
+function qualityBandwidth(height: number) {
+	const bitrateByHeight: Record<number, number> = {
+		1080: 5_200_000,
+		720: 2_800_000,
+		540: 1_600_000,
+		480: 1_200_000,
+		360: 800_000,
+		240: 500_000,
+		144: 250_000
+	};
+	return bitrateByHeight[height] ?? Math.max(250_000, height * 2200);
+}
+
+function parseRawQualityText(value: string): RawQuality[] {
+	const byHeight = new Map<number, RawQuality>();
+
+	for (const rawLine of value.split(/\r?\n/)) {
+		const line = rawLine.trim();
+		if (!line) continue;
+
+		const match = line.match(/^(.+?)\s*:\s*(https?:\/\/.+)$/i);
+		if (!match) continue;
+
+		const label = match[1].trim().toUpperCase();
+		const url = match[2].trim();
+		const height = parseQualityHeight(label);
+		if (!height || !normalizeDirectVideoUrl(url) || !/\.m3u8(?:$|[?#])/i.test(url)) continue;
+
+		byHeight.set(height, { label: `${height}P`, height, url });
+	}
+
+	return Array.from(byHeight.values()).sort((a, b) => b.height - a.height);
+}
+
+function buildRawQualityMasterPlaylist(qualities: RawQuality[]) {
+	const lines = ['#EXTM3U', '#EXT-X-VERSION:3'];
+	for (const quality of qualities) {
+		const resolution = qualityResolution(quality.height);
+		lines.push(
+			`#EXT-X-STREAM-INF:BANDWIDTH=${qualityBandwidth(quality.height)},RESOLUTION=${resolution.width}x${resolution.height},NAME="${quality.label}"`
+		);
+		lines.push(quality.url);
+	}
+	return `data:application/vnd.apple.mpegurl;charset=utf-8,${encodeURIComponent(
+		lines.join('\n')
+	)}`;
+}
+
+function formatRawQualitySource(source: StreamSource): FormattedStreamSource[] {
+	const qualities = parseRawQualityText(source.value);
+	if (!qualities.length) return [];
+
+	return [
+		{
+			...source,
+			label: source.label || 'ReelShort',
+			playerUrl: buildRawQualityMasterPlaylist(qualities),
+			serverUrl: source.value
+		}
+	];
+}
+
 /**
  * Format satu StreamSource → proxy URL string.
  * Return null jika provider tidak didukung.
@@ -199,6 +291,9 @@ export function formatProxySources(
 	});
 
 	return sorted.flatMap((source) => {
+		const rawQualitySources = formatRawQualitySource(source);
+		if (rawQualitySources.length) return rawQualitySources;
+
 		const playerUrl = formatProxyUrl(source, baseUrl);
 		if (!playerUrl) return [];
 		return [{ ...source, playerUrl, serverUrl: source.value }];

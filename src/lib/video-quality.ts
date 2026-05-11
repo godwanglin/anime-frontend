@@ -1,4 +1,4 @@
-const QUALITY_LADDER = [1080, 720, 480, 360, 240, 144] as const;
+const QUALITY_LADDER = [1080, 720, 540, 480, 360, 240, 144] as const;
 
 export function normalizedQualityHeight(height: number) {
 	if (!Number.isFinite(height) || height <= 0) return 0;

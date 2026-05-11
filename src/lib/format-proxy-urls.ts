@@ -120,6 +120,11 @@ function encodeHex(value: string) {
 }
 
 function parseQualityHeight(value: string) {
+	const normalized = value.trim().toLowerCase();
+	if (normalized === 'hd') return 1080;
+	if (normalized === 'sd') return 720;
+	if (normalized === 'ld') return 540;
+
 	const match = value.match(/(\d{3,4})\s*p?/i);
 	if (!match) return 0;
 	const height = Number.parseInt(match[1], 10);

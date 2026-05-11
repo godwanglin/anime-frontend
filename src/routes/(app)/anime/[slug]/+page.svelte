@@ -215,7 +215,9 @@
 
 	function episodeHref(ep?: Episode) {
 		if (!ep?.slug) return '#';
-		return `/anime/${ep.animeSlug ?? activeAnimeSlug}/${ep.slug}`;
+		const animeSlug = ep.animeSlug ?? activeAnimeSlug;
+		const baseRoute = activeAnime.type?.toLowerCase() === 'short' ? 'short' : 'anime';
+		return `/${baseRoute}/${animeSlug}/${ep.slug}`;
 	}
 
 	function episodeLoginHref(ep?: Episode) {

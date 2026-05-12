@@ -546,8 +546,89 @@ body.short-sheet-lock {
 	}
 }
 
+/* ===== FULLSCREEN LAYOUT ===== */
+
 :fullscreen .short-stage,
 :-webkit-full-screen .short-stage {
 	width: 100%;
 	max-width: 100%;
+}
+
+/* Hide description in all fullscreen modes */
+:fullscreen .short-copy p,
+:-webkit-full-screen .short-copy p {
+	display: none;
+}
+
+/* Title only — push up above progress bar */
+:fullscreen .short-copy,
+:-webkit-full-screen .short-copy {
+	right: 72px;
+	bottom: max(68px, calc(env(safe-area-inset-bottom) + 54px));
+}
+
+/* ===== LANDSCAPE FULLSCREEN (mobile rotated) ===== */
+@media (orientation: landscape) {
+	:fullscreen .short-top,
+	:-webkit-full-screen .short-top {
+		top: max(10px, env(safe-area-inset-top));
+		left: max(14px, env(safe-area-inset-left));
+		right: max(14px, env(safe-area-inset-right));
+	}
+
+	/* Actions: horizontal row pinned to bottom-right */
+	:fullscreen .short-actions,
+	:-webkit-full-screen .short-actions {
+		top: auto;
+		right: max(14px, env(safe-area-inset-right));
+		bottom: max(52px, calc(env(safe-area-inset-bottom) + 40px));
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 2px;
+		width: auto;
+	}
+
+	/* Hide avatar & text labels in landscape */
+	:fullscreen .short-actions .short-avatar,
+	:-webkit-full-screen .short-actions .short-avatar {
+		display: none;
+	}
+
+	:fullscreen .short-actions button > span,
+	:-webkit-full-screen .short-actions button > span {
+		display: none;
+	}
+
+	:fullscreen .short-actions button,
+	:-webkit-full-screen .short-actions button {
+		width: 40px;
+		min-height: 36px;
+		gap: 0;
+	}
+
+	/* Title: bottom-left, single line, won't overlap actions */
+	:fullscreen .short-copy,
+	:-webkit-full-screen .short-copy {
+		right: auto;
+		bottom: max(52px, calc(env(safe-area-inset-bottom) + 40px));
+		left: max(16px, env(safe-area-inset-left));
+		max-width: 54%;
+	}
+
+	:fullscreen .short-copy h1,
+	:-webkit-full-screen .short-copy h1 {
+		font-size: 14px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	/* Progress bar: full width, very bottom, respects safe areas */
+	:fullscreen .short-progress-bar,
+	:-webkit-full-screen .short-progress-bar {
+		right: max(12px, env(safe-area-inset-right));
+		bottom: max(8px, env(safe-area-inset-bottom));
+		left: max(12px, env(safe-area-inset-left));
+	}
 }

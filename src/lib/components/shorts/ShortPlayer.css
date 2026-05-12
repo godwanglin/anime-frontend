@@ -108,6 +108,36 @@ body.short-sheet-lock {
 	color: rgb(255 255 255 / 0.96);
 }
 
+.short-watch-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 6px 12px 6px 8px;
+	font-size: 12px;
+	font-weight: 700;
+	color: white;
+	background: rgb(255 255 255 / 0.14);
+	border: 1px solid rgb(255 255 255 / 0.22);
+	border-radius: 999px;
+	backdrop-filter: blur(8px);
+	white-space: nowrap;
+	text-shadow: none;
+	transition: background 150ms ease;
+}
+
+.short-watch-btn:hover,
+.short-watch-btn:active {
+	background: rgb(255 255 255 / 0.24);
+}
+
+.short-watch-btn .material-symbols-rounded,
+.short-watch-btn .material-symbols-outlined,
+.short-watch-btn .material-symbols-sharp {
+	font-size: 16px;
+	font-weight: 400;
+	line-height: 1;
+}
+
 .short-copy {
 	position: absolute;
 	right: 72px;

@@ -116,6 +116,7 @@
 		anime.thumbnail || poster || activeEpisode.thumbnail || anime.cover || anime.bigCover || ''
 	);
 	const seriesHref = $derived(`/anime/${anime.slug}`);
+	const watchHref = $derived(`/anime/${anime.slug}/${activeEpisode.slug}`);
 	const reaction = $derived(videoReactions.getReaction(activeEpisode?.id));
 	const isSaved = $derived(saved.checkSaved(anime?.id));
 	const sortedEpisodes = $derived([...episodes].filter((item) => item.slug).sort((a, b) => Number(a.number) - Number(b.number)));
@@ -787,6 +788,10 @@
 								<AppIcon name="arrow_back" />
 							</a>
 							<span>{episodeLabel}</span>
+							<a href={watchHref} class="short-watch-btn" aria-label="Tonton di watch normal">
+								<AppIcon name="tv" />
+								<span>Watch</span>
+							</a>
 						</div>
 
 						{#if previewTime}

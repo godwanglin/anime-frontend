@@ -148,7 +148,13 @@
 	});
 
 	function isHlsSource(value: string) {
-		return value.startsWith('data:application/vnd.apple.mpegurl') || /\.m3u8(?:$|[?#])/i.test(value);
+		const lower = value.toLowerCase();
+		if (/\.mp4(?:$|[?#])/.test(lower)) return false;
+		return (
+			lower.startsWith('data:application/vnd.apple.mpegurl') ||
+			/\.m3u8(?:$|[?#])/i.test(value) ||
+			lower.includes('/playlist')
+		);
 	}
 
 	function tryNextSource() {

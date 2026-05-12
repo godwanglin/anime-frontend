@@ -544,5 +544,10 @@ body.short-sheet-lock {
 	.short-shell {
 		background: radial-gradient(circle at top, #1b1628 0, #050506 42%);
 	}
+}
 
+:fullscreen .short-stage,
+:-webkit-full-screen .short-stage {
+	width: 100%;
+	max-width: 100%;
 }

@@ -195,7 +195,14 @@
 				hls = new Hls({
 					enableWorker: true,
 					lowLatencyMode: false,
-					backBufferLength: 30
+					// buffer aggressively — short dramas are short enough to pre-load most of
+					maxBufferLength: 90,
+					maxMaxBufferLength: 180,
+					maxBufferSize: 120 * 1000 * 1000, // 120 MB
+					backBufferLength: 60,
+					// start from highest quality available
+					startLevel: -1,
+					abrEwmaDefaultEstimate: 2_000_000,
 				});
 				hls.attachMedia(videoEl);
 				hls.on(Hls.Events.MEDIA_ATTACHED, () => {
@@ -203,8 +210,13 @@
 					hls.loadSource(playbackUrl);
 				});
 				hls.on(Hls.Events.MANIFEST_PARSED, () => play());
-				hls.on(Hls.Events.ERROR, (_: unknown, data: { fatal?: boolean }) => {
-					if (data.fatal) tryNextSource();
+				hls.on(Hls.Events.ERROR, (_: unknown, data: { fatal?: boolean; type?: string }) => {
+					if (!data.fatal) return;
+					if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+						hls.recoverMediaError();
+					} else {
+						tryNextSource();
+					}
 				});
 				return;
 			}

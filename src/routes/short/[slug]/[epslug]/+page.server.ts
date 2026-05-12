@@ -84,7 +84,8 @@ async function refreshAuthSession(input: {
 	if (!response.ok) return null;
 
 	const data = payload?.data as { accessToken?: string; refreshToken?: string } | undefined;
-	if (data?.accessToken) setAuthCookie(input.cookies, 'accessToken', data.accessToken, ACCESS_TOKEN_MAX_AGE);
+	if (data?.accessToken)
+		setAuthCookie(input.cookies, 'accessToken', data.accessToken, ACCESS_TOKEN_MAX_AGE);
 	if (data?.refreshToken)
 		setAuthCookie(input.cookies, 'refreshToken', data.refreshToken, REFRESH_TOKEN_MAX_AGE);
 	return data ?? null;
@@ -99,7 +100,7 @@ async function loadYouTubeSubtitles(input: {
 	fetch: Parameters<PageServerLoad>[0]['fetch'];
 }) {
 	const episode = input.detail?.episode as Record<string, unknown> | undefined;
-	const servers = ((input.detail?.servers ?? episode?.servers ?? []) as VideoServer[]);
+	const servers = (input.detail?.servers ?? episode?.servers ?? []) as VideoServer[];
 	const youtubeServer = servers.find((server) => server.value && isYouTubeUrl(server.value));
 	if (!youtubeServer?.value) return {};
 

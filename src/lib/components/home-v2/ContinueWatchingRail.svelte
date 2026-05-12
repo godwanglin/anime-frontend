@@ -2,6 +2,7 @@
 	import OptimizedImage from '$lib/components/OptimizedImage.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
+	import { isShortSlug } from '$lib/stores/short-slugs';
 	import PlayIcon from './icons/PlayIcon.svelte';
 	import ChevronRightIcon from './icons/ChevronRightIcon.svelte';
 	import ClockIcon from './icons/ClockIcon.svelte';
@@ -52,7 +53,11 @@
 				class="flex max-w-[calc(100%+2rem)] gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4"
 			>
 				{#each items as item (item.episodeSlug)}
-					<a href="/anime/{item.animeSlug}/{item.episodeSlug}" class="cw-card group">
+					{@const isShort = item.animeType?.toLowerCase() === 'short' || isShortSlug(item.animeSlug)}
+					{@const cwHref = isShort
+						? `/short/${item.animeSlug}/${item.episodeSlug}`
+						: `/anime/${item.animeSlug}/${item.episodeSlug}`}
+					<a href={cwHref} class="cw-card group">
 						<div class="cw-thumb">
 							<OptimizedImage
 								src={item.animeThumbnail}

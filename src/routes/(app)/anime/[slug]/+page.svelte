@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
 	import config from '$lib/config';
 	import SEO from '$lib/components/SEO.svelte';
@@ -188,6 +189,11 @@
 	});
 
 	onMount(() => {
+		if (activeAnime.type?.toLowerCase() === 'short' && firstEp?.slug) {
+			void goto(`/short/${activeAnimeSlug}/${firstEp.slug}`, { replaceState: true });
+			return;
+		}
+
 		const mq = window.matchMedia('(min-width: 768px)');
 		const update = () => {
 			isDesktop = mq.matches;

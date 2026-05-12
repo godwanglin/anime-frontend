@@ -56,7 +56,11 @@
 					totalEpisodes: item.totalEpisodes,
 					episodeCount: item.episodeCount
 				})}
-				<a href={item.href ?? '/anime/' + item.slug} class="er-card group">
+				{@const isShort = item.animeType?.toLowerCase() === 'short'}
+		{@const epHref = isShort && item.href
+			? item.href.replace(/^\/anime\//, '/short/')
+			: (item.href ?? '/anime/' + item.slug)}
+		<a href={epHref} class="er-card group">
 					<div class="er-thumb">
 						<OptimizedImage
 							src={item.thumbnail}

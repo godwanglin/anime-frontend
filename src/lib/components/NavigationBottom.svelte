@@ -7,7 +7,7 @@
 
 	const navItems = [
 		{ href: '/', icon: 'home', label: 'Home' },
-		{ href: '/popular', icon: 'local_fire_department', label: 'Populer' },
+		{ href: '/short', icon: 'smart_display', label: 'Short' },
 		{ href: '/chat', icon: 'forum', label: 'Chat', floating: true },
 		{ href: '/browse', icon: 'explore', label: 'Jelajah' },
 		{ href: '/profile', icon: 'person', label: 'Profil' }

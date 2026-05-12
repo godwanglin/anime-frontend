@@ -7,6 +7,7 @@ export type WatchHistory = {
 	animeSlug: string;
 	animeTitle: string;
 	animeThumbnail: string;
+	animeType?: string | null;
 	episodeId: number;
 	episodeSlug: string;
 	episodeNumber: number;

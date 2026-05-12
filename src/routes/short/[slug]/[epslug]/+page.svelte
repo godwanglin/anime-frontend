@@ -49,9 +49,11 @@
 	);
 	const sources = $derived(formatProxySources(servers) as FormattedStreamSource[]);
 	const episodes = $derived.by(() => {
-		const directEpisodes = (((detail as any)?.episodes as Episode[] | undefined) ?? []) as Episode[];
-		const seasonEpisodes = ((((detail as any)?.seasons as Season[] | undefined) ?? []) as Season[])
-			.flatMap((season) => season.episodes ?? []);
+		const directEpisodes = (((detail as any)?.episodes as Episode[] | undefined) ??
+			[]) as Episode[];
+		const seasonEpisodes = (
+			(((detail as any)?.seasons as Season[] | undefined) ?? []) as Season[]
+		).flatMap((season) => season.episodes ?? []);
 		const animeEpisodes = (anime.episodes ?? []) as Episode[];
 		const candidates = directEpisodes.length
 			? directEpisodes
@@ -62,9 +64,7 @@
 		return episode.slug ? [episode, ...candidates] : candidates;
 	});
 	const isShort = $derived(String(anime.type ?? '').toLowerCase() === 'short');
-	const currentSlug = $derived(
-		String(data?.params?.epslug ?? episode.slug ?? '')
-	);
+	const currentSlug = $derived(String(data?.params?.epslug ?? episode.slug ?? ''));
 </script>
 
 {#if data.error}
@@ -86,13 +86,7 @@
 		<a href="/anime/{anime.slug}">Kembali ke detail</a>
 	</div>
 {:else}
-	<ShortPlayer
-		{anime}
-		{episode}
-		{sources}
-		{episodes}
-		{currentSlug}
-	/>
+	<ShortPlayer {anime} {episode} {sources} {episodes} {currentSlug} />
 {/if}
 
 <style>

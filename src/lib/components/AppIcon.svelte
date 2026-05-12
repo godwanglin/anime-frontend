@@ -61,6 +61,7 @@
 		forum: 'ChatAlt2',
 		forward_10: 'FastForward',
 		forward_5: 'FastForward',
+		fullscreen: 'ArrowsExpand',
 		grid_view: 'ViewGrid',
 		hd: 'DesktopComputer',
 		history: 'Clock',

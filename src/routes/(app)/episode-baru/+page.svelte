@@ -22,6 +22,12 @@
 	const episodes = $derived((data.episodes ?? []) as Episode[]);
 	const featured = $derived(episodes[0]);
 	const restEpisodes = $derived(episodes.slice(1));
+
+	function resolveHref(item: Episode) {
+		if (!item.href) return '#';
+		if (item.animeType?.toLowerCase() === 'short') return item.href.replace(/^\/anime\//, '/short/');
+		return item.href;
+	}
 	const activeLimit = $derived(Number(data.limit ?? 48));
 
 	const limitOptions = [
@@ -79,7 +85,7 @@
 
 				{#if featured}
 					<a
-						href={featured.href}
+						href={resolveHref(featured)}
 						class="group flex max-w-2xl items-center gap-3 rounded-2xl bg-white/10 p-2.5 backdrop-blur-xl ring-1 ring-white/15 transition hover:bg-white/15"
 					>
 						<div class="relative h-16 w-28 shrink-0 overflow-hidden rounded-xl bg-zinc-800">
@@ -154,7 +160,7 @@
 			{#each restEpisodes as item, i}
 				{@const episodeLabel = episodeBadgeLabel(item)}
 				<a
-					href={item.href}
+					href={resolveHref(item)}
 					class="episode-card group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-200 md:hover:-translate-y-0.5 md:hover:shadow-lg md:hover:shadow-black/10 md:hover:ring-violet-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-violet-500/40"
 				>
 					<div class="relative aspect-video overflow-hidden bg-zinc-200 dark:bg-zinc-800">

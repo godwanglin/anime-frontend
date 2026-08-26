@@ -11,7 +11,7 @@
  * Origin yang sudah ketauan blokir CORS dicatat per-sesi supaya request
  * berikutnya ke origin itu langsung skip step 2 (gak buang round-trip).
  */
-const ALLOWED_EFFECT_CDN_ORIGIN = 'https://cdn-static.weebin.site';
+const ALLOWED_EFFECT_CDN_ORIGIN = 'https://cdn-static.weebinhub.com';
 const cache = new Map<string, string>();
 const inflight = new Map<string, Promise<string>>();
 const corsBlockedOrigins = new Set<string>();
@@ -274,9 +274,7 @@ export async function assetLoaderV2<T extends { src: string }>(
 					? `${effect.src}${effect.src.includes('?') ? '&' : '?'}_t=${Date.now()}`
 					: effect.src;
 
-				const blobUrl = bust
-					? await refreshEffectV2(key, url)
-					: await preloadEffectV2(key, url);
+				const blobUrl = bust ? await refreshEffectV2(key, url) : await preloadEffectV2(key, url);
 
 				return {
 					...effect,

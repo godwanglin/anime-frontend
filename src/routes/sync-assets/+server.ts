@@ -2,7 +2,7 @@ import { env } from '$env/dynamic/public';
 import type { RequestHandler } from './$types';
 
 function apiBaseUrl() {
-	return (env.PUBLIC_API_BASE_URL || 'https://weebin.site').replace(/\/+$/, '');
+	return (env.PUBLIC_API_BASE_URL || 'https://weebinhub.com').replace(/\/+$/, '');
 }
 
 export const OPTIONS: RequestHandler = async () => {

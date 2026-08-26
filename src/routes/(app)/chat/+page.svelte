@@ -888,7 +888,7 @@
 
 	function contextSubtitle(context: ChatContextItem) {
 		if (context.type === 'episode' && context.animeTitle) return context.animeTitle;
-		return context.description ?? 'weebin.site';
+		return context.description ?? 'weebinhub.com';
 	}
 
 	async function openProfileCard(user: ChatUser, anchorEl: HTMLButtonElement) {
@@ -1474,7 +1474,7 @@
 													<small
 														>{link.preview
 															? contextSubtitle(link.preview)
-															: 'Link internal weebin.site'}</small
+															: 'Link internal weebinhub.com'}</small
 													>
 													<span class="context-action">
 														<AppIcon name="open_in_new" />
@@ -1705,7 +1705,7 @@
 		title="Mention WeebinAI"
 		onclick={triggerWeebinAiShortcut}
 	>
-		<img src="https://cdn-static.weebin.site/content/avatar/weebin-ai.png" alt="" loading="lazy" />
+		<img src="https://cdn-static.weebinhub.com/content/avatar/weebin-ai.png" alt="" loading="lazy" />
 	</button>
 {/if}
 

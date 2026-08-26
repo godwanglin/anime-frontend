@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import config from '$lib/config';
 
-	const CDN_PREFIX = 'https://cdn-static.weebin.site';
+	const CDN_PREFIX = 'https://cdn-static.weebinhub.com';
 	const MAX_ASSETS = 100;
 
 	type AssetContext = 'anime' | 'episode';

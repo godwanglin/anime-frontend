@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 
-const ALLOWED_ORIGIN = 'https://cdn-static.weebin.site';
+const ALLOWED_ORIGIN = 'https://cdn-static.weebinhub.com';
 const MAX_REDIRECTS = 3;
 
 function allowedCdnUrl(rawUrl: string) {

@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
-		allowedHosts: ['test.weebin.site'],
+		allowedHosts: ['test.weebinhub.com'],
 		proxy: {
 			'/api': {
 				target: 'http://localhost:3000',
@@ -14,7 +14,7 @@ export default defineConfig({
 		}
 	},
 	preview: {
-		allowedHosts: ['test.weebin.site'],
+		allowedHosts: ['test.weebinhub.com'],
 		port: 5173
 	}
 });

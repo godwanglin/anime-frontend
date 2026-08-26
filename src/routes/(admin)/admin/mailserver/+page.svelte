@@ -270,7 +270,7 @@
 							<input
 								value={config.smtpHost}
 								oninput={(e) => update('smtpHost', e.currentTarget.value)}
-								placeholder="mail.weebin.site"
+								placeholder="mail.weebinhub.com"
 								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
 							/>
 						</label>
@@ -290,7 +290,7 @@
 							<input
 								value={config.smtpUser}
 								oninput={(e) => update('smtpUser', e.currentTarget.value)}
-								placeholder="noreply@weebin.site"
+								placeholder="noreply@weebinhub.com"
 								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
 							/>
 						</label>
@@ -321,7 +321,7 @@
 							<input
 								value={config.smtpFromEmail}
 								oninput={(e) => update('smtpFromEmail', e.currentTarget.value)}
-								placeholder="noreply@weebin.site"
+								placeholder="noreply@weebinhub.com"
 								class="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm outline-none focus:border-violet-500"
 							/>
 						</label>

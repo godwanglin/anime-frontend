@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { adminApi, toQuery } from '$lib/admin/api';
+	import { imageUrl } from '$lib/image-url';
 	import { onMount } from 'svelte';
 
 	type ActivityUser = {
@@ -204,7 +205,7 @@
 						<div class="min-w-0">
 							<div class="flex items-center gap-3">
 								{#if item.user.avatar}
-									<img src={item.user.avatar} alt={displayName(item)} class="h-11 w-11 rounded-full object-cover" />
+									<img src={imageUrl(item.user.avatar)} alt={displayName(item)} class="h-11 w-11 rounded-full object-cover" />
 								{:else}
 									<div class="flex h-11 w-11 items-center justify-center rounded-full bg-violet-600 text-sm font-black text-white">
 										{initials(item)}
@@ -280,7 +281,7 @@
 								<div class="space-y-2">
 									{#each item.recentSaved.slice(0, 3) as saved}
 										<a href={`/anime/${saved.animeSlug}`} class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-zinc-900">
-											<img src={saved.animeThumbnail} alt={saved.animeTitle} class="h-8 w-8 rounded object-cover" />
+											<img src={imageUrl(saved.animeThumbnail)} alt={saved.animeTitle} class="h-8 w-8 rounded object-cover" />
 											<div class="min-w-0">
 												<p class="line-clamp-1 text-xs font-black text-zinc-200">{saved.animeTitle}</p>
 												<p class="text-[11px] text-zinc-600">{timeAgo(saved.savedAt)}</p>

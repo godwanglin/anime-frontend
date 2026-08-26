@@ -2,6 +2,7 @@
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { adminApi } from '$lib/admin/api';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
+	import { imageUrl } from '$lib/image-url';
 	import { displayUserName } from '$lib/user-display';
 
 	type Reporter  = { id: number; username: string; fullName?: string | null; avatar: string | null };
@@ -140,7 +141,7 @@
 					<div class="flex flex-wrap items-start justify-between gap-3">
 						<div class="flex items-center gap-3 min-w-0">
 							<img
-								src={report.reporter.avatar ?? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayUserName(report.reporter))}`}
+								src={report.reporter.avatar ? imageUrl(report.reporter.avatar) : `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayUserName(report.reporter))}`}
 								alt={displayUserName(report.reporter)}
 								class="h-8 w-8 rounded-full bg-zinc-800 shrink-0"
 							/>

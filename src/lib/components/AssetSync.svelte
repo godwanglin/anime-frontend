@@ -3,8 +3,8 @@
 	import { onMount } from 'svelte';
 	import config from '$lib/config';
 
-	const CDN_PREFIX = 'https://cdn-static.weebinhub.com';
 	const MAX_ASSETS = 100;
+	const LEGACY_IMAGE_HOST = 'cdn-static.weebin.site';
 
 	type AssetContext = 'anime' | 'episode';
 	type SyncAsset = {
@@ -26,19 +26,24 @@
 
 	function normalizeSrc(src: string) {
 		try {
-			return new URL(src, window.location.href).href;
+			const resolved = new URL(src, window.location.href);
+			if (resolved.hostname === LEGACY_IMAGE_HOST) {
+				return `${config.IMAGE_CDN.replace(/\/+$/, '')}${resolved.pathname}${resolved.search}${resolved.hash}`;
+			}
+			return resolved.href;
 		} catch {
 			return '';
 		}
 	}
 
 	function collectAssets() {
+		const cdnPrefix = config.IMAGE_CDN.replace(/\/+$/, '');
 		const seen = new Set<string>();
 		const assets: SyncAsset[] = [];
 
 		document.querySelectorAll<HTMLImageElement>('img[src]').forEach((img) => {
 			const src = normalizeSrc(img.currentSrc || img.src || img.getAttribute('src') || '');
-			if (!src || src.startsWith(CDN_PREFIX)) return;
+			if (!src || src.startsWith(cdnPrefix)) return;
 
 			const marker = img.closest<HTMLElement>('[data-sync-asset-context][data-sync-asset-id]');
 			const context = marker?.dataset.syncAssetContext;
@@ -66,7 +71,7 @@
 		const assets = collectAssets();
 		if (assets.length === 0) return;
 
-		fetch(`${config.API_BASE_URL}/api/sync-assets`, {
+		fetch('/sync-assets', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ assets }),

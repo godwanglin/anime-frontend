@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { imageUrl } from '$lib/image-url';
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { formatCommentTimestamp, withCommentTimestamp } from '$lib/comment-timestamp';
 	import { auth } from '$lib/stores/auth.svelte';
@@ -62,7 +63,7 @@
 		<!-- Current user avatar -->
 		{#if auth.user?.avatar}
 			<img
-				src={auth.user.avatar}
+				src={imageUrl(auth.user.avatar)}
 				alt=""
 				class="shrink-0 rounded-full object-cover mt-0.5"
 				style="

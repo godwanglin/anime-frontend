@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import config from '$lib/config';
+	import { imageUrl } from '$lib/image-url';
 	import { auth } from '$lib/stores/auth.svelte';
 
 	type ScanLog = { time: string; type: 'info' | 'success' | 'error'; message: string };
@@ -281,7 +282,7 @@
 							onclick={() => (selectedItem = item)}
 							class="flex w-full gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-left hover:border-violet-500/60"
 						>
-							<img src={item.card.thumbnail ?? '/icon.png'} alt="" class="h-14 w-10 rounded object-cover" />
+							<img src={item.card.thumbnail ? imageUrl(item.card.thumbnail) : '/icon.png'} alt="" class="h-14 w-10 rounded object-cover" />
 							<div class="min-w-0">
 								<p class="truncate text-sm font-bold text-zinc-100">{item.card.title}</p>
 								<p class="mt-1 text-xs text-zinc-500">
@@ -299,7 +300,7 @@
 				<h3 class="text-sm font-black uppercase tracking-[0.18em] text-zinc-400">Preview Data</h3>
 				{#if selectedItem?.detail}
 					<div class="mt-4 grid gap-3 lg:grid-cols-[12rem_1fr]">
-						<img src={selectedItem.card.thumbnail ?? '/icon.png'} alt="" class="aspect-[3/4] w-full rounded-xl object-cover" />
+						<img src={selectedItem.card.thumbnail ? imageUrl(selectedItem.card.thumbnail) : '/icon.png'} alt="" class="aspect-[3/4] w-full rounded-xl object-cover" />
 						<div>
 							<h4 class="text-xl font-black text-zinc-50">{selectedItem.detail.title}</h4>
 							<p class="mt-2 text-sm text-zinc-400">{selectedItem.detail.genres.join(', ') || 'Genre kosong'}</p>

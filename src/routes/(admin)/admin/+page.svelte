@@ -3,6 +3,7 @@
 	import { Chart } from 'chart.js/auto';
 	import { adminApi } from '$lib/admin/api';
 	import AdminStatsCard from '$lib/components/admin/AdminStatsCard.svelte';
+	import { imageUrl } from '$lib/image-url';
 	import { displayUserName } from '$lib/user-display';
 
 	type Stats = {
@@ -98,7 +99,7 @@
 					{#each stats.topAnime as anime, i}
 						<a href="/anime/{anime.slug}" class="flex items-center gap-3 rounded-lg p-2 hover:bg-zinc-800">
 							<span class="w-6 text-center text-sm font-black text-violet-400">{i + 1}</span>
-							<img src={anime.thumbnail ?? '/icon.png'} alt={anime.title} class="h-10 w-10 rounded-lg object-cover" />
+							<img src={anime.thumbnail ? imageUrl(anime.thumbnail) : '/icon.png'} alt={anime.title} class="h-10 w-10 rounded-lg object-cover" />
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-bold text-zinc-100">{anime.title}</p>
 								<p class="text-xs text-zinc-500">{format(anime.viewCount)} histori</p>

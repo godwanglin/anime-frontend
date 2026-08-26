@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { imageUrl } from '$lib/image-url';
+
 	type Loading = 'eager' | 'lazy';
 	type FetchPriority = 'high' | 'low' | 'auto';
 	type Decoding = 'async' | 'sync' | 'auto';
@@ -38,8 +40,12 @@
 
 	let loaded = $state(false);
 
+	const resolvedSrc = $derived(imageUrl(src));
 	const fallbackSrcset = $derived(
-		srcset ?? (src ? `${src} 320w, ${src} 480w, ${src} 640w, ${src} 960w` : undefined)
+		srcset ??
+			(resolvedSrc
+				? `${resolvedSrc} 320w, ${resolvedSrc} 480w, ${resolvedSrc} 640w, ${resolvedSrc} 960w`
+				: undefined)
 	);
 
 	function handleLoad() {
@@ -58,7 +64,7 @@
 		<source type="image/webp" srcset={webpSrcset} {sizes} />
 	{/if}
 	<img
-		{src}
+		src={resolvedSrc}
 		{alt}
 		srcset={fallbackSrcset}
 		{sizes}

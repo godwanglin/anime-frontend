@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { imageUrl } from '$lib/image-url';
+
 	import { getFrameAssetUrl, getFrameTweak, type EquippedFrame } from '$lib/decorations';
 
 	type Props = {
@@ -57,7 +59,7 @@
 	{#if showInner}
 		<span class="avatar-inner">
 			{#if src}
-				<img {src} {alt} loading="lazy" decoding="async" class="avatar-img" />
+		<img src={imageUrl(src)} {alt} loading="lazy" decoding="async" class="avatar-img" />
 			{:else}
 				<span class="avatar-fallback" aria-hidden={alt ? 'false' : 'true'}>{initial}</span>
 			{/if}

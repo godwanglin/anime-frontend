@@ -2,6 +2,7 @@
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { adminApi } from '$lib/admin/api';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
+	import { imageUrl } from '$lib/image-url';
 	import { displayUserName } from '$lib/user-display';
 
 	type UserLite = { id: number; username: string; fullName?: string | null; avatar?: string | null };
@@ -150,7 +151,7 @@
 					<div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 						<div class="flex min-w-0 gap-3">
 							<img
-								src={report.episode.thumbnail ?? report.episode.anime.thumbnail ?? '/icon.png'}
+								src={report.episode.thumbnail ? imageUrl(report.episode.thumbnail) : (report.episode.anime.thumbnail ? imageUrl(report.episode.anime.thumbnail) : '/icon.png')}
 								alt={report.episode.anime.title}
 								class="h-20 w-14 shrink-0 rounded-lg object-cover bg-zinc-800"
 							/>

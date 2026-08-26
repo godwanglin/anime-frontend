@@ -6,6 +6,7 @@
 	import AdminFormInput from '$lib/components/admin/AdminFormInput.svelte';
 	import AdminModal from '$lib/components/admin/AdminModal.svelte';
 	import AdminTagInput from '$lib/components/admin/AdminTagInput.svelte';
+	import { imageUrl } from '$lib/image-url';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
 
 	type Episode = { id: number; number: number; title: string; slug: string; sub?: string; date?: string };
@@ -151,8 +152,8 @@
 		{:else}
 			<section class="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
 				<div class="grid gap-4 md:grid-cols-2">
-					<div><AdminFormInput label="Thumbnail URL" name="thumbnail" bind:value={thumbnail} />{#if thumbnail}<img src={thumbnail} alt="Thumbnail" class="mt-3 max-h-56 rounded-lg object-cover" />{/if}</div>
-					<div><AdminFormInput label="Big Cover URL" name="bigCover" bind:value={bigCover} />{#if bigCover}<img src={bigCover} alt="Cover" class="mt-3 max-h-56 rounded-lg object-cover" />{/if}</div>
+					<div><AdminFormInput label="Thumbnail URL" name="thumbnail" bind:value={thumbnail} />{#if thumbnail}<img src={imageUrl(thumbnail)} alt="Thumbnail" class="mt-3 max-h-56 rounded-lg object-cover" />{/if}</div>
+					<div><AdminFormInput label="Big Cover URL" name="bigCover" bind:value={bigCover} />{#if bigCover}<img src={imageUrl(bigCover)} alt="Cover" class="mt-3 max-h-56 rounded-lg object-cover" />{/if}</div>
 				</div>
 			</section>
 		{/if}

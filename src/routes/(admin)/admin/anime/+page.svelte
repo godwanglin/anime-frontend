@@ -8,6 +8,7 @@
 	import AdminSearchBar from '$lib/components/admin/AdminSearchBar.svelte';
 	import AdminStatusBadge from '$lib/components/admin/AdminStatusBadge.svelte';
 	import AdminTable from '$lib/components/admin/AdminTable.svelte';
+	import { imageUrl } from '$lib/image-url';
 	import { adminToast } from '$lib/stores/adminToast.svelte';
 
 	type Anime = {
@@ -155,7 +156,7 @@
 					class="flex items-center gap-3 text-left"
 				>
 					<img
-						src={row.thumbnail ?? '/icon.png'}
+						src={row.thumbnail ? imageUrl(row.thumbnail) : '/icon.png'}
 						alt={row.title}
 						class="h-12 w-10 rounded-lg object-cover"
 					/>

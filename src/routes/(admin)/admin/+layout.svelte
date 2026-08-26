@@ -7,6 +7,7 @@
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { imageUploader } from '$lib/stores/image-uploader.svelte';
+	import { imageUrl } from '$lib/image-url';
 	import { notifications } from '$lib/stores/notifications.svelte';
 	import type { AppNotification } from '$lib/stores/notifications.svelte';
 	import { displayUserName, userInitial } from '$lib/user-display';
@@ -306,8 +307,9 @@
 			<div class="border-t border-zinc-800 p-4">
 				<div class="mb-3 flex items-center gap-3">
 					<img
-						src={adminUser.avatar ||
-							`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(adminDisplayName)}`}
+						src={adminUser.avatar
+							? imageUrl(adminUser.avatar)
+							: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(adminDisplayName)}`}
 						alt={adminDisplayName}
 						class="h-10 w-10 rounded-full bg-zinc-800"
 					/>

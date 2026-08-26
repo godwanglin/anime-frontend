@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
+	import { imageUrl } from '$lib/image-url';
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import config from '$lib/config';
 	import { formatProxySources } from '$lib/format-proxy-urls';
@@ -113,7 +114,7 @@
 			''
 	);
 	const sheetPoster = $derived(
-		anime.thumbnail || poster || activeEpisode.thumbnail || anime.cover || anime.bigCover || ''
+		imageUrl(anime.thumbnail || poster || activeEpisode.thumbnail || anime.cover || anime.bigCover || '')
 	);
 	const seriesHref = $derived(`/anime/${anime.slug}`);
 	const watchHref = $derived(`/anime/${anime.slug}/${activeEpisode.slug}`);
@@ -912,7 +913,7 @@
 					</div>
 				{:else}
 					<a class="short-placeholder" href={episodeHref(item)}>
-						<img src={item.thumbnail ?? poster} alt={item.title ?? `Episode ${item.number}`} />
+						<img src={imageUrl(item.thumbnail ?? poster)} alt={item.title ?? `Episode ${item.number}`} />
 					</a>
 				{/if}
 			</section>

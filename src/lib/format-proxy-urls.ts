@@ -1,5 +1,6 @@
 import config from './config';
 import { normalizedQualityHeight } from './video-quality';
+import { isYouTubeUrl, getYouTubePlaylistUrl } from './youtube-proxy';
 
 interface StreamSource {
 	id: number;
@@ -252,6 +253,10 @@ export function formatProxyUrl(
 		const id = extractSbchillId(value);
 		if (!id) return null;
 		return `${baseUrl}/api/video-stream/okru-stream/playlist/${id}?host=sbchill.com`;
+	}
+
+	if (isYouTubeUrl(value)) {
+		return getYouTubePlaylistUrl(value);
 	}
 
 	const directVideoUrl = normalizeDirectVideoUrl(value);

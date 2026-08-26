@@ -14,6 +14,7 @@
 	import FinalCTA from '$lib/components/home-v2/FinalCTA.svelte';
 
 	const { data } = $props();
+	
 </script>
 
 <SEO />

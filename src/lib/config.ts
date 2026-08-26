@@ -1,7 +1,7 @@
 import { env } from '$env/dynamic/public';
 
 export default {
-	API_BASE_URL: env.PUBLIC_API_BASE_URL || 'https://api.weebinhub.com',
+	API_BASE_URL: env.PUBLIC_API_BASE_URL || 'https://weebinhub.com/api',
 	IMAGE_CDN: env.PUBLIC_IMAGE_CDN || 'https://cdn-static.weebinhub.com',
 	// API_BASE_URL: env.PUBLIC_API_BASE_URL || 'http://localhost:3000',
 	GOOGLE_CLIENT_ID:

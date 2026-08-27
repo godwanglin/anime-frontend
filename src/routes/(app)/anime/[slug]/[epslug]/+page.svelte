@@ -115,40 +115,35 @@
 	const activeServers = $derived(
 		(hydratedServers ?? ((detail as any)?.servers ?? [])) as StreamServer[]
 	);
-	const youtubeServer = $derived(activeServers.find((s) => isYouTubeUrl(s.value)));
-	const streamSources = $derived(
-		loginRequired
-			? []
-			: formatProxySources(activeServers).filter((source) => !isYouTubeUrl(source.value))
-	);
-	const ytDirectUrls = $derived.by(() => {
-		if (loginRequired) return [];
-		if (!youtubeServer) return [];
-		return [144, 240, 360, 480, 720, 1080].map((quality) =>
-			getYouTubeDirectUrl(youtubeServer.value, quality)
-		);
+	const streamSources = $derived(loginRequired ? [] : formatProxySources(activeServers));
+	const ytDirectUrl = $derived.by(() => {
+		if (loginRequired) return null;
+		const ytServer = activeServers.find((s) => isYouTubeUrl(s.value));
+		return ytServer ? getYouTubeDirectUrl(ytServer.value) : null;
 	});
 	const streamUrls = $derived([
-		...ytDirectUrls,
+		...(ytDirectUrl ? [ytDirectUrl] : []),
 		...streamSources.map((s) => s.playerUrl)
 	]);
 	const streamLabels = $derived([
-		...(youtubeServer ? '144p 240p 360p 480p 720p 1080p'.split(' ') : []),
+		...(ytDirectUrl ? ['YouTube'] : []),
 		...streamSources.map((s) => s.label)
 	]);
 	const episodeSubtitles = $derived(extractEpisodeSubtitles(detail));
 	const youtubeDbSubtitlesBySrc = $derived.by(() => {
-		if (!youtubeServer) return {};
+		if (!ytDirectUrl) return {};
+		const ytServer = activeServers.find((server) => isYouTubeUrl(server.value));
+		if (!ytServer) return {};
 
 		const tracks = episodeSubtitles
-			.filter((subtitle) => subtitle.serverUrl === youtubeServer.value)
+			.filter((subtitle) => subtitle.serverUrl === ytServer.value)
 			.map((subtitle) => ({
 				label: subtitle.label,
 				lang: subtitle.language,
 				src: subtitle.fileUrl
 			}));
 
-		return tracks.length ? Object.fromEntries(ytDirectUrls.map((url) => [url, tracks])) : {};
+		return tracks.length ? { [ytDirectUrl]: tracks } : {};
 	});
 	const subtitlesBySrc = $derived({
 		...groupSubtitlesForPlayer(streamSources, episodeSubtitles),
@@ -2480,4 +2475,3 @@
 		}
 	}
 </style>
-

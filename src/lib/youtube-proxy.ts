@@ -25,9 +25,10 @@ export function getYouTubePlaylistUrl(youtubeUrl: string): string {
 	return `${config.API_BASE_URL}/api/video-stream/ydwn-proxy/playlist?url=${encodeURIComponent(targetUrl)}`;
 }
 
-export function getYouTubeDirectUrl(youtubeUrl: string): string {
+export function getYouTubeDirectUrl(youtubeUrl: string, quality?: number): string {
 	const targetUrl = toNormalizedYouTubeUrl(youtubeUrl);
-	return `${config.API_BASE_URL}/api/video-stream/ydwn-proxy/direct.mp4?url=${encodeURIComponent(targetUrl)}`;
+	const qualityQuery = quality ? `&quality=${quality}p` : '';
+	return `${config.API_BASE_URL}/api/video-stream/ydwn-proxy/direct.mp4?url=${encodeURIComponent(targetUrl)}${qualityQuery}`;
 }
 
 export function getYouTubeCaptionsUrl(youtubeUrl: string): string {

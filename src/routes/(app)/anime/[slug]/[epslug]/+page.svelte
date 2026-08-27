@@ -12,7 +12,7 @@
 	import VideoReactionBar from '$lib/components/VideoReactionBar.svelte';
 	import { formatRelativeID } from '$lib/format-date';
 	import { formatProxySources } from '$lib/format-proxy-urls';
-	import { isYouTubeUrl, getYouTubePlaylistUrl } from '$lib/youtube-proxy';
+	import { isYouTubeUrl, getYouTubeDirectUrl } from '$lib/youtube-proxy';
 	import { extractEpisodeSubtitles, groupSubtitlesForPlayer } from '$lib/subtitle-studio';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
@@ -116,22 +116,22 @@
 		(hydratedServers ?? ((detail as any)?.servers ?? [])) as StreamServer[]
 	);
 	const streamSources = $derived(loginRequired ? [] : formatProxySources(activeServers));
-	const ytPlaylistUrl = $derived.by(() => {
+	const ytDirectUrl = $derived.by(() => {
 		if (loginRequired) return null;
 		const ytServer = activeServers.find((s) => isYouTubeUrl(s.value));
-		return ytServer ? getYouTubePlaylistUrl(ytServer.value) : null;
+		return ytServer ? getYouTubeDirectUrl(ytServer.value) : null;
 	});
 	const streamUrls = $derived([
-		...(ytPlaylistUrl ? [ytPlaylistUrl] : []),
+		...(ytDirectUrl ? [ytDirectUrl] : []),
 		...streamSources.map((s) => s.playerUrl)
 	]);
 	const streamLabels = $derived([
-		...(ytPlaylistUrl ? ['YouTube'] : []),
+		...(ytDirectUrl ? ['YouTube'] : []),
 		...streamSources.map((s) => s.label)
 	]);
 	const episodeSubtitles = $derived(extractEpisodeSubtitles(detail));
 	const youtubeDbSubtitlesBySrc = $derived.by(() => {
-		if (!ytPlaylistUrl) return {};
+		if (!ytDirectUrl) return {};
 		const ytServer = activeServers.find((server) => isYouTubeUrl(server.value));
 		if (!ytServer) return {};
 
@@ -143,7 +143,7 @@
 				src: subtitle.fileUrl
 			}));
 
-		return tracks.length ? { [ytPlaylistUrl]: tracks } : {};
+		return tracks.length ? { [ytDirectUrl]: tracks } : {};
 	});
 	const subtitlesBySrc = $derived({
 		...groupSubtitlesForPlayer(streamSources, episodeSubtitles),
@@ -907,7 +907,7 @@
 					{title}
 					autoPlay={preference.pref.autoPlay}
 					{subtitlesBySrc}
-					forceHls
+					forceHls={false}
 					prevHref={previousEpisodeHref}
 					nextHref={nextEpisodeHref}
 					autoNext={preference.pref.autoNextEpisode}

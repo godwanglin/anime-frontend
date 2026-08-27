@@ -115,7 +115,8 @@
 	const activeServers = $derived(
 		(hydratedServers ?? ((detail as any)?.servers ?? [])) as StreamServer[]
 	);
-	const streamSources = $derived(loginRequired ? [] : formatProxySources(activeServers));
+	const nonYoutubeServers = $derived(activeServers.filter((s) => !isYouTubeUrl(s.value)));
+	const streamSources = $derived(loginRequired ? [] : formatProxySources(nonYoutubeServers));
 	const ytPlaylistUrl = $derived.by(() => {
 		if (loginRequired) return null;
 		const ytServer = activeServers.find((s) => isYouTubeUrl(s.value));

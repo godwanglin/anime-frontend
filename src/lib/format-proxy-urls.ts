@@ -1,6 +1,6 @@
 import config from './config';
 import { normalizedQualityHeight } from './video-quality';
-import { isYouTubeUrl, getYouTubePlaylistUrl } from './youtube-proxy';
+import { isYouTubeUrl, getYouTubeDirectUrl } from './youtube-proxy';
 
 interface StreamSource {
 	id: number;
@@ -256,7 +256,7 @@ export function formatProxyUrl(
 	}
 
 	if (isYouTubeUrl(value)) {
-		return getYouTubePlaylistUrl(value);
+		return getYouTubeDirectUrl(value);
 	}
 
 	const directVideoUrl = normalizeDirectVideoUrl(value);

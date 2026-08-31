@@ -67,6 +67,7 @@
 
 	let videoEl = $state<HTMLVideoElement>();
 	let containerEl = $state<HTMLElement>();
+	let videoAspect = $state('16 / 9');
 	let seekbarEl = $state<HTMLInputElement>();
 	let subtitleReapplyRaf = 0;
 	let showEpisodeDrawer = $state(false);
@@ -176,6 +177,9 @@
 
 	function handleLoadedMetadata() {
 		vp.onLoadedMetadata();
+		if (videoEl?.videoWidth && videoEl.videoHeight) {
+			videoAspect = `${videoEl.videoWidth} / ${videoEl.videoHeight}`;
+		}
 		if (vp.allSubtitles.length > 0) {
 			const activeIndex =
 				vp.activeSubtitleIndex >= 0 ? vp.activeSubtitleIndex : vp.preferredSubtitleIndex();
@@ -217,12 +221,15 @@
 <div
 	class="vp-shell"
 	class:vp-ambient-disabled={!vp.ambientEnabled}
+	class:vp-ambient-big-dots={vp.ambientType === 'big-dots'}
+	class:vp-fullscreen-ambient-disabled={!vp.fullscreenAmbient}
 	style:--vp-ambient-primary={vp.ambientPrimary}
 	style:--vp-ambient-secondary={vp.ambientSecondary}
 	style:--vp-ambient-opacity={vp.ambientOpacity}
 	style:--vp-ambient-blur={`${vp.ambientBlur}px`}
 	style:--vp-ambient-saturation={vp.ambientSaturation}
 	style:--vp-video-brightness={vp.videoBrightness}
+	style:--vp-video-aspect={videoAspect}
 	style:--vp-primary-color={vp.themeCfg.primaryColor}
 	style:--vp-accent-color={vp.themeCfg.accentColor}
 	style:--vp-control-text-color={vp.themeCfg.controlTextColor}
@@ -245,6 +252,7 @@
 		role="region"
 		aria-label={title}
 	>
+		<div class="vp-ambient vp-fullscreen-ambient" aria-hidden="true"></div>
 		<VideoSurface
 			{vp}
 			{poster}

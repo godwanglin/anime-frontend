@@ -27,6 +27,12 @@
 	-webkit-backdrop-filter: blur(18px) saturate(160%);
 }
 
+@media (min-width: 768px) {
+	.notification-toolbar {
+		left: calc(50% + 110px);
+	}
+}
+
 .notification-toolbar-actions {
 	display: flex;
 	flex-shrink: 0;
@@ -124,6 +130,68 @@
 
 .notification-feed {
 	border-top: 1px solid var(--border);
+}
+
+.notification-row-shell {
+	position: relative;
+}
+
+.notification-menu-button {
+	position: absolute;
+	top: 14px;
+	right: 10px;
+	z-index: 2;
+	display: inline-flex;
+	width: 32px;
+	height: 32px;
+	align-items: center;
+	justify-content: center;
+	border-radius: 10px;
+	color: var(--text-faint);
+}
+
+.notification-menu-button:hover {
+	background: var(--surface-offset);
+	color: var(--text-primary);
+}
+
+.notification-menu {
+	position: absolute;
+	top: 48px;
+	right: 10px;
+	z-index: 5;
+	min-width: 120px;
+	padding: 5px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--surface);
+	box-shadow: var(--shadow-lg);
+}
+
+.notification-toolbar-menu-wrap {
+	position: relative;
+}
+
+.notification-toolbar-menu {
+	top: 44px;
+	right: 0;
+}
+
+.notification-menu button {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: 7px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	color: #f87171;
+	font-size: 11px;
+	font-weight: 800;
+	text-align: left;
+}
+
+.notification-menu button:hover {
+	background: color-mix(in oklch, #ef4444 12%, transparent);
 }
 
 .notification-row {

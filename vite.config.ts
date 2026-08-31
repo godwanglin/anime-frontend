@@ -8,7 +8,7 @@ export default defineConfig({
 		allowedHosts: ['test.weebinhub.com'],
 		proxy: {
 			'/api': {
-				target: 'https://api.weebinhub.com',
+				target: 'http://localhost:3000',
 				changeOrigin: true
 			}
 		}

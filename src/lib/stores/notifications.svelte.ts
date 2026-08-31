@@ -249,6 +249,29 @@ async function markAllAsRead() {
 	unreadCount = 0;
 }
 
+async function deleteNotification(id: number) {
+	if (!auth.isLoggedIn) return;
+	await parseResponse(
+		await auth.authFetch(`/api/notifications/${id}`, {
+			method: 'DELETE'
+		})
+	);
+	const deleted = items.find((item) => item.id === id);
+	items = items.filter((item) => item.id !== id);
+	if (deleted && !deleted.isRead) unreadCount = Math.max(0, unreadCount - 1);
+}
+
+async function deleteAllNotifications() {
+	if (!auth.isLoggedIn) return;
+	await parseResponse(
+		await auth.authFetch('/api/notifications', {
+			method: 'DELETE'
+		})
+	);
+	items = [];
+	unreadCount = 0;
+}
+
 async function updatePreferences(next: Partial<NotificationPreference>) {
 	if (!auth.isLoggedIn) return;
 	const response = await auth.authFetch('/api/notifications/preferences', {
@@ -327,6 +350,8 @@ export const notifications = {
 	fetchPreferences,
 	markAsRead,
 	markAllAsRead,
+	deleteNotification,
+	deleteAllNotifications,
 	updatePreferences,
 	togglePanel,
 	startPolling,

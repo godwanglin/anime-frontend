@@ -10,6 +10,8 @@
 
 	let selectedCategory = $state('all');
 	let stickyTop = $state(56);
+	let openMenuId = $state<number | null>(null);
+	let toolbarMenuOpen = $state(false);
 
 	const filteredNotifications = $derived(
 		selectedCategory === 'all'
@@ -84,6 +86,16 @@
 		if (item.link) goto(item.link);
 	}
 
+	async function removeNotification(item: AppNotification) {
+		openMenuId = null;
+		await notifications.deleteNotification(item.id).catch(() => null);
+	}
+
+	async function removeAllNotifications() {
+		toolbarMenuOpen = false;
+		await notifications.deleteAllNotifications().catch(() => null);
+	}
+
 	onMount(() => {
 		const header = document.querySelector('header');
 		const syncStickyTop = () => {
@@ -124,20 +136,35 @@
 			</nav>
 
 			<div class="notification-toolbar-actions">
-				{#if notifications.unreadCount > 0}
-					<button type="button" onclick={() => notifications.markAllAsRead()} class="text-action">
-						<AppIcon name="done_all" />
-						<span>Tandai dibaca</span>
+				<div class="notification-toolbar-menu-wrap">
+					<button
+						type="button"
+						onclick={() => (toolbarMenuOpen = !toolbarMenuOpen)}
+						class="icon-action"
+						aria-label="Menu notifikasi"
+						aria-expanded={toolbarMenuOpen}
+					>
+						<AppIcon name="more_vert" />
 					</button>
-				{/if}
-				<button
-					type="button"
-					onclick={() => notifications.fetchNotifications().catch(() => null)}
-					class="icon-action"
-					aria-label="Refresh notifikasi"
-				>
-					<AppIcon name="refresh" />
-				</button>
+					{#if toolbarMenuOpen}
+						<div class="notification-menu notification-toolbar-menu">
+							<button type="button" onclick={() => { toolbarMenuOpen = false; notifications.fetchNotifications().catch(() => null); }}>
+								<AppIcon name="refresh" />
+								Refresh
+							</button>
+							{#if notifications.unreadCount > 0}
+								<button type="button" onclick={() => { toolbarMenuOpen = false; notifications.markAllAsRead(); }}>
+									<AppIcon name="done_all" />
+									Tandai dibaca
+								</button>
+							{/if}
+							<button type="button" onclick={removeAllNotifications}>
+								<AppIcon name="delete_sweep" />
+								Hapus semua
+							</button>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</section>
 	{/if}
@@ -163,12 +190,13 @@
 	{:else}
 		<section class="notification-feed" aria-label="Daftar notifikasi">
 			{#each filteredNotifications as item}
-				<button
-					type="button"
-					onclick={() => openNotification(item)}
-					class="notification-row"
-					class:is-unread={!item.isRead}
-				>
+				<div class="notification-row-shell">
+					<button
+						type="button"
+						onclick={() => openNotification(item)}
+						class="notification-row"
+						class:is-unread={!item.isRead}
+					>
 					<span class="notification-icon">
 						<AppIcon name={categoryIcon(item.category)} />
 					</span>
@@ -191,7 +219,28 @@
 							</span>
 						{/if}
 					</span>
-				</button>
+					</button>
+					<button
+						type="button"
+						class="notification-menu-button"
+						aria-label="Menu notifikasi"
+						aria-expanded={openMenuId === item.id}
+						onclick={(event) => {
+							event.stopPropagation();
+							openMenuId = openMenuId === item.id ? null : item.id;
+						}}
+					>
+						<AppIcon name="more_vert" />
+					</button>
+					{#if openMenuId === item.id}
+						<div class="notification-menu">
+							<button type="button" onclick={() => removeNotification(item)}>
+								<AppIcon name="delete" />
+								Hapus
+							</button>
+						</div>
+					{/if}
+				</div>
 			{/each}
 		</section>
 	{/if}

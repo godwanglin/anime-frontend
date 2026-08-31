@@ -8,6 +8,7 @@
 	import ProfileCard from '$lib/components/ProfileCard.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import { getCultivationBadge } from '$lib/exp';
+	import { imageUrl } from '$lib/image-url';
 	import {
 		fetchChatPublicUser,
 		fetchChatMessages,
@@ -1299,7 +1300,7 @@
 					>
 						{#if !message.isMine}
 							<AvatarFrame
-								src={message.user.avatar}
+								src={imageUrl(message.user.avatar)}
 								alt={displayUserName(message.user)}
 								size={38}
 								frame={message.user.frame ?? null}
@@ -1491,7 +1492,7 @@
 
 						{#if message.isMine}
 							<AvatarFrame
-								src={message.user.avatar}
+								src={imageUrl(message.user.avatar)}
 								alt={displayUserName(message.user)}
 								size={38}
 								frame={message.user.frame ?? null}
@@ -1608,7 +1609,7 @@
 									>
 										<span class="mention-avatar">
 											{#if user.avatar}
-												<img src={user.avatar} alt="" loading="lazy" />
+												<img src={imageUrl(user.avatar)} alt="" loading="lazy" />
 											{:else}
 												{userInitial(user)}
 											{/if}

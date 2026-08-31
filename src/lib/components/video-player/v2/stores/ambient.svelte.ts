@@ -78,8 +78,7 @@ export function createAmbientManager(ctx: AmbientContext) {
 	}
 
 	function boostColor(r: number, g: number, b: number, cfg: AmbientConfig) {
-		const max = Math.max(r, g, b);
-		const boost = max > 0 ? ((cfg.contrast ?? 1.18) * 190) / max : 1;
+		const boost = Math.min(2.2, Math.max(1, cfg.contrast ?? 1.18));
 		return {
 			r: Math.round(Math.min(255, r * boost)),
 			g: Math.round(Math.min(255, g * boost)),
@@ -96,6 +95,10 @@ export function createAmbientManager(ctx: AmbientContext) {
 		},
 		get opacity() {
 			return ctx.getConfig()?.opacity ?? 0.96;
+		},
+		get type() {
+			const config = ctx.getConfig();
+			return config?.ambientType ?? config?.ambientype ?? 'card';
 		},
 		get blur() {
 			return ctx.getConfig()?.blur ?? 36;

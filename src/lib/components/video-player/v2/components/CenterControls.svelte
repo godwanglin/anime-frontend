@@ -42,12 +42,7 @@
 	}
 </script>
 
-{#if prevHref || nextHref}
-	<div
-		class="vp-center-controls"
-		class:vp-center-controls-visible={visible}
-		aria-hidden={!visible}
-	>
+<div class="vp-center-controls" class:vp-center-controls-visible={visible} aria-hidden={!visible}>
 		{#if prevHref}
 			<a
 				href={prevHref}
@@ -107,5 +102,4 @@
 				</svg>
 			</span>
 		{/if}
-	</div>
-{/if}
+</div>

@@ -9,6 +9,7 @@
 	import { history } from '$lib/stores/history.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
 	import { displayUserName, userInitial } from '$lib/user-display';
+	import { imageUrl } from '$lib/image-url';
 
 	type Episode = {
 		id: number;
@@ -380,7 +381,7 @@
 <SEO
 	title={activeAnime.title}
 	description={activeAnime.synopsis?.slice(0, 160)}
-	image={activeAnime.thumbnail}
+	image={imageUrl(activeAnime.thumbnail)}
 	type="article"
 />
 
@@ -395,7 +396,7 @@
 			<!-- Cover -->
 			<div class="relative overflow-hidden" style="height: 56vw; max-height: 260px;">
 				<img
-					src={cover}
+					src={imageUrl(cover)}
 					alt=""
 					aria-hidden="true"
 					class="absolute inset-0 w-full h-full object-cover object-top"
@@ -477,7 +478,7 @@
                     "
 					>
 						<img
-							src={activeAnime.thumbnail}
+							src={imageUrl(activeAnime.thumbnail)}
 							alt={activeAnime.title}
 							class="w-full h-full object-cover"
 							data-sync-asset-context="anime"
@@ -583,7 +584,7 @@
 	<!-- ── DESKTOP HERO ──────────────────────────── -->
 	<div class="hidden md:block relative overflow-hidden" style="height: clamp(400px, 52vw, 520px);">
 		<img
-			src={cover}
+			src={imageUrl(cover)}
 			alt=""
 			aria-hidden="true"
 			class="absolute inset-0 w-full h-full object-cover scale-110"
@@ -602,7 +603,7 @@
 					style="box-shadow: 0 20px 60px oklch(0 0 0 / 0.5);"
 				>
 					<img
-						src={activeAnime.thumbnail}
+						src={imageUrl(activeAnime.thumbnail)}
 						alt={activeAnime.title}
 						class="w-full h-full object-cover"
 						data-sync-asset-context="anime"
@@ -1241,7 +1242,7 @@
 							>
 								{#if review.user?.avatar}
 									<img
-										src={review.user.avatar}
+										src={imageUrl(review.user.avatar)}
 										alt={displayUserName(review.user)}
 										class="h-full w-full object-cover"
 									/>

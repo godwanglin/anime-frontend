@@ -1,4 +1,4 @@
-import type { SettingsSubPanel } from './types';
+import type { SettingsSubPanel, VideoFit } from './types';
 
 export function createSettingsManager() {
 	let showRateMenu = $state(false);
@@ -7,6 +7,8 @@ export function createSettingsManager() {
 	let showSettings = $state(false);
 	let settingsSubPanel = $state<SettingsSubPanel>(null);
 	let closeOnSelect = $state(false);
+	let videoFit = $state<VideoFit>('auto');
+	let fullscreenAmbient = $state(true);
 
 	function toggleSettings(sub: SettingsSubPanel = null) {
 		closeOnSelect = false;
@@ -43,6 +45,15 @@ export function createSettingsManager() {
 		showSubtitleMenu = false;
 	}
 
+	function setVideoFit(value: VideoFit) {
+		videoFit = value;
+		finishSelection();
+	}
+
+	function toggleFullscreenAmbient() {
+		fullscreenAmbient = !fullscreenAmbient;
+	}
+
 	function onDocClick(e: MouseEvent) {
 		const target = e.target as HTMLElement;
 		if (
@@ -60,6 +71,17 @@ export function createSettingsManager() {
 		finishSelection,
 		closeAllMenus,
 		onDocClick,
+		setVideoFit,
+		toggleFullscreenAmbient,
+		get fullscreenAmbient() {
+			return fullscreenAmbient;
+		},
+		get videoFit() {
+			return videoFit;
+		},
+		set videoFit(value: VideoFit) {
+			videoFit = value;
+		},
 		get showSettings() {
 			return showSettings;
 		},

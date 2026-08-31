@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { qualityLabel } from '$lib/video-quality';
 	import type { createVideoPlayerState } from '../stores/vpstate.svelte';
 
 	type VideoPlayerState = ReturnType<typeof createVideoPlayerState>;
@@ -159,6 +158,23 @@
 						>
 					</span>
 				</button>
+				<button class="vp-settings-row" onclick={() => vp.toggleSettings('video-fit')}>
+					<span class="vp-settings-row-label">
+						<span class="vp-settings-row-icon">▣</span>
+						Tampilan video
+					</span>
+					<span class="vp-settings-row-value">
+						{vp.videoFit === 'auto' ? 'Otomatis' : vp.videoFit === 'cover' ? 'Penuhi' : 'Utuh'}
+						<span class="vp-settings-row-chevron">›</span>
+					</span>
+				</button>
+				<button class="vp-settings-row" onclick={vp.toggleFullscreenAmbient}>
+					<span class="vp-settings-row-label">
+						<span class="vp-settings-row-icon">✦</span>
+						Ambient fullscreen
+					</span>
+					<span class="vp-settings-row-value">{vp.fullscreenAmbient ? 'On' : 'Off'}</span>
+				</button>
 			</div>
 		{:else}
 			<div class="vp-settings-subpanel">
@@ -172,6 +188,8 @@
 							? 'Quality'
 							: vp.settingsSubPanel === 'subtitle'
 								? 'Subtitle'
+							: vp.settingsSubPanel === 'video-fit'
+								? 'Tampilan video'
 								: 'Timer tidur'}
 				</button>
 
@@ -210,11 +228,9 @@
 								onclick={() => selectQuality(q.level)}
 							>
 								{@render Check(vp.currentQuality === q.level)}
-								{qualityLabel(q.height).toUpperCase()}
+								{q.height}P
 								{#if locked}
 									<span class="vp-settings-item-sub">{lockedQualityBadge()}</span>
-								{:else if q.bitrate}
-									<span class="vp-settings-item-sub">{Math.round(q.bitrate / 1000)}k</span>
 								{/if}
 							</button>
 						{/each}
@@ -267,6 +283,17 @@
 							>
 								{@render Check(vp.sleepTimerOption === item.value)}
 								{item.label}
+							</button>
+						{/each}
+					{:else if vp.settingsSubPanel === 'video-fit'}
+						{#each [
+							['auto', 'Otomatis', 'Sesuaikan rasio video'],
+							['contain', 'Utuh', 'Tampilkan seluruh video'],
+							['cover', 'Penuhi', 'Penuhi kotak player']
+						] as option}
+							<button class="vp-settings-item" class:vp-settings-item-active={vp.videoFit === option[0]} onclick={() => vp.setVideoFit(option[0] as 'auto' | 'contain' | 'cover')}>
+								<span>{option[1]}</span>
+								<span class="vp-settings-item-sub">{option[2]}</span>
 							</button>
 						{/each}
 					{/if}

@@ -1,5 +1,5 @@
 import type { QualityLevel, VideoPlayerOptions } from './types';
-import { normalizedQualityHeight, qualityLabel } from '$lib/video-quality';
+import { normalizedQualityHeight } from '$lib/video-quality';
 import { STORAGE_KEYS } from './types';
 
 interface HlsContext {
@@ -321,7 +321,7 @@ export function createHlsManager(ctx: HlsContext) {
 			const video = ctx.getVideoEl();
 			if (!height || height === lastNotifiedHeight || (video?.currentTime ?? 0) < 1) return;
 			lastNotifiedHeight = height;
-			ctx.notify?.(`Resolusi berubah ke ${qualityLabel(height)}`);
+			ctx.notify?.(`Resolusi berubah ke ${height}p`);
 		});
 
 		hls.on(HlsConstructor.Events.ERROR, (_: unknown, data: { fatal: boolean }) => {
@@ -362,14 +362,7 @@ export function createHlsManager(ctx: HlsContext) {
 		currentQuality = level;
 		if (hlsInstance) {
 			applyAutoLevelCap();
-			const video = ctx.getVideoEl();
-			const canSmooth = level !== -1 && smoothSwitchEnabled() && !!video && video.currentTime > 0;
-			if (canSmooth) {
-				startQualitySwitch();
-				hlsInstance.nextLevel = level;
-			} else {
-				hlsInstance.currentLevel = level;
-			}
+			hlsInstance.currentLevel = level;
 		}
 		ctx.notify?.(level === -1 ? 'Quality: Auto' : `Quality: ${currentQualityLabel()}`);
 		persistQuality();
@@ -379,12 +372,12 @@ export function createHlsManager(ctx: HlsContext) {
 	function currentQualityLabel(): string {
 		if (currentQuality === -1) return 'Auto';
 		const q = qualityLevels.find((level) => level.level === currentQuality);
-		return q ? qualityLabel(q.height).toUpperCase() : 'Auto';
+		return q ? `${q.height}P` : 'Auto';
 	}
 
 	function currentResolutionLabel(): string {
 		if (currentQuality === -1)
-			return activeQualityHeight ? `AUTO ${qualityLabel(activeQualityHeight).toUpperCase()}` : 'AUTO';
+			return activeQualityHeight ? `AUTO ${activeQualityHeight}P` : 'AUTO';
 		return currentQualityLabel();
 	}
 

@@ -14,6 +14,7 @@
 	import { activity, type ActivityPingPayload } from '$lib/stores/activity.svelte';
 	import { pageTitle } from '$lib/stores/page.svelte';
 	import { displayUserName, userInitial } from '$lib/user-display';
+	import { imageUrl } from '$lib/image-url';
 	import PwaInstallBanner from '$lib/components/PwaInstallBanner.svelte';
 
 	let { children } = $props();
@@ -278,7 +279,7 @@
 					style="background: var(--accent-surface); border: 1px solid oklch(from var(--accent) l c h / 0.2);"
 				>
 					<img
-						src={auth.user?.avatar ||
+						src={imageUrl(auth.user?.avatar) ||
 							`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(displayUserName(auth.user, 'A'))}&backgroundColor=7c3aed`}
 						alt={displayUserName(auth.user)}
 						class="w-9 h-9 rounded-full object-cover shrink-0"
@@ -501,7 +502,7 @@
 				>
 					{#if auth.isLoggedIn}
 						<img
-							src={auth.user?.avatar ||
+							src={imageUrl(auth.user?.avatar) ||
 								`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(userInitial(auth.user))}&backgroundColor=7c3aed`}
 							alt={displayUserName(auth.user)}
 							class="w-5 h-5 rounded-full object-cover"
@@ -782,7 +783,7 @@
 		</aside>
 
 		<!-- ── MAIN CONTENT ── -->
-		<main class="flex-1 min-w-0 max-w-full overflow-x-clip px-4 py-5 pb-28 md:pb-8">
+		<main class="flex-1 min-w-0 max-w-full overflow-x-visible px-4 py-5 pb-28 md:pb-8">
 			{#if shouldPreloadCodeViewport}
 				<PreloadCodeViewport>
 					{@render children()}

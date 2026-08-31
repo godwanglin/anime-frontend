@@ -24,17 +24,27 @@
 		onloadedmetadata?: () => void;
 		onended?: () => void;
 	} = $props();
+
+	let autoFit = $state<'contain' | 'cover'>('contain');
+
+	function updateAutoFit() {
+		if (!videoEl || !videoEl.videoWidth || !videoEl.videoHeight) return;
+		const containerRatio = videoEl.clientWidth / videoEl.clientHeight;
+		const videoRatio = videoEl.videoWidth / videoEl.videoHeight;
+		autoFit = Math.abs(containerRatio - videoRatio) < 0.03 ? 'cover' : 'contain';
+	}
 </script>
 
 <video
 	bind:this={videoEl}
-	class="vp-video"
+	class="vp-video vp-video-fit-{vp.videoFit === 'auto' ? autoFit : vp.videoFit}"
 	{poster}
 	playsinline
 	onplay={onplay}
 	onpause={onpause}
 	ontimeupdate={ontimeupdate}
 	onloadedmetadata={onloadedmetadata}
+	onloadeddata={updateAutoFit}
 	onended={onended}
 	onwaiting={vp.onWaiting}
 	oncanplay={vp.onCanPlay}

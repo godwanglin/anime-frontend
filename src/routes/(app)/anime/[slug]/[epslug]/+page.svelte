@@ -101,19 +101,25 @@
 	const anime = $derived(data.anime as Anime | null);
 	const episode = $derived(data.episode as Episode | null);
 	const detail = $derived(data.episodeDetail as Record<string, unknown> | null);
-	const loginRequired = $derived(data.errorCode === 'LOGIN_REQUIRED' || data.error === 'LOGIN_REQUIRED');
-	const currentWatchPath = $derived(`/anime/${data.params?.slug ?? ''}/${data.params?.epslug ?? ''}`);
+	const loginRequired = $derived(
+		data.errorCode === 'LOGIN_REQUIRED' || data.error === 'LOGIN_REQUIRED'
+	);
+	const currentWatchPath = $derived(
+		`/anime/${data.params?.slug ?? ''}/${data.params?.epslug ?? ''}`
+	);
 	const loginHref = $derived(`/login?redirect=${encodeURIComponent(currentWatchPath)}`);
 	const premiumHref = $derived(`/premium?redirect=${encodeURIComponent(currentWatchPath)}`);
 	const title = $derived(episode?.title ?? anime?.title ?? 'Episode');
 	const cover = $derived(anime?.bigCover || anime?.thumbnail || '');
-	const episodeDataKey = $derived(`${episode?.id ?? ''}:${episode?.slug ?? data.params?.epslug ?? ''}`);
+	const episodeDataKey = $derived(
+		`${episode?.id ?? ''}:${episode?.slug ?? data.params?.epslug ?? ''}`
+	);
 	let hydratedServers = $state<StreamServer[] | null>(null);
 	let isHydratingSokujaServers = $state(false);
 	let sokujaHydrationAttempted = $state(false);
 	let lastEpisodeDataKey = $state('');
 	const activeServers = $derived(
-		(hydratedServers ?? ((detail as any)?.servers ?? [])) as StreamServer[]
+		(hydratedServers ?? (detail as any)?.servers ?? []) as StreamServer[]
 	);
 	const nonYoutubeServers = $derived(activeServers.filter((s) => !isYouTubeUrl(s.value)));
 	const streamSources = $derived(loginRequired ? [] : formatProxySources(nonYoutubeServers));
@@ -207,10 +213,16 @@
 		episodeTitle: episode?.title ?? title
 	});
 	const resolvedSkipIntroSeconds = $derived(
-		episode?.skipIntroSeconds ?? (detail as any)?.anime?.skipIntroSeconds ?? anime?.skipIntroSeconds ?? null
+		episode?.skipIntroSeconds ??
+			(detail as any)?.anime?.skipIntroSeconds ??
+			anime?.skipIntroSeconds ??
+			null
 	);
 	const resolvedSkipOutroSeconds = $derived(
-		episode?.skipOutroSeconds ?? (detail as any)?.anime?.skipOutroSeconds ?? anime?.skipOutroSeconds ?? null
+		episode?.skipOutroSeconds ??
+			(detail as any)?.anime?.skipOutroSeconds ??
+			anime?.skipOutroSeconds ??
+			null
 	);
 
 	const episodeRelativeDate = $derived(formatRelativeID(episode?.createdAt) || episode?.date || '');
@@ -341,11 +353,13 @@
 		},
 		ambient: {
 			enabled: isDesktop,
+			ambientType: 'card',
 			intensity: isDesktop ? 1.5 : 0,
-			opacity: isDesktop ? 0.42 : 0,
-			blur: isDesktop ? 72 : 0,
-			saturation: isDesktop ? 1.65 : 1,
-			contrast: 1
+			opacity: isDesktop ? 1 : 0,
+			blur: isDesktop ? 120 : 0,
+			saturation: isDesktop ? 1 : 1,
+			contrast: 8,
+			fullscreen: 'On'
 		},
 		controls: {
 			enabled: true,
@@ -384,7 +398,7 @@
 		},
 		access: {
 			hasPremiumAccess: auth.isPremium,
-			maxFreeQuality: 720,
+			maxFreeQuality: 2160,
 			loginHref,
 			lockedQualityMessage: 'Premium diperlukan untuk membuka kualitas 1080p',
 			lockedQualityBadge: 'Premium',
@@ -542,8 +556,6 @@
 		preloadEpisodePages(hrefs);
 	});
 
-
-
 	function episodeProgress(id?: number) {
 		return history.byEpisode(id)?.progressPct ?? 0;
 	}
@@ -651,7 +663,9 @@
 		playbackCurrentTime = seconds;
 		playerApi?.seek?.(seconds);
 		playerApi?.play?.();
-		document.querySelector('.watch-player-shell')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		document
+			.querySelector('.watch-player-shell')
+			?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 	}
 
 	function formatCount(value?: number) {
@@ -744,7 +758,9 @@
 />
 
 {#if loginPromptOpen}
-	<div class="fixed inset-0 z-[95] flex items-end justify-center bg-black/70 px-4 py-5 backdrop-blur-sm md:items-center">
+	<div
+		class="fixed inset-0 z-[95] flex items-end justify-center bg-black/70 px-4 py-5 backdrop-blur-sm md:items-center"
+	>
 		<button
 			class="absolute inset-0"
 			aria-label="Tutup login prompt"
@@ -802,7 +818,9 @@
 {/if}
 
 {#if reportOpen}
-	<div class="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-4 py-5 backdrop-blur-sm md:items-center">
+	<div
+		class="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-4 py-5 backdrop-blur-sm md:items-center"
+	>
 		<button class="absolute inset-0" aria-label="Tutup laporan" onclick={closeReport}></button>
 		<form
 			onsubmit={(event) => {
@@ -813,7 +831,9 @@
 		>
 			<div class="mb-4 flex items-start justify-between gap-4">
 				<div>
-					<p class="text-[10px] font-black uppercase tracking-[0.18em] text-red-400">Report Episode</p>
+					<p class="text-[10px] font-black uppercase tracking-[0.18em] text-red-400">
+						Report Episode
+					</p>
 					<h2 class="mt-1 text-lg font-black">Laporkan masalah video</h2>
 					<p class="mt-1 text-xs text-zinc-500 line-clamp-2">{anime?.title} - {title}</p>
 				</div>
@@ -861,10 +881,18 @@
 			</label>
 
 			{#if reportError}
-				<p class="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300">{reportError}</p>
+				<p
+					class="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
+				>
+					{reportError}
+				</p>
 			{/if}
 			{#if reportMessage}
-				<p class="mb-3 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs font-bold text-green-300">{reportMessage}</p>
+				<p
+					class="mb-3 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs font-bold text-green-300"
+				>
+					{reportMessage}
+				</p>
 			{/if}
 
 			<div class="flex justify-end gap-2">
@@ -887,20 +915,15 @@
 	</div>
 {/if}
 
-<div class="-mx-4 -mt-4 max-w-[calc(100%+2rem)] overflow-x-clip md:mx-0 md:mt-0 md:max-w-none">
+<div class="-mx-4 -mt-4 max-w-[calc(100%+2rem)] overflow-x-visible md:mx-0 md:mt-0 md:max-w-none">
 	<!-- ══════════════════════════════════════════
          VIDEO PLAYER — full bleed, always black
     ══════════════════════════════════════════ -->
 	<div
-		class="watch-player-fixed-spacer w-full aspect-video md:mx-8 md:w-[calc(100%-4rem)]"
-		aria-hidden="true"
-	></div>
-
-	<div
-		class="watch-player-shell watch-player-fixed w-full bg-black md:bg-transparent md:rounded-2xl md:shadow-2xl md:shadow-black/20"
+		class="watch-player-shell watch-player-sticky w-full md:rounded-2xl md:shadow-2xl md:shadow-black/20"
 	>
 		{#if streamUrls.length}
-			<div class="relative w-full aspect-video">
+			<div class="relative w-full">
 				<LazyVideoPlayer
 					src={streamUrls}
 					sourceLabels={streamLabels}
@@ -1030,10 +1053,7 @@
 					{/if}
 
 					<!-- Episode title (display style, Bebas Neue) -->
-					<h1
-						class="watch-title mb-2.5"
-						style="color: var(--text-primary);"
-					>
+					<h1 class="watch-title mb-2.5" style="color: var(--text-primary);">
 						{title ?? anime?.title ?? ''}
 					</h1>
 
@@ -1120,7 +1140,10 @@
 						<span class="text-[11.5px] font-black" style="color: var(--text-primary);">
 							{formatCount(episode?.views)}
 						</span>
-						<span class="text-[9px] font-semibold uppercase tracking-wider" style="color: var(--text-faint);">
+						<span
+							class="text-[9px] font-semibold uppercase tracking-wider"
+							style="color: var(--text-faint);"
+						>
 							ditonton
 						</span>
 					</div>
@@ -1138,10 +1161,7 @@
 					<span>{isSaved ? 'Tersimpan' : 'Simpan'}</span>
 				</button>
 
-				<button
-					onclick={openReport}
-					class="watch-action-btn watch-action-btn-report"
-				>
+				<button onclick={openReport} class="watch-action-btn watch-action-btn-report">
 					<AppIcon name="report" style="font-size:15px;" />
 					<span>Report</span>
 				</button>
@@ -1228,10 +1248,16 @@
 							<AppIcon name="playlist_play" style="font-size:18px;" />
 						</span>
 						<div class="min-w-0 flex-1">
-							<p class="text-[9px] font-black uppercase tracking-[0.22em]" style="color: var(--text-faint);">
+							<p
+								class="text-[9px] font-black uppercase tracking-[0.22em]"
+								style="color: var(--text-faint);"
+							>
 								Daftar Episode
 							</p>
-							<p class="text-[13px] font-black line-clamp-1 -mt-0.5" style="color: var(--text-primary);">
+							<p
+								class="text-[13px] font-black line-clamp-1 -mt-0.5"
+								style="color: var(--text-primary);"
+							>
 								{anime?.title}
 							</p>
 						</div>
@@ -1264,7 +1290,10 @@
 					class="px-4 py-2.5 shrink-0 flex items-center justify-between gap-3"
 					style="border-bottom: 1px solid var(--border); background: oklch(from var(--surface-offset) l c h / 0.4);"
 				>
-					<span class="text-[10px] font-bold tracking-wider uppercase" style="color: var(--text-faint);">
+					<span
+						class="text-[10px] font-bold tracking-wider uppercase"
+						style="color: var(--text-faint);"
+					>
 						{episodeOrder === 'desc' ? 'Terbaru dulu' : 'Terlama dulu'}
 					</span>
 					<button
@@ -1291,7 +1320,9 @@
 							aria-disabled={isLocked}
 							aria-current={isActive ? 'page' : undefined}
 							title={isLocked ? 'Masuk untuk membuka episode terbaru' : undefined}
-							class="watch-ep-row {isActive ? 'is-active' : ''} {isLocked ? 'is-locked' : ''} {isWatched ? 'is-watched' : ''}"
+							class="watch-ep-row {isActive ? 'is-active' : ''} {isLocked
+								? 'is-locked'
+								: ''} {isWatched ? 'is-watched' : ''}"
 						>
 							<!-- Ep number bubble -->
 							<div class="watch-ep-bubble">
@@ -1335,10 +1366,7 @@
 								</div>
 								{#if progress > 0}
 									<div class="watch-ep-progress">
-										<div
-											class="watch-ep-progress-fill"
-											style="width: {progress}%;"
-										></div>
+										<div class="watch-ep-progress-fill" style="width: {progress}%;"></div>
 									</div>
 								{/if}
 							</div>
@@ -1432,10 +1460,7 @@
 					<AppIcon name={isSaved ? 'bookmark' : 'bookmark_add'} style="font-size:15px;" />
 					<span>{isSaved ? 'Tersimpan' : 'Simpan'}</span>
 				</button>
-				<button
-					onclick={openReport}
-					class="watch-mobile-action-btn watch-mobile-action-btn-report"
-				>
+				<button onclick={openReport} class="watch-mobile-action-btn watch-mobile-action-btn-report">
 					<AppIcon name="report" style="font-size:15px;" />
 					<span>Report</span>
 				</button>
@@ -1452,7 +1477,9 @@
 					>
 						<AppIcon name="skip_previous" style="font-size:18px;" />
 						<div class="flex flex-col leading-tight items-start">
-							<span class="text-[9px] font-bold uppercase tracking-wider opacity-65">Sebelumnya</span>
+							<span class="text-[9px] font-bold uppercase tracking-wider opacity-65"
+								>Sebelumnya</span
+							>
 							<span class="text-[12px] font-black">Ep {previousEpisode.number}</span>
 						</div>
 					</a>
@@ -1467,7 +1494,9 @@
 						aria-label="Episode berikutnya"
 					>
 						<div class="flex flex-col leading-tight items-end">
-							<span class="text-[9px] font-bold uppercase tracking-wider opacity-80">Berikutnya</span>
+							<span class="text-[9px] font-bold uppercase tracking-wider opacity-80"
+								>Berikutnya</span
+							>
 							<span class="text-[12px] font-black">Ep {nextEpisode.number}</span>
 						</div>
 						<AppIcon name="skip_next" style="font-size:18px;" />
@@ -1513,7 +1542,10 @@
 							<AppIcon name="playlist_play" style="font-size:16px;" />
 						</span>
 						<div>
-							<p class="text-[13px] font-black flex items-center gap-1.5" style="color: var(--text-primary);">
+							<p
+								class="text-[13px] font-black flex items-center gap-1.5"
+								style="color: var(--text-primary);"
+							>
 								Daftar Episode
 								<span class="watch-ep-count-inline">{episodes.length}</span>
 							</p>
@@ -1552,15 +1584,15 @@
 								: isLocked
 									? 'color-mix(in srgb, var(--surface) 72%, black)'
 									: progress > 0
-									? 'var(--accent-surface)'
-									: 'var(--surface)'};
+										? 'var(--accent-surface)'
+										: 'var(--surface)'};
                             border-color: {isActive
 								? 'transparent'
 								: isLocked
 									? 'var(--border-strong)'
 									: progress > 0
-									? 'oklch(from var(--accent) l c h / 0.25)'
-									: 'var(--border)'};
+										? 'oklch(from var(--accent) l c h / 0.25)'
+										: 'var(--border)'};
                             box-shadow: {isActive
 								? '0 4px 12px var(--accent-glow)'
 								: 'var(--shadow-sm)'};
@@ -1576,7 +1608,9 @@
 								</span>
 							{/if}
 							{#if isLocked}
-								<div class="absolute inset-0 z-30 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/35 backdrop-blur-[1px]">
+								<div
+									class="absolute inset-0 z-30 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/35 backdrop-blur-[1px]"
+								>
 									<AppIcon name="lock" class="text-white/90" style="font-size:16px;" />
 								</div>
 							{/if}
@@ -1589,16 +1623,19 @@
 									: isLocked
 										? 'var(--text-muted)'
 										: progress > 0
-										? 'var(--accent-text)'
-										: 'var(--text-primary)'};"
+											? 'var(--accent-text)'
+											: 'var(--text-primary)'};"
 							>
 								{episodeNumber(ep)}
 							</span>
 
 							<!-- Check icon jika selesai -->
 							{#if progress >= 90 && !isActive}
-								<AppIcon name="check_circle" class="absolute top-0.5 right-0.5"
-									style="font-size:12px; color: green;" />
+								<AppIcon
+									name="check_circle"
+									class="absolute top-0.5 right-0.5"
+									style="font-size:12px; color: green;"
+								/>
 							{/if}
 
 							<!-- Progress bar -->
@@ -1633,8 +1670,13 @@
                         box-shadow: var(--shadow-sm);
                     "
 					>
-						<AppIcon name={isDesktop && showAllEpisodes ? 'expand_less' : 'expand_more'} style="font-size:16px;" />
-						{isDesktop && showAllEpisodes ? 'Sembunyikan' : `Lihat semua ${episodes.length} episode`}
+						<AppIcon
+							name={isDesktop && showAllEpisodes ? 'expand_less' : 'expand_more'}
+							style="font-size:16px;"
+						/>
+						{isDesktop && showAllEpisodes
+							? 'Sembunyikan'
+							: `Lihat semua ${episodes.length} episode`}
 					</button>
 				{/if}
 			</div>
@@ -1678,7 +1720,10 @@
 										class="h-8 shrink-0 flex items-center gap-1.5 px-3 rounded-[var(--radius-lg)] text-[10px] font-bold transition-all active:scale-[0.97]"
 										style="background: var(--surface-offset); border: 1px solid var(--border-strong); color: var(--text-muted);"
 									>
-										<AppIcon name={episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'} style="font-size:13px;" />
+										<AppIcon
+											name={episodeOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
+											style="font-size:13px;"
+										/>
 										{episodeOrder === 'desc' ? 'Terbaru' : 'Terlama'}
 									</button>
 									<button
@@ -1735,37 +1780,42 @@
 											: ''}"
 										style="
 											background: {isActive
-												? 'var(--accent)'
-												: isLocked
-													? 'color-mix(in srgb, var(--surface-offset) 72%, black)'
-													: progress > 0
+											? 'var(--accent)'
+											: isLocked
+												? 'color-mix(in srgb, var(--surface-offset) 72%, black)'
+												: progress > 0
 													? 'var(--accent-surface)'
 													: 'var(--surface-offset)'};
 											border-color: {isActive
-												? 'transparent'
-												: isLocked
-													? 'var(--border-strong)'
-													: progress > 0
+											? 'transparent'
+											: isLocked
+												? 'var(--border-strong)'
+												: progress > 0
 													? 'oklch(from var(--accent) l c h / 0.25)'
 													: 'var(--border-strong)'};
 											color: {isActive
-													? '#fff'
-													: isLocked
-														? 'var(--text-muted)'
-														: progress > 0
+											? '#fff'
+											: isLocked
+												? 'var(--text-muted)'
+												: progress > 0
 													? 'var(--accent-text)'
 													: 'var(--text-primary)'};
 										"
 									>
 										{episodeNumber(ep)}
 										{#if isLocked}
-											<span class="absolute inset-0 z-30 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/35 backdrop-blur-[1px]">
+											<span
+												class="absolute inset-0 z-30 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/35 backdrop-blur-[1px]"
+											>
 												<AppIcon name="lock" class="text-white/90" style="font-size:16px;" />
 											</span>
 										{/if}
 										{#if progress >= 90 && !isActive}
-											<AppIcon name="check_circle" class="absolute right-1 top-1"
-												style="font-size:10px; color: var(--accent);" />
+											<AppIcon
+												name="check_circle"
+												class="absolute right-1 top-1"
+												style="font-size:10px; color: var(--accent);"
+											/>
 										{/if}
 									</a>
 								{/each}
@@ -1831,29 +1881,35 @@
 </div>
 
 <style>
-	.watch-player-fixed {
-		position: fixed;
-		top: 56px;
-		left: 0;
-		right: 0;
+	.watch-player-sticky {
+		position: sticky;
+		top: 60px;
 		z-index: 20;
 	}
 
 	@media (min-width: 768px) {
-		.watch-player-fixed {
-			top: 60px;
-			left: calc(max((100vw - 80rem) / 2, 0px) + 220px + 2rem);
-			right: calc(max((100vw - 80rem) / 2, 0px) + 2rem);
-			width: auto;
+		.watch-player-sticky {
+			top: 86px;
 		}
 	}
 
 	:global(.watch-player-shell .vp-ambient) {
 		inset: -72px -28px;
+		border-radius: 28px;
+		background: linear-gradient(
+			110deg,
+			color-mix(in srgb, var(--vp-ambient-primary) 70%, transparent),
+			transparent 42%,
+			color-mix(in srgb, var(--vp-ambient-secondary) 60%, transparent)
+		);
+	}
+
+	:global(.watch-player-shell .vp-shell.vp-ambient-big-dots .vp-ambient) {
+		inset: -120px -180px;
 		border-radius: 9999px;
 		background:
-			radial-gradient(48% 70% at 22% 50%, var(--vp-ambient-primary), transparent 72%),
-			radial-gradient(48% 70% at 78% 50%, var(--vp-ambient-secondary), transparent 74%);
+			radial-gradient(circle at 18% 50%, var(--vp-ambient-primary) 0 22%, transparent 58%),
+			radial-gradient(circle at 82% 50%, var(--vp-ambient-secondary) 0 22%, transparent 58%);
 	}
 
 	/*
@@ -1899,7 +1955,9 @@
 		text-transform: uppercase;
 		letter-spacing: 0.18em;
 		color: var(--accent);
-		transition: color 180ms ease, transform 180ms ease;
+		transition:
+			color 180ms ease,
+			transform 180ms ease;
 	}
 
 	.watch-breadcrumb:hover {
@@ -1945,7 +2003,9 @@
 	.watch-badge-ep {
 		background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l + 0.1) c h));
 		color: white;
-		box-shadow: 0 3px 10px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		box-shadow:
+			0 3px 10px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	}
 
 	.watch-badge-sub {
@@ -1993,14 +2053,22 @@
 	}
 
 	.watch-nav-btn-next {
-		background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l + 0.06) c h));
+		background: linear-gradient(
+			135deg,
+			var(--accent),
+			oklch(from var(--accent) calc(l + 0.06) c h)
+		);
 		color: white;
-		box-shadow: 0 6px 18px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		box-shadow:
+			0 6px 18px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	}
 
 	.watch-nav-btn-next:hover {
 		transform: translateX(2px);
-		box-shadow: 0 10px 24px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		box-shadow:
+			0 10px 24px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	}
 
 	.watch-nav-btn:active {
@@ -2013,7 +2081,9 @@
 		border: 1px solid var(--border);
 		border-radius: 18px;
 		backdrop-filter: blur(8px);
-		box-shadow: var(--shadow-sm), inset 0 1px 0 oklch(from #ffffff l c h / 0.04);
+		box-shadow:
+			var(--shadow-sm),
+			inset 0 1px 0 oklch(from #ffffff l c h / 0.04);
 	}
 
 	.watch-action-divider {
@@ -2068,9 +2138,15 @@
 	}
 
 	.watch-action-btn-saved {
-		background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l + 0.08) c h));
+		background: linear-gradient(
+			135deg,
+			var(--accent),
+			oklch(from var(--accent) calc(l + 0.08) c h)
+		);
 		color: white;
-		box-shadow: 0 4px 12px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		box-shadow:
+			0 4px 12px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	}
 
 	.watch-action-btn-report {
@@ -2099,7 +2175,9 @@
 		border-radius: 11px;
 		background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l + 0.1) c h));
 		color: white;
-		box-shadow: 0 4px 12px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		box-shadow:
+			0 4px 12px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	}
 
 	.watch-ep-count {
@@ -2164,7 +2242,9 @@
 		color: white;
 		font-weight: 900;
 		border-color: transparent;
-		box-shadow: 0 4px 12px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		box-shadow:
+			0 4px 12px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	}
 
 	.watch-season-tab:active {
@@ -2221,7 +2301,11 @@
 	}
 
 	.watch-ep-row.is-active {
-		background: linear-gradient(135deg, var(--accent-surface), oklch(from var(--accent) l c h / 0.08));
+		background: linear-gradient(
+			135deg,
+			var(--accent-surface),
+			oklch(from var(--accent) l c h / 0.08)
+		);
 		box-shadow:
 			inset 3px 0 0 var(--accent),
 			0 2px 8px var(--accent-glow);
@@ -2256,7 +2340,9 @@
 		background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l + 0.1) c h));
 		color: white;
 		border-color: transparent;
-		box-shadow: 0 4px 12px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+		box-shadow:
+			0 4px 12px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.25);
 	}
 
 	.watch-ep-row.is-watched:not(.is-active) .watch-ep-bubble {
@@ -2291,7 +2377,11 @@
 		font-weight: 900;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l + 0.08) c h));
+		background: linear-gradient(
+			135deg,
+			var(--accent),
+			oklch(from var(--accent) calc(l + 0.08) c h)
+		);
 		color: white;
 		box-shadow: 0 2px 6px var(--accent-glow);
 	}
@@ -2306,8 +2396,15 @@
 	}
 
 	@keyframes watch-pulse {
-		0%, 100% { opacity: 1; transform: scale(1); }
-		50% { opacity: 0.4; transform: scale(1.3); }
+		0%,
+		100% {
+			opacity: 1;
+			transform: scale(1);
+		}
+		50% {
+			opacity: 0.4;
+			transform: scale(1.3);
+		}
 	}
 
 	.watch-ep-locked-pill {
@@ -2368,8 +2465,15 @@
 	}
 
 	@keyframes watch-arrow-pulse {
-		0%, 100% { transform: translateX(0); opacity: 1; }
-		50% { transform: translateX(2px); opacity: 0.7; }
+		0%,
+		100% {
+			transform: translateX(0);
+			opacity: 1;
+		}
+		50% {
+			transform: translateX(2px);
+			opacity: 0.7;
+		}
 	}
 
 	/* ── Section icon badge (Anime Terkait, etc) ── */
@@ -2418,10 +2522,16 @@
 	}
 
 	.watch-mobile-action-btn.is-saved {
-		background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l + 0.08) c h));
+		background: linear-gradient(
+			135deg,
+			var(--accent),
+			oklch(from var(--accent) calc(l + 0.08) c h)
+		);
 		color: white;
 		border-color: transparent;
-		box-shadow: 0 4px 14px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		box-shadow:
+			0 4px 14px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	}
 
 	.watch-mobile-action-btn-report {
@@ -2455,9 +2565,15 @@
 	}
 
 	.watch-mobile-nav-next {
-		background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l + 0.08) c h));
+		background: linear-gradient(
+			135deg,
+			var(--accent),
+			oklch(from var(--accent) calc(l + 0.08) c h)
+		);
 		color: white;
-		box-shadow: 0 6px 18px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		box-shadow:
+			0 6px 18px var(--accent-glow),
+			inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	}
 
 	@media (hover: none) {

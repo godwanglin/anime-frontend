@@ -50,6 +50,8 @@ export function createPublicApi(ctx: any) {
 		exitFullscreen: playback.exitFullscreen,
 		toggleControlsLock: playback.toggleControlsLock,
 		toggleSettings: settings.toggleSettings,
+		setVideoFit: settings.setVideoFit,
+		toggleFullscreenAmbient: settings.toggleFullscreenAmbient,
 		openShortcutPanel: settings.openShortcutPanel,
 		finishSettingsSelection: settings.finishSelection,
 		toggleStats: ctx.toggleStats,
@@ -224,6 +226,15 @@ export function createPublicApi(ctx: any) {
 		get settingsSubPanel() {
 			return settings.settingsSubPanel;
 		},
+		get videoFit() {
+			return settings.videoFit;
+		},
+		set videoFit(value) {
+			settings.videoFit = value;
+		},
+		get fullscreenAmbient() {
+			return settings.fullscreenAmbient;
+		},
 		set settingsSubPanel(value) {
 			settings.settingsSubPanel = value;
 		},
@@ -283,6 +294,9 @@ export function createPublicApi(ctx: any) {
 		},
 		get ambientSecondary() {
 			return ambient.secondary;
+		},
+		get ambientType() {
+			return ambient.type;
 		},
 		get ambientEnabled() {
 			return ambient.enabled;

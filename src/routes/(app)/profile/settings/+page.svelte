@@ -4,6 +4,7 @@
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { displayUserName } from '$lib/user-display';
+	import { imageUrl } from '$lib/image-url';
 
 	let username = $state(displayUserName(auth.user, ''));
 	let avatar = $state(auth.user?.avatar ?? '');
@@ -25,7 +26,7 @@
 	// Avatar preview — pakai avatar akun kalau ada, fallback ke dicebear
 	const avatarPreview = $derived(
 		avatar.trim()
-			? avatar
+			? imageUrl(avatar)
 			: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(username || 'A')}&backgroundColor=7c3aed`
 	);
 

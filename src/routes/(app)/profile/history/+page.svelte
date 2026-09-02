@@ -4,6 +4,7 @@
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { history } from '$lib/stores/history.svelte';
+	import { imageUrl } from '$lib/image-url';
 
 	let removingId = $state<number | null>(null);
 	let confirmClear = $state(false);
@@ -196,7 +197,7 @@
 										style="width: 120px; aspect-ratio: 16/9;"
 									>
 										<img
-											src={item.animeThumbnail}
+											src={imageUrl(item.animeThumbnail)}
 											alt={item.animeTitle}
 											loading="lazy"
 											class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

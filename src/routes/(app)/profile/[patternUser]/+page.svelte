@@ -8,6 +8,7 @@
 	import ProfileEffect from '$lib/components/ProfileEffect.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import config from '$lib/config';
+	import { imageUrl } from '$lib/image-url';
 	import {
 		getEffectDuration,
 		getEffectLoop,
@@ -602,7 +603,7 @@
 									style="width: 120px; aspect-ratio: 16/9;"
 								>
 									<OptimizedImage
-										src={item.animeThumbnail}
+										src={imageUrl(item.animeThumbnail)}
 										alt={item.animeTitle}
 										className="h-full w-full"
 										imageClass="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -704,7 +705,7 @@
 									<div class="mb-2 flex items-center gap-2">
 										{#if item.anime.thumbnail}
 											<OptimizedImage
-												src={item.anime.thumbnail}
+												src={imageUrl(item.anime.thumbnail)}
 												alt=""
 												className="h-8 w-8 rounded-lg shrink-0"
 												imageClass="h-full w-full object-cover"
@@ -802,7 +803,7 @@
 							>
 								<div class="relative aspect-[2/3] w-full overflow-hidden">
 									<OptimizedImage
-										src={item.animeThumbnail}
+										src={imageUrl(item.animeThumbnail)}
 										alt={item.animeTitle}
 										className="h-full w-full"
 										imageClass="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

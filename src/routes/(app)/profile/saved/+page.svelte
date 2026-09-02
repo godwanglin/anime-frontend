@@ -4,6 +4,7 @@
 	import SEO from '$lib/components/SEO.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
+	import { imageUrl } from '$lib/image-url';
 
 	let removingId = $state<number | null>(null);
 
@@ -125,7 +126,7 @@
 							class="block relative aspect-[2/3] w-full overflow-hidden"
 						>
 							<img
-								src={item.animeThumbnail}
+								src={imageUrl(item.animeThumbnail)}
 								alt={item.animeTitle}
 								loading="lazy"
 								class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

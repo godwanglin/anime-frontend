@@ -15,6 +15,7 @@
 	import { history } from '$lib/stores/history.svelte';
 	import { saved } from '$lib/stores/saved.svelte';
 	import { displayUserName, userInitial } from '$lib/user-display';
+	import { imageUrl } from '$lib/image-url';
 
 	const displayName = $derived(displayUserName(auth.user));
 	const avatar = $derived(
@@ -343,7 +344,7 @@
 							style="width: 140px; aspect-ratio: 16/9;"
 						>
 							<img
-								src={item.animeThumbnail}
+								src={imageUrl(item.animeThumbnail)}
 								alt={item.animeTitle}
 								loading="lazy"
 								class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

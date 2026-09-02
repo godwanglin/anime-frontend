@@ -17,7 +17,7 @@
 		animeTitle: string;
 	};
 
-	type R2Video = {
+	type StorageVideo = {
 		videoId: string;
 		prefix: string;
 		masterKey: string;
@@ -30,14 +30,14 @@
 		linkedServers: LinkedServer[];
 	};
 
-	let items = $state<R2Video[]>([]);
+	let items = $state<StorageVideo[]>([]);
 	let isLoading = $state(true);
 	let isDeleting = $state(false);
 	let nextCursor = $state<string | null>(null);
 	let bucket = $state('');
 	let cursorHistory = $state<(string | null)[]>([null]);
 	let cursorIndex = $state(0);
-	let deleteTarget = $state<R2Video | null>(null);
+	let deleteTarget = $state<StorageVideo | null>(null);
 
 	const hasPrev = $derived(cursorIndex > 0);
 	const hasNext = $derived(Boolean(nextCursor));
@@ -50,12 +50,12 @@
 		try {
 			const query = new URLSearchParams({ limit: '20' });
 			if (cursor) query.set('cursor', cursor);
-			const result = await adminApi<R2Video[]>(`/r2-videos?${query.toString()}`);
+			const result = await adminApi<StorageVideo[]>(`/video-storage?${query.toString()}`);
 			items = result.data;
 			nextCursor = (result.meta.nextCursor as string | null | undefined) ?? null;
 			bucket = String(result.meta.bucket ?? '');
 		} catch (error) {
-			adminToast.error(error instanceof Error ? error.message : 'Gagal memuat R2 video');
+			adminToast.error(error instanceof Error ? error.message : 'Gagal memuat video storage');
 		} finally {
 			isLoading = false;
 		}
@@ -81,7 +81,7 @@
 			const result = await adminApi<{
 				deletedCount: number;
 				detachedServers: LinkedServer[];
-			}>(`/r2-videos/${encodeURIComponent(deleteTarget.videoId)}`, {
+			}>(`/video-storage/${encodeURIComponent(deleteTarget.videoId)}`, {
 				method: 'DELETE'
 			});
 			adminToast.success(
@@ -90,7 +90,7 @@
 			deleteTarget = null;
 			await loadVideos();
 		} catch (error) {
-			adminToast.error(error instanceof Error ? error.message : 'Gagal hapus video R2');
+			adminToast.error(error instanceof Error ? error.message : 'Gagal hapus video storage');
 		} finally {
 			isDeleting = false;
 		}
@@ -124,9 +124,9 @@
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 		<div>
 			<p class="text-xs font-black uppercase tracking-widest text-violet-400">Streaming Bucket</p>
-			<h2 class="text-2xl font-black text-zinc-100">R2 Video Storage</h2>
+			<h2 class="text-2xl font-black text-zinc-100">Video Storage</h2>
 			<p class="mt-1 text-sm text-zinc-500">
-				List folder HLS dari R2 dan hapus object video yang sudah tidak dipakai.
+				List folder HLS dan hapus object video yang sudah tidak dipakai.
 			</p>
 		</div>
 		<button
@@ -166,7 +166,7 @@
 				<thead class="bg-zinc-800/50 text-left text-xs font-black uppercase tracking-widest text-zinc-500">
 					<tr>
 						<th class="px-4 py-3">Video</th>
-						<th class="px-4 py-3">R2</th>
+						<th class="px-4 py-3">Storage</th>
 						<th class="px-4 py-3">Linked Episode</th>
 						<th class="px-4 py-3 text-right">Action</th>
 					</tr>
@@ -287,8 +287,8 @@
 
 <AdminModal
 	open={Boolean(deleteTarget)}
-	title="Hapus video R2?"
-	message={`Semua object di ${deleteTarget?.prefix ?? 'folder ini'} akan dihapus. Server R2 yang terhubung ke episode juga akan dilepas.`}
+	title="Hapus video storage?"
+	message={`Semua object di ${deleteTarget?.prefix ?? 'folder ini'} akan dihapus. Server storage yang terhubung ke episode juga akan dilepas.`}
 	danger
 	onClose={() => (deleteTarget = null)}
 	onConfirm={deleteVideo}

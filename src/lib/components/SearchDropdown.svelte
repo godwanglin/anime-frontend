@@ -2,6 +2,7 @@
 	import AppIcon from '$lib/components/AppIcon.svelte';
 	import { goto } from '$app/navigation';
 	import config from '$lib/config';
+	import { imageUrl } from '$lib/image-url';
 
 	type SearchResult = {
 		id: number;
@@ -81,7 +82,7 @@
 					class="flex items-center gap-3 px-3 py-2 hover:bg-violet-50 dark:hover:bg-zinc-800 transition group"
 				>
 					<img
-						src={item.thumbnail}
+						src={imageUrl(item.thumbnail)}
 						alt={item.title}
 						class="w-9 h-12 object-cover rounded-lg shrink-0"
 						loading="lazy"
